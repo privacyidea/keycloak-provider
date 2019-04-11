@@ -7,10 +7,6 @@
     <#elseif section = "form">
         <form id="kc-totp-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
-                <div class="${properties.kcLabelWrapperClass!}">
-                    <label for="pi_otp" class="${properties.kcLabelClass!}">Please enter your second factor</label>
-                </div>
-
                 <div class="${properties.kcInputWrapperClass!}">
                     <input id="pi_otp" name="pi_otp" type="password" class="${properties.kcInputClass!}" />
                 </div>

@@ -98,6 +98,28 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piVerifySSL.setHelpText("Do not uncheck this in productive environment");
         configProperties.add(piVerifySSL);
 
+        ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
+        piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piDoTriggerChallenge.setName("pidotriggerchallenge");
+        piDoTriggerChallenge.setLabel("Enable trigger challenge");
+        piDoTriggerChallenge.setHelpText("Choose if you want to do trigger challenge");
+        configProperties.add(piDoTriggerChallenge);
+
+        ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
+        piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
+        piServiceAccount.setName("piserviceaccount");
+        piServiceAccount.setLabel("Service account");
+        piServiceAccount.setHelpText("Username of the service account. Only needed, if trigger challenge is enabled.");
+        configProperties.add(piServiceAccount);
+
+        ProviderConfigProperty piServicePass = new ProviderConfigProperty();
+        piServicePass.setType(ProviderConfigProperty.PASSWORD);
+        piServicePass.setName("piservicepass");
+        piServicePass.setLabel("Service account password");
+        piServicePass.setHelpText("Password of the service account. Only needed, if trigger challenge is enabled.");
+        configProperties.add(piServicePass);
+
+
     }
 
 
