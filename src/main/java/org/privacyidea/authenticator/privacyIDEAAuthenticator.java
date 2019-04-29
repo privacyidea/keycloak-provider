@@ -120,7 +120,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
         if (message != null) {
             challenge = context.form().setInfo(message).createForm("privacyIDEA.ftl");
         } else {
-            challenge = context.form().createForm("privacyIDEA.ftl");
+            challenge = context.form().setInfo("Please enter OTP").createForm("privacyIDEA.ftl");
         }
 
         context.challenge(challenge);
