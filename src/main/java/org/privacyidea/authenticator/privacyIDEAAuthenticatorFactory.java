@@ -119,6 +119,13 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piServicePass.setHelpText("Password of the service account. Only needed, if trigger challenge is enabled.");
         configProperties.add(piServicePass);
 
+        ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
+        piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
+        piExcludeGroups.setName("piexcludegroups");
+        piExcludeGroups.setLabel("Exclude groups");
+        piExcludeGroups.setHelpText("You can select groups, which will not do 2FA. Enter the group names and separate them with comma e.g. 'group1,group2'");
+        configProperties.add(piExcludeGroups);
+
 
     }
 

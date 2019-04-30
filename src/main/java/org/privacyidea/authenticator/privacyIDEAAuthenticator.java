@@ -32,6 +32,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.GroupModel;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
@@ -59,6 +60,7 @@ import java.security.KeyManagementException;
 
 import javax.json.*;
 import java.util.Map;
+import java.util.Set;
 
 public class privacyIDEAAuthenticator implements Authenticator {
 
@@ -71,7 +73,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
     private String piserviceaccount;
     private String piservicepass;
     private String username;
-
+    private String piexcludegroups;
 
 
     @Override
@@ -79,6 +81,9 @@ public class privacyIDEAAuthenticator implements Authenticator {
 
         UserModel user = context.getUser();
         this.username = user.getUsername();
+
+        Set<GroupModel> groupModelSet = user.getGroups();
+        GroupModel[] groupModels = groupModelSet.toArray(new GroupModel[0]);
 
         AuthenticatorConfigModel acm = context.getAuthenticatorConfig();
         Map<String,String> configMap = acm.getConfig();
@@ -88,6 +93,18 @@ public class privacyIDEAAuthenticator implements Authenticator {
         this.pidotriggerchallenge = configMap.get("pidotriggerchallenge").equals("true") ? true : false;
         this.piserviceaccount = configMap.get("piserviceaccount");
         this.piservicepass = configMap.get("piservicepass");
+        this.piexcludegroups = configMap.get("piexcludegroups");
+
+        String piexcludegroups[] = this.piexcludegroups.split(",");
+
+        for (GroupModel groupModel : groupModels) {
+            for (String excludedGroup : piexcludegroups) {
+                if (groupModel.getName().equals(excludedGroup)) {
+                    context.success();
+                    return;
+                }
+            }
+        }
 
         String message = null;
 
