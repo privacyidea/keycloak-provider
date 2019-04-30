@@ -8,6 +8,12 @@
         <form id="kc-totp-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
+                    <#if tokenEnrollmentQR != "">
+                        <center>
+                            <img width="256" height="256" src="${tokenEnrollmentQR}">
+                        </center>
+                        Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
+                    </#if>
                     <input id="pi_otp" name="pi_otp" type="password" class="${properties.kcInputClass!}" />
                 </div>
             </div>
