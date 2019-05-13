@@ -126,6 +126,26 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piExcludeGroups.setHelpText("You can select groups, which will not do 2FA. Enter the group names and separate them with comma e.g. 'group1,group2'");
         configProperties.add(piExcludeGroups);
 
+        ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
+        piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piEnrollToken.setName("pienrolltoken");
+        piEnrollToken.setLabel("Enable token enrollment");
+        piEnrollToken.setHelpText("If enabled, the users can enroll a token theirselves, if they do not have one yet.");
+        piEnrollToken.setDefaultValue("false");
+        configProperties.add(piEnrollToken);
+
+        List<String> tokenTypes = new ArrayList<String>();
+        tokenTypes.add("hotp");
+        tokenTypes.add("totp");
+        ProviderConfigProperty piTokenType = new ProviderConfigProperty();
+        piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
+        piTokenType.setName("pitokentype");
+        piTokenType.setLabel("Token type");
+        piTokenType.setHelpText("Select the token type, the users can enroll, if they do not have a token yet.");
+        piTokenType.setOptions(tokenTypes);
+        piTokenType.setDefaultValue("hotp");
+        configProperties.add(piTokenType);
+
 
     }
 

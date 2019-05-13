@@ -74,6 +74,9 @@ public class privacyIDEAAuthenticator implements Authenticator {
     private String piservicepass;
     private String username;
     private String piexcludegroups;
+    private boolean pienrolltoken;
+    private String pitokentype;
+    private String tokenEnrollmentQR;
 
 
     @Override
@@ -94,6 +97,10 @@ public class privacyIDEAAuthenticator implements Authenticator {
         this.piserviceaccount = configMap.get("piserviceaccount");
         this.piservicepass = configMap.get("piservicepass");
         this.piexcludegroups = configMap.get("piexcludegroups");
+        this.pienrolltoken = configMap.get("pienrolltoken").equals("true") ? true : false;
+        this.pitokentype = configMap.get("pitokentype");
+
+        this.tokenEnrollmentQR = "";
 
         String piexcludegroups[] = this.piexcludegroups.split(",");
 
@@ -107,6 +114,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
         }
 
         String message = null;
+        int tokenCounter = 0;
 
         if (pidotriggerchallenge) {
 
@@ -127,18 +135,38 @@ public class privacyIDEAAuthenticator implements Authenticator {
             try {
                 JsonObject detail = body.getJsonObject("detail");
                 message = detail.getString("message");
+                JsonObject result = body.getJsonObject("result");
+                tokenCounter = result.getInt("value");
             } catch (Exception e) {
 
+            }
+
+            if (this.pienrolltoken && tokenCounter == 0) {
+
+                params = "user=" + this.username + "&type=" + this.pitokentype + "&genkey=1";
+                body = httpConnection("/token/init", params, token);
+
+                try {
+                    JsonObject detail = body.getJsonObject("detail");
+                    JsonObject googleurl = detail.getJsonObject("googleurl");
+                    this.tokenEnrollmentQR = googleurl.getString("img");
+                } catch (Exception e) {
+
+                }
             }
         }
 
         Response challenge;
 
-        if (message != null) {
-            challenge = context.form().setInfo(message).createForm("privacyIDEA.ftl");
-        } else {
-            challenge = context.form().setInfo("Please enter OTP").createForm("privacyIDEA.ftl");
+
+        if (message == null) {
+            message = "Please enter OTP";
         }
+
+        challenge = context.form()
+                .setInfo(message)
+                .setAttribute("tokenEnrollmentQR", this.tokenEnrollmentQR)
+                .createForm("privacyIDEA.ftl");
 
         context.challenge(challenge);
     }
@@ -156,6 +184,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
         if (!validated) {
             Response challenge =  context.form()
                     .setError("Authentication failed.")
+                    .setAttribute("tokenEnrollmentQR", this.tokenEnrollmentQR)
                     .createForm("privacyIDEA.ftl");
             context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
             return;
