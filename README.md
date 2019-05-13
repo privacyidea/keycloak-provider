@@ -25,7 +25,7 @@ You can find different preferences in your configuration, which are explained be
 | Realm | This is the realm, where the users are located in. Leave empty to use the privacyIDEA default realm|
 | Verify SSL | You can choose if Keycloak should verify the ssl certificate from privacyIDEA. Please do not uncheck this in a productive environment! |
 | Enable trigger challenge | Select if trigger challenge is enabled |
-| Service account | The username of your service account to trigger challenges, enroll tokens or check if push tokens are confirmed. Please make sure, that the service account needs to have the correct rights. |
+| Service account | The username of your service account to trigger challenges, enroll tokens or check if push tokens are confirmed. Please make sure, that the service account has the correct rights. |
 | Service account password | The password of your service account |
 | Exclude groups | You can exclude groups from 2FA |
 | Enable token enrollment | If the current user does not have a token yet, it can be enrolled. The service account has to be set up |
