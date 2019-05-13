@@ -43,7 +43,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 
-import java.net.URL;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -65,10 +64,65 @@ public class privacyIDEAAuthenticator implements Authenticator {
 
     public static final String CREDENTIAL_TYPE = "pi_otp";
 
+    private String piserver;
+    private String pirealm;
+    private boolean piverifyssl;
+    private boolean pidotriggerchallenge;
+    private String piserviceaccount;
+    private String piservicepass;
+    private String username;
+
+
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        Response challenge = context.form().createForm("privacyIDEA.ftl");
+
+        UserModel user = context.getUser();
+        this.username = user.getUsername();
+
+        AuthenticatorConfigModel acm = context.getAuthenticatorConfig();
+        Map<String,String> configMap = acm.getConfig();
+        this.piserver = configMap.get("piserver");
+        this.pirealm = configMap.get("pirealm") == null ? "" : configMap.get("pirealm");
+        this.piverifyssl = configMap.get("piverifyssl").equals("true") ? true : false;
+        this.pidotriggerchallenge = configMap.get("pidotriggerchallenge").equals("true") ? true : false;
+        this.piserviceaccount = configMap.get("piserviceaccount");
+        this.piservicepass = configMap.get("piservicepass");
+
+        String message = null;
+
+        if (pidotriggerchallenge) {
+
+            String params = "username=" + this.piserviceaccount + "&password=" + this.piservicepass;
+            JsonObject body = httpConnection("/auth", params, null);
+            String token = "";
+            try {
+                JsonObject result = body.getJsonObject("result");
+                JsonObject value = result.getJsonObject("value");
+                token = value.getString("token");
+            } catch (Exception e) {
+
+            }
+
+            params = "user=" + this.username;
+            body = httpConnection("/validate/triggerchallenge", params, token);
+
+            try {
+                JsonObject detail = body.getJsonObject("detail");
+                message = detail.getString("message");
+            } catch (Exception e) {
+
+            }
+        }
+
+        Response challenge;
+
+        if (message != null) {
+            challenge = context.form().setInfo(message).createForm("privacyIDEA.ftl");
+        } else {
+            challenge = context.form().setInfo("Please enter OTP").createForm("privacyIDEA.ftl");
+        }
+
         context.challenge(challenge);
     }
 
@@ -98,23 +152,23 @@ public class privacyIDEAAuthenticator implements Authenticator {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         String otp = formData.getFirst("pi_otp");
 
-        UserModel user = context.getUser();
-        String username = user.getUsername();
+        String params = "user=" + this.username + "&pass=" + otp + "&realm=" + this.pirealm;
 
-
+        JsonObject body = httpConnection("/validate/check", params, null);
         try {
+            JsonObject result = body.getJsonObject("result");
+            boolean value = result.getBoolean("value");
+            return value;
+        } catch (Exception e) {
 
-            AuthenticatorConfigModel acm = context.getAuthenticatorConfig();
-            Map<String,String> configMap = acm.getConfig();
-            String piserver = configMap.get("piserver");
-            String pirealm = configMap.get("pirealm");
-            String piverifyssl = configMap.get("piverifyssl");
+        }
+        return false;
 
-            if (pirealm == null) {
-                pirealm = "";
-            }
+    }
 
-            URL piserverurl = new URL(piserver + "/validate/check");
+    protected JsonObject httpConnection(String path, String params, String authToken) {
+        try {
+            URL piserverurl = new URL(this.piserver + path);
             String piServerProtocol = piserverurl.getProtocol();
 
             HttpURLConnection con;
@@ -125,15 +179,18 @@ public class privacyIDEAAuthenticator implements Authenticator {
                 con = (HttpURLConnection) (piserverurl.openConnection());
             }
 
-            if (piverifyssl.equals("false") && con instanceof HttpsURLConnection) {
+            if (!this.piverifyssl && con instanceof HttpsURLConnection) {
                 con = turnOffSSLVerification((HttpsURLConnection) con);
             }
 
             con.setDoOutput(true);
             con.setRequestMethod("POST");
+            if (authToken != null) {
+                con.setRequestProperty("Authorization", authToken);
+            }
             con.connect();
 
-            byte[] outputBytes = ("user=" + username + "&pass=" + otp + "&realm=" + pirealm).getBytes("UTF-8");
+            byte[] outputBytes = (params).getBytes("UTF-8");
             OutputStream os = con.getOutputStream();
             os.write(outputBytes);
             os.close();
@@ -152,15 +209,13 @@ public class privacyIDEAAuthenticator implements Authenticator {
             JsonObject body = jsonReader.readObject();
             jsonReader.close();
 
-            JsonObject result = body.getJsonObject("result");
-            boolean value = result.getBoolean("value");
 
-            return value;
+            return body;
+
         } catch (Exception e) {
-            System.out.println(e);
-        }
 
-        return false;
+        }
+        return null;
     }
 
 
