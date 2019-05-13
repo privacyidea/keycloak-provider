@@ -10,5 +10,21 @@ This provider allows you to use privacyIDEA's 2FA with Keycloak.
 * Copy the template privacyIDEA.ftl to `themes/base/login`.
 
 Now you can enable the execution for your auth flow.  
-In the config file, edit the privacyIDEA URL and the realm.  
 If you set the execution as 'required', every user needs to login with a second factor.
+
+## Configuration
+
+You can find different preferences in your configuration, which are explained below.
+
+| Configuration | Explanation |
+| ----- | ----- |
+| URL | The URL to your privacyIDEA server, which must be reachable from the keycloak server |
+| Realm | This is the realm, where the users are located in. Leave empty for default |
+| Verify SSL | You can choose if Keycloak should verify the ssl certificate from privacyIDEA. Please do not uncheck this in a productive environment! |
+| Enable trigger challenge | Select if trigger challenge is enabled |
+| Service account | The username for your service account to trigger challenges, enroll tokens or check if push tokens are confirmed. Please make sure, that the service account needs to have the correct rights. |
+| Service account password | The password for your service account |
+| Exclude groups | You can exclude groups from 2FA |
+| Enable token enrollment | If the current user does not have a token yet, it can be enrolled. The service account has to be set up |
+| Token type | Select the token type for the token enrollment |
+| Refresh interval for push tokens | Choose your custom interval in seconds to check if the push token is confirmed. This can be a comma separated list, if you want to change the interval |
