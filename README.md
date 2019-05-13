@@ -2,10 +2,13 @@
 
 This provider allows you to use privacyIDEA's 2FA with Keycloak.
 
+## Download
+
+* Check our latest [releases](https://github.com/privacyidea/keycloak-provider/releases)
+* Download the assets privacyIDEA.jar and privacyIDEA.ftl
+
 ## Installation
 
-* After building this provider with `mvn clean install wildfly:deploy`
-* Pack the content of `target/classes` to `privacyidea.jar`
 * Move the packed jar file into your deployment directory.  
 * Copy the template privacyIDEA.ftl to `themes/base/login`.
 
@@ -28,3 +31,15 @@ You can find different preferences in your configuration, which are explained be
 | Enable token enrollment | If the current user does not have a token yet, it can be enrolled. The service account has to be set up |
 | Token type | Select the token type for the token enrollment |
 | Refresh interval for push tokens | Choose your custom interval in seconds to check if the push token is confirmed. This can be a comma separated list, if you want to change the interval |
+
+## Manual build with source code
+
+You can also build the provider yourself.  
+***Notice:** This is not a stable release. Do not use it in a productive environment.*
+
+* We used the [demo server](https://www.keycloak.org/archive/downloads-4.3.0.html) to build our plugin.
+* Clone this repo to `keycloak-demo-4.3.0.Final/examples/providers`
+* Build this provider with `mvn clean install wildfly:deploy`
+* Pack the content of `target/classes` to privacyidea.jar
+
+Go on with **Installation**.
