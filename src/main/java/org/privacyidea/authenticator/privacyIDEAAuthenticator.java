@@ -181,12 +181,12 @@ public class privacyIDEAAuthenticator implements Authenticator {
         Map<String,String> configMap = acm.getConfig();
         this.piserver = configMap.get("piserver");
         this.pirealm = configMap.get("pirealm") == null ? "" : configMap.get("pirealm");
-        this.piverifyssl = configMap.get("piverifyssl").equals("true") ? true : false;
-        this.pidotriggerchallenge = configMap.get("pidotriggerchallenge").equals("true") ? true : false;
+        this.piverifyssl = configMap.get("piverifyssl").equals("true");
+        this.pidotriggerchallenge = configMap.get("pidotriggerchallenge").equals("true");
         this.piserviceaccount = configMap.get("piserviceaccount");
         this.piservicepass = configMap.get("piservicepass");
         this.piexcludegroups = configMap.get("piexcludegroups");
-        this.pienrolltoken = configMap.get("pienrolltoken").equals("true") ? true : false;
+        this.pienrolltoken = configMap.get("pienrolltoken").equals("true");
         this.pienrolltokentype = configMap.get("pienrolltokentype");
 
         String pipushtokeninvervall[] = configMap.get("pipushtokeninterval").split(",");
