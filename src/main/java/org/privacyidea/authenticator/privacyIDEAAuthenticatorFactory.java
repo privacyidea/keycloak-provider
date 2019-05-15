@@ -130,7 +130,7 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piEnrollToken.setName("pienrolltoken");
         piEnrollToken.setLabel("Enable token enrollment");
-        piEnrollToken.setHelpText("If enabled, the users can enroll a token theirselves, if they do not have one yet. Service account is needed");
+        piEnrollToken.setHelpText("If enabled, the users can enroll a token themselves, if they do not have one yet. Service account is needed");
         piEnrollToken.setDefaultValue("false");
         configProperties.add(piEnrollToken);
 
