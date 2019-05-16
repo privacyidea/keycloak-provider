@@ -181,19 +181,24 @@ public class privacyIDEAAuthenticator implements Authenticator {
         Map<String,String> configMap = acm.getConfig();
         this.piserver = configMap.get("piserver");
         this.pirealm = configMap.get("pirealm") == null ? "" : configMap.get("pirealm");
-        this.piverifyssl = configMap.get("piverifyssl").equals("true");
-        this.pidotriggerchallenge = configMap.get("pidotriggerchallenge").equals("true");
-        this.piserviceaccount = configMap.get("piserviceaccount");
-        this.piservicepass = configMap.get("piservicepass");
-        this.piexcludegroups = configMap.get("piexcludegroups");
-        this.pienrolltoken = configMap.get("pienrolltoken").equals("true");
-        this.pienrolltokentype = configMap.get("pienrolltokentype");
+        this.piverifyssl = configMap.get("piverifyssl") == null ? false : configMap.get("piverifyssl").equals("true");
+        this.pidotriggerchallenge = configMap.get("pidotriggerchallenge") == null ? false : configMap.get("pidotriggerchallenge").equals("true");
+        this.piserviceaccount = configMap.get("piserviceaccount") == null ? "" : configMap.get("piserviceaccount");
+        this.piservicepass = configMap.get("piservicepass") == null ? "" : configMap.get("piservicepass");
+        this.piexcludegroups = configMap.get("piexcludegroups") == null ? "" : configMap.get("piexcludegroups");
+        this.pienrolltoken = configMap.get("pienrolltoken") == null ? false : configMap.get("pienrolltoken").equals("true");
+        this.pienrolltokentype = configMap.get("pienrolltokentype") == null ? "" : configMap.get("pienrolltokentype");
 
-        String pipushtokeninvervall[] = configMap.get("pipushtokeninterval").split(",");
-        this.pipushtokeninterval = new int[pipushtokeninvervall.length];
+        String pipushtokeninterval[];
+        if (configMap.get("pipushtokeninterval") == null) {
+            pipushtokeninterval = new String[1];
+        } else {
+            pipushtokeninterval = configMap.get("pipushtokeninterval").split(",");
+        }
+        this.pipushtokeninterval = new int[pipushtokeninterval.length];
         try {
-            for (int i = 0; i < pipushtokeninvervall.length; i++) {
-                this.pipushtokeninterval[i] = Integer.parseInt(pipushtokeninvervall[i]);
+            for (int i = 0; i < pipushtokeninterval.length; i++) {
+                this.pipushtokeninterval[i] = Integer.parseInt(pipushtokeninterval[i]);
             }
         } catch (Exception e) {
             this.pipushtokeninterval = new int[]{5,1,1,1,2,3};
