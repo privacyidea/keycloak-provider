@@ -109,14 +109,14 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
         piServiceAccount.setName("piserviceaccount");
         piServiceAccount.setLabel("Service account");
-        piServiceAccount.setHelpText("Username of the service account. Only needed, if trigger challenge is enabled.");
+        piServiceAccount.setHelpText("Username of the service account. Needed for trigger challenge, token enrollment and push tokens.");
         configProperties.add(piServiceAccount);
 
         ProviderConfigProperty piServicePass = new ProviderConfigProperty();
         piServicePass.setType(ProviderConfigProperty.PASSWORD);
         piServicePass.setName("piservicepass");
         piServicePass.setLabel("Service account password");
-        piServicePass.setHelpText("Password of the service account. Only needed, if trigger challenge is enabled.");
+        piServicePass.setHelpText("Password of the service account. Needed for trigger challenge, token enrollment and push tokens");
         configProperties.add(piServicePass);
 
         ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
@@ -130,7 +130,7 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piEnrollToken.setName("pienrolltoken");
         piEnrollToken.setLabel("Enable token enrollment");
-        piEnrollToken.setHelpText("If enabled, the users can enroll a token theirselves, if they do not have one yet.");
+        piEnrollToken.setHelpText("If enabled, the users can enroll a token themselves, if they do not have one yet. Service account is needed");
         piEnrollToken.setDefaultValue("false");
         configProperties.add(piEnrollToken);
 
@@ -139,12 +139,19 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         tokenTypes.add("totp");
         ProviderConfigProperty piTokenType = new ProviderConfigProperty();
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
-        piTokenType.setName("pitokentype");
+        piTokenType.setName("pienrolltokentype");
         piTokenType.setLabel("Token type");
-        piTokenType.setHelpText("Select the token type, the users can enroll, if they do not have a token yet.");
+        piTokenType.setHelpText("Select the token type, the users can enroll, if they do not have a token yet. Service account is needed");
         piTokenType.setOptions(tokenTypes);
         piTokenType.setDefaultValue("hotp");
         configProperties.add(piTokenType);
+
+        ProviderConfigProperty piPushTokenInterval = new ProviderConfigProperty();
+        piPushTokenInterval.setType(ProviderConfigProperty.STRING_TYPE);
+        piPushTokenInterval.setName("pipushtokeninterval");
+        piPushTokenInterval.setLabel("Refresh interval for push tokens");
+        piPushTokenInterval.setHelpText("Set refresh interval for push tokens in seconds. You can use a comma separated list. The last entry will be repeated.");
+        configProperties.add(piPushTokenInterval);
 
 
     }
