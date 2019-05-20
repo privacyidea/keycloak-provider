@@ -35,6 +35,8 @@ import org.keycloak.models.UserModel;
 import org.keycloak.models.GroupModel;
 import org.keycloak.forms.login.LoginFormsProvider;
 
+import org.jboss.logging.Logger;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -66,6 +68,8 @@ import java.util.Set;
 public class privacyIDEAAuthenticator implements Authenticator {
 
     public static final String CREDENTIAL_TYPE = "pi_otp";
+
+    protected static Logger log = Logger.getLogger(privacyIDEAAuthenticator.class);
 
     /**
      * Server URL
@@ -234,7 +238,9 @@ public class privacyIDEAAuthenticator implements Authenticator {
                 JsonObject value = result.getJsonObject("value");
                 this.authToken = value.getString("token");
             } catch (Exception e) {
-
+                log.error(e);
+                log.error("Failed to get authorization token.");
+                log.error("Unable to read response from privacyIDEA.");
             }
 
             params = "user=" + username;
@@ -268,7 +274,8 @@ public class privacyIDEAAuthenticator implements Authenticator {
                     tokenType = "push";
                 }
             } catch (Exception e) {
-
+                log.error(e);
+                log.error("Trigger challenge was not successful.");
             }
 
             /**
@@ -285,7 +292,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
                     JsonObject googleurl = detail.getJsonObject("googleurl");
                     tokenEnrollmentQR = googleurl.getString("img");
                 } catch (Exception e) {
-
+                    log.error("Token enrollment failed");
                 }
             }
         }
@@ -361,6 +368,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
 
             } else {
                 form.setError("Authentication failed.");
+                log.debug("Authentication failed for user " + context.getUser().getUsername());
             }
 
             Response challenge = form.createForm("privacyIDEA.ftl");
@@ -416,7 +424,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
                     }
                 }
             } catch (Exception e) {
-
+                log.error("Push token verification failed.");
             }
             return false;
         }
@@ -430,7 +438,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
             boolean value = result.getBoolean("value");
             return value;
         } catch (Exception e) {
-
+            log.error("Verification was not successful: Invalid response from privacyIDEA");
         }
         return false;
 
@@ -508,7 +516,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
             return body;
 
         } catch (Exception e) {
-
+            log.error(e);
         }
         return null;
     }
