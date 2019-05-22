@@ -430,7 +430,12 @@ public class privacyIDEAAuthenticator implements Authenticator {
         }
 
         String otp = formData.getFirst("pi_otp");
-        String params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm;
+        String params;
+        if (this.pidotriggerchallenge) {
+            params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm + "&transaction_id=" + transaction_id;
+        } else {
+            params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm;
+        }
 
         JsonObject body = httpConnection("/validate/check", params, null, "POST");
         try {
