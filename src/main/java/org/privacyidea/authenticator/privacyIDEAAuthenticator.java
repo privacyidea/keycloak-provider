@@ -250,28 +250,30 @@ public class privacyIDEAAuthenticator implements Authenticator {
                 JsonObject detail = body.getJsonObject("detail");
                 JsonObject result = body.getJsonObject("result");
                 tokenCounter = result.getInt("value");
-                context.getAuthenticationSession().setAuthNote("pi.transaction_id", detail.getString("transaction_id"));
-                JsonArray multi_challenge = detail.getJsonArray("multi_challenge");
-                for (int i = 0; i < multi_challenge.size(); i++) {
-                    JsonObject challenge = multi_challenge.getJsonObject(i);
-                    if (challenge.getString("type").equals("push")) {
-                        pushToken = true;
-                        if (pushMessage == null) {
-                            pushMessage = challenge.getString("message");
+                if (tokenCounter > 0) {
+                    context.getAuthenticationSession().setAuthNote("pi.transaction_id", detail.getString("transaction_id"));
+                    JsonArray multi_challenge = detail.getJsonArray("multi_challenge");
+                    for (int i = 0; i < multi_challenge.size(); i++) {
+                        JsonObject challenge = multi_challenge.getJsonObject(i);
+                        if (challenge.getString("type").equals("push")) {
+                            pushToken = true;
+                            if (pushMessage == null) {
+                                pushMessage = challenge.getString("message");
+                            } else {
+                                pushMessage = pushMessage + ", " + challenge.getString("message");
+                            }
                         } else {
-                            pushMessage = pushMessage + ", " + challenge.getString("message");
-                        }
-                    } else {
-                        otpToken = true;
-                        if (otpMessage == null) {
-                            otpMessage = challenge.getString("message");
-                        } else {
-                            otpMessage = otpMessage + ", " + challenge.getString("message");
+                            otpToken = true;
+                            if (otpMessage == null) {
+                                otpMessage = challenge.getString("message");
+                            } else {
+                                otpMessage = otpMessage + ", " + challenge.getString("message");
+                            }
                         }
                     }
-                }
-                if (pushToken) {
-                    tokenType = "push";
+                    if (pushToken) {
+                        tokenType = "push";
+                    }
                 }
             } catch (Exception e) {
                 log.error(e);
@@ -312,7 +314,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
                 .setAttribute("pushToken", pushToken)
                 .setAttribute("otpToken", otpToken)
                 .setAttribute("pushMessage", pushMessage == null ? "" : pushMessage)
-                .setAttribute("otpMessage", otpMessage == null ? "" : otpMessage)
+                .setAttribute("otpMessage", otpMessage == null ? "Please enter OTP" : otpMessage)
                 .createForm("privacyIDEA.ftl");
 
         context.challenge(challenge);
@@ -431,7 +433,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
 
         String otp = formData.getFirst("pi_otp");
         String params;
-        if (this.pidotriggerchallenge) {
+        if (this.pidotriggerchallenge && tokenEnrollmentQR.equals("")) {
             params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm + "&transaction_id=" + transaction_id;
         } else {
             params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm;
