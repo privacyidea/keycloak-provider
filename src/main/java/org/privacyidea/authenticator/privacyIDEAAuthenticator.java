@@ -410,19 +410,16 @@ public class privacyIDEAAuthenticator implements Authenticator {
         }
 
         if (tokenType.equals("push")) {
-            JsonObject body = httpConnection("/token/challenges/", null, this.authToken, "GET");
+            String params = "transaction_id=" + transaction_id;
+            JsonObject body = httpConnection("/token/challenges/", params, this.authToken, "GET");
             try {
                 JsonObject result = body.getJsonObject("result");
                 JsonObject value = result.getJsonObject("value");
                 JsonArray challenges = value.getJsonArray("challenges");
                 for (int i = 0; i < challenges.size(); i++) {
                     JsonObject challenge = challenges.getJsonObject(i);
-                    String JsonTransaction_id = challenge.getString("transaction_id");
-                    if (transaction_id.equals(JsonTransaction_id)) {
-                        boolean otp_valid = challenge.getBoolean("otp_valid");
-                        if (otp_valid) {
-                            return true;
-                        }
+                    if (challenge.getBoolean("otp_valid")) {
+                        return true;
                     }
                 }
             } catch (Exception e) {
