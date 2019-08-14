@@ -22,26 +22,6 @@
 
 package org.privacyidea.authenticator;
 
-import org.jboss.resteasy.spi.HttpResponse;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
-import org.keycloak.authentication.AuthenticationFlowContext;
-import org.keycloak.authentication.AuthenticationFlowError;
-import org.keycloak.authentication.Authenticator;
-import org.keycloak.models.AuthenticatorConfigModel;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserCredentialModel;
-import org.keycloak.models.UserModel;
-import org.keycloak.models.GroupModel;
-import org.keycloak.forms.login.LoginFormsProvider;
-
-import org.jboss.logging.Logger;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -49,6 +29,19 @@ import java.io.StringReader;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.net.URI;
+
+import java.nio.charset.StandardCharsets;
+
+import java.security.NoSuchAlgorithmException;
+import java.security.KeyManagementException;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+
+import javax.json.*;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.HostnameVerifier;
@@ -58,12 +51,24 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.KeyManagementException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
-import javax.json.*;
-import java.util.Map;
-import java.util.Set;
+import org.jboss.logging.Logger;
+import org.jboss.resteasy.spi.HttpResponse;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
+import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.authentication.AuthenticationFlowError;
+import org.keycloak.authentication.Authenticator;
+import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.models.AuthenticatorConfigModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserCredentialModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.GroupModel;
+
 
 public class privacyIDEAAuthenticator implements Authenticator {
 
@@ -231,7 +236,9 @@ public class privacyIDEAAuthenticator implements Authenticator {
 
         if (pidotriggerchallenge) {
 
-            String params = "username=" + this.piserviceaccount + "&password=" + this.piservicepass;
+            Map<String, String> params = new HashMap<>();
+            params.put("username", this.piserviceaccount);
+            params.put("password", this.piservicepass);
             JsonObject body = httpConnection("/auth", params, null, "POST");
             try {
                 JsonObject result = body.getJsonObject("result");
@@ -243,7 +250,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
                 log.error("Unable to read response from privacyIDEA.");
             }
 
-            params = "user=" + username;
+            params.put("user", username);
             body = httpConnection("/validate/triggerchallenge", params, this.authToken, "POST");
 
             try {
@@ -286,7 +293,9 @@ public class privacyIDEAAuthenticator implements Authenticator {
 
             if (this.pienrolltoken && tokenCounter == 0) {
 
-                params = "user=" + username + "&type=" + this.pienrolltokentype + "&genkey=1";
+                params.put("user", username);
+                params.put("type", this.pienrolltokentype);
+                params.put("genkey", "1");
                 body = httpConnection("/token/init", params, this.authToken, "POST");
 
                 try {
@@ -410,7 +419,8 @@ public class privacyIDEAAuthenticator implements Authenticator {
         }
 
         if (tokenType.equals("push")) {
-            String params = "transaction_id=" + transaction_id;
+            Map<String, String> params = new HashMap<>();
+            params.put("transaction_id", transaction_id);
             JsonObject body = httpConnection("/token/challenges/", params, this.authToken, "GET");
             try {
                 JsonObject result = body.getJsonObject("result");
@@ -429,13 +439,13 @@ public class privacyIDEAAuthenticator implements Authenticator {
         }
 
         String otp = formData.getFirst("pi_otp");
-        String params;
+        Map<String, String> params = new HashMap<>();
+        params.put("user", username);
+        params.put("pass", otp);
+        params.put("realm", this.pirealm);
         if (this.pidotriggerchallenge && tokenEnrollmentQR.equals("")) {
-            params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm + "&transaction_id=" + transaction_id;
-        } else {
-            params = "user=" + username + "&pass=" + otp + "&realm=" + this.pirealm;
+            params.put("transaction_id", transaction_id);
         }
-
         JsonObject body = httpConnection("/validate/check", params, null, "POST");
         try {
             JsonObject result = body.getJsonObject("result");
@@ -466,12 +476,20 @@ public class privacyIDEAAuthenticator implements Authenticator {
      *
      * @return JsonObject body which contains the whole response
      */
-    protected JsonObject httpConnection(String path, String params, String authToken, String method) {
+    protected JsonObject httpConnection(String path, Map<String, String> params, String authToken, String method) {
+        StringBuilder paramsSB = new StringBuilder();
+        params.forEach((key, value)-> {
+            try {
+                paramsSB.append(key + "=" + URLEncoder.encode(value, StandardCharsets.UTF_8.toString()) + "&");
+            } catch (Exception e) {
+                log.error(e);
+            }
+        });
+        paramsSB.deleteCharAt(paramsSB.length()-1);
         try {
             URL piserverurl = new URL(this.piserver + path);
-
             if (method.equals("GET") && params != null) {
-                piserverurl = new URL(this.piserver + path + "?" + params);
+                piserverurl = new URL(this.piserver + path + "?" + paramsSB.toString());
             }
 
             String piServerProtocol = piserverurl.getProtocol();
@@ -496,7 +514,7 @@ public class privacyIDEAAuthenticator implements Authenticator {
             con.connect();
 
             if (method.equals("POST")) {
-                byte[] outputBytes = (params).getBytes("UTF-8");
+                byte[] outputBytes = (paramsSB.toString()).getBytes("UTF-8");
                 OutputStream os = con.getOutputStream();
                 os.write(outputBytes);
                 os.close();
