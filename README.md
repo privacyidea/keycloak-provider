@@ -1,6 +1,8 @@
 # Keycloak privacyIDEA provider
 
-This provider allows you to use privacyIDEA's 2FA with Keycloak.
+This provider allows you to use privacyIDEA's 2FA with Keycloak.  
+We added a detailed how to in our [blog](https://www.privacyidea.org/how-to-use-keycloak-with-privacyidea/).  
+In this blog entry, you can find an example with Keycloak, privacyIDEA and Drupal.
 
 ## Download
 
@@ -9,7 +11,7 @@ This provider allows you to use privacyIDEA's 2FA with Keycloak.
 
 ## Installation
 
-* Move the packed jar file into your deployment directory.  
+* Move the packed jar file into your deployment directory `standalone/deployment`.  
 * Copy the template privacyIDEA.ftl to `themes/base/login`.
 
 Now you can enable the execution for your auth flow.  
