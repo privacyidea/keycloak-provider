@@ -1,27 +1,6 @@
-/**
- * Copyright 2019 NetKnights GmbH - micha.preusser@neknights.it
- * - Modified
- *
- * Based on original code:
- *
- * Copyright 2016 Red Hat, Inc. and/or its affiliates
- * and other contributors as indicated by the @author tags.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.privacyidea.authenticator;
 
+import org.jboss.logging.Logger;
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
@@ -34,18 +13,44 @@ import org.keycloak.provider.ProviderConfigProperty;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Copyright 2019 NetKnights GmbH - micha.preusser@neknights.it
+ * - Modified
+ * <p>
+ * Based on original code:
+ * <p>
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
-    public static final String PROVIDER_ID = "privacyidea-authenticator";
+    //private static Logger log = Logger.getLogger(privacyIDEAAuthenticatorFactory.class);
+
+    private static final String PROVIDER_ID = "privacyidea-authenticator";
     private static final privacyIDEAAuthenticator SINGLETON = new privacyIDEAAuthenticator();
+    private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
     @Override
     public String getId() {
+        //log.debug("AUTHENTICATOR FACTORY: GET ID");
         return PROVIDER_ID;
     }
 
     @Override
     public Authenticator create(KeycloakSession session) {
+        //log.debug("AUTHENTICATOR FACTORY: CREATE");
         return SINGLETON;
     }
 
@@ -53,29 +58,33 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
             AuthenticationExecutionModel.Requirement.REQUIRED,
             AuthenticationExecutionModel.Requirement.DISABLED
     };
+
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
+        //log.debug("AUTHENTICATOR FACTORY: getRequirement Choices");
         return REQUIREMENT_CHOICES;
     }
 
     @Override
     public boolean isUserSetupAllowed() {
+        // log.debug("AUTHENTICATOR FACTORY: isUserSetupAllowed");
         return false;
     }
 
     @Override
     public boolean isConfigurable() {
+        //log.debug("AUTHENTICATOR FACTORY: isConfigurable");
         return true;
     }
 
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
+        //log.debug("AUTHENTICATOR FACTORY: getConfigProperies");
         return configProperties;
     }
 
-    private static final List<ProviderConfigProperty> configProperties = new ArrayList<ProviderConfigProperty>();
-
     static {
+        //log.debug("AUTHENTICATOR FACTORY: STATIC INIT");
 
         ProviderConfigProperty piServerUrl = new ProviderConfigProperty();
         piServerUrl.setType(ProviderConfigProperty.STRING_TYPE);
@@ -134,7 +143,7 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piEnrollToken.setDefaultValue("false");
         configProperties.add(piEnrollToken);
 
-        List<String> tokenTypes = new ArrayList<String>();
+        List<String> tokenTypes = new ArrayList<>();
         tokenTypes.add("hotp");
         tokenTypes.add("totp");
         ProviderConfigProperty piTokenType = new ProviderConfigProperty();
@@ -152,10 +161,7 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
         piPushTokenInterval.setLabel("Refresh interval for push tokens");
         piPushTokenInterval.setHelpText("Set refresh interval for push tokens in seconds. You can use a comma separated list. The last entry will be repeated.");
         configProperties.add(piPushTokenInterval);
-
-
     }
-
 
     @Override
     public String getHelpText() {
@@ -174,18 +180,13 @@ public class privacyIDEAAuthenticatorFactory implements AuthenticatorFactory, Co
 
     @Override
     public void init(Config.Scope config) {
-
     }
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-
     }
 
     @Override
     public void close() {
-
     }
-
-
 }
