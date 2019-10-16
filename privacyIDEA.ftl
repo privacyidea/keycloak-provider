@@ -10,24 +10,23 @@
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if tokenType = "push">
                         ${pushMessage}
-                        <#else>
+                    <#else>
                         ${otpMessage}
                     </#if>
                     <#-- Show QR code for new token, if one has been enrolled -->
                     <#if tokenEnrollmentQR != "">
-                        <center>
+                        <div style="text-align: center;">
                             <img width="256" height="256" src="${tokenEnrollmentQR}">
-                        </center>
+                        </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
-                    <input id="pi_otp" name="pi_otp" type="hidden" class="${properties.kcInputClass!}" autofocus />
+                    <input id="pi_otp" name="pi_otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
                 </div>
             </div>
 
             <div class="${properties.kcFormGroupClass!}">
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
-                    <div class="${properties.kcFormOptionsWrapperClass!}">
-                    </div>
+                    <div class="${properties.kcFormOptionsWrapperClass!}"/>
                 </div>
 
                 <#--These inputs will be returned to privacyIDEAAuthenticator-->
@@ -42,40 +41,46 @@
                 <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
                     <div class="${properties.kcFormButtonsWrapperClass!}">
                         <#if tokenType = "push">
-                            <#--The form will be reloaded if push token is enabled to check if it is confirmed.
-                            The interval can be set in the configuration-->
-                                <script>
-                                    window.onload=function(){
-                                        window.setTimeout(function() {
-                                            document.forms["loginform"].submit();
-                                        }, parseInt(${pushTokenInterval})*1000);
-                                    };
-                                </script>
-                            <#if otpToken>
-                            <#--The token type can be changed if we can use push or otp-->
-                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}" name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('otp')" type="button" value="Use OTP"/>
-                            </#if>
-                            <#else>
-                            <#--If token type is not push, an input field and login button is needed-->
-                                <script>
-                                    document.getElementById("pi_otp").type="password";
-                                    document.getElementById("pi_otp").required=true;
-                                </script>
-                                <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
-                            <#if pushToken>
-                            <#--The token type can be changed if we can use push or otp-->
-                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}" name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('push')" type="button" value="Use Push Token"/>
-                            </#if>
+                        <#--The form will be reloaded if push token is enabled to check if it is confirmed.
+                        The interval can be set in the configuration-->
+                            <script>
+                                window.onload = function () {
+                                    window.setTimeout(function () {
+                                        document.forms["loginform"].submit();
+                                    }, parseInt(${pushTokenInterval}) * 1000);
+                                };
+                            </script>
+                        <#if otpToken>
+                        <#--The token type can be changed if we can use push or otp-->
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                               name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('otp')"
+                               type="button" value="Use OTP"/>
+                        </#if>
+                        <#else>
+                        <#--If token type is not push, an input field and login button is needed-->
+                            <script>
+                                document.getElementById("pi_otp").type = "password";
+                                document.getElementById("pi_otp").required = true;
+                            </script>
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
+                               name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
+                        <#if pushToken>
+                        <#--The token type can be changed if we can use push or otp-->
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                               name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('push')"
+                               type="button" value="Use Push Token"/>
+                        </#if>
                         </#if>
                         <#--If we change the token type, this information must be transmitted to privacyIDEAAuthenticator-->
                         <script>
                             function changeTokenType(tokenType) {
-                                document.getElementById("tokenType").value=tokenType;
-                                document.getElementById("tokenTypeChanged").value="true";
+                                document.getElementById("tokenType").value = tokenType;
+                                document.getElementById("tokenTypeChanged").value = "true";
                                 document.forms["loginform"].submit();
                             }
                         </script>
-                        <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}" name="cancel" id="kc-cancel" type="submit" value="${msg("doCancel")}"/>
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                               name="cancel" id="kc-cancel" type="submit" value="${msg("doCancel")}"/>
                     </div>
                 </div>
             </div>
