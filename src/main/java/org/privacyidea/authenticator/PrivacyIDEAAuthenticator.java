@@ -122,28 +122,37 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Enroll token if enabled and user does not have one (counted from trigger challenge)
         String tokenEnrollmentQR = "";
-        if (_config.doEnrollToken() && tokenCounter == 0) {
-            // Check if user has a token
-            Map<String, String> params = new HashMap<>();
-            params.put(PARAM_KEY_USER, _currentUserName);
-            /*JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN, params, true, GET);
-
-            JsonObject result = response.getJsonObject(JSON_KEY_RESULT);
-            JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
-            JsonArray tokens = value.getJsonArray(JSON_KEY_TOKENS);
-            log.info("tokens size:" + tokens.size()); */
-            //if (tokens.size() < 1) {
-            params.put(PARAM_KEY_TYPE, _config.getEnrollingTokenType());
-            params.put(PARAM_KEY_GENKEY, "1");
-            JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
+        if (_config.doEnrollToken()) {
             try {
-                JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
-                JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
-                tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
+                // get the current list of tokens for a user
+                Map<String, String> params = new HashMap<>();
+                params.put(PARAM_KEY_USER, _currentUserName);
+                JsonObject body = _endpoint.sendRequest(ENDPOINT_TOKEN, params, true, GET);
+                JsonObject value = body.getJsonObject(JSON_KEY_RESULT).getJsonObject(JSON_KEY_VALUE);
+                tokenCounter = value.getInt(JSON_KEY_COUNT, 0);
+
+                // Check if user has a token
+                if (tokenCounter != 0) {
+                    params = new HashMap<>();
+                    params.put(PARAM_KEY_USER, _currentUserName);
+                    /*JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN, params, true, GET);
+
+                    JsonObject result = response.getJsonObject(JSON_KEY_RESULT);
+                    JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
+                    JsonArray tokens = value.getJsonArray(JSON_KEY_TOKENS);
+                    log.info("tokens size:" + tokens.size()); */
+                    //if (tokens.size() < 1) {
+                    params.put(PARAM_KEY_TYPE, _config.getEnrollingTokenType());
+                    params.put(PARAM_KEY_GENKEY, "1");
+                    JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
+                    JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
+                    JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
+                    tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
+                }
             } catch (Exception e) {
-                _log.error("Token enrollment failed");
+                _log.error(e);
+                _log.error("Token enrollment was not successful.");
             }
-            //}
         }
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
 

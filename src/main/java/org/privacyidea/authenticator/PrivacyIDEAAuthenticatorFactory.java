@@ -1,7 +1,6 @@
 package org.privacyidea.authenticator;
 
 import org.keycloak.Config;
-import org.keycloak.authentication.ConfigurableAuthenticatorFactory;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
@@ -34,7 +33,7 @@ import static org.privacyidea.authenticator.Const.*;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authentication.AuthenticatorFactory, ConfigurableAuthenticatorFactory {
+public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authentication.AuthenticatorFactory, org.keycloak.authentication.ConfigurableAuthenticatorFactory {
 
     private static final PrivacyIDEAAuthenticator SINGLETON = new PrivacyIDEAAuthenticator();
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
@@ -79,7 +78,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServerUrl.setType(ProviderConfigProperty.STRING_TYPE);
         piServerUrl.setName(CONFIG_SERVER);
         piServerUrl.setLabel("URL");
-        piServerUrl.setHelpText("The URL of the privacyIDEA server");
+        piServerUrl.setHelpText("The URL of the privacyIDEA server (complete with scheme, host and port like \"https://<piserver>:port\")");
         configProperties.add(piServerUrl);
 
         ProviderConfigProperty piRealm = new ProviderConfigProperty();
@@ -128,7 +127,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piEnrollToken.setName(CONFIG_ENROLLTOKEN);
         piEnrollToken.setLabel("Enable token enrollment");
-        piEnrollToken.setHelpText("If enabled, the users can enroll a token themselves, if they do not have one yet. Trigger Challenge has to be enabled and a service account is needed");
+        piEnrollToken.setHelpText("If enabled, the user gets a token enrolled automatically for them, if they do not have one yet. The Service account is needed");
         piEnrollToken.setDefaultValue("false");
         configProperties.add(piEnrollToken);
 
@@ -138,7 +137,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         ProviderConfigProperty piTokenType = new ProviderConfigProperty();
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
         piTokenType.setName(CONFIG_ENROLLTOKENTYPE);
-        piTokenType.setLabel("Token type");
+        piTokenType.setLabel("Enrollment Token type");
         piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
         piTokenType.setOptions(tokenTypes);
         piTokenType.setDefaultValue("HOTP");
