@@ -12,7 +12,7 @@ In this blog entry, you can find an example with Keycloak, privacyIDEA and Drupa
 ## Installation
 
 * Move the packed jar file into your deployment directory `standalone/deployment`.  
-* Copy the template privacyIDEA.ftl to `themes/base/login`.
+* Move the template privacyIDEA.ftl to `themes/base/login`.
 
 Now you can enable the execution for your auth flow.  
 If you set the execution as 'required', every user needs to login with a second factor.
@@ -36,12 +36,7 @@ You can find different preferences in your configuration, which are explained be
 
 ## Manual build with source code
 
-You can also build the provider yourself.  
-***Notice:** This is not a stable release. Do not use it in a productive environment.*
+* If the wildfly server is running, the authenticator can directly be deployed with
+``mvn clean install wildfly:deploy`` and only the template has to be copied.
 
-* We used the [demo server](https://www.keycloak.org/archive/downloads-4.3.0.html) to build our plugin.
-* Clone this repo to `keycloak-demo-4.3.0.Final/examples/providers`
-* Build this provider with `mvn clean install wildfly:deploy`
-* Pack the content of `target/classes` to privacyidea.jar
-
-Go on with **Installation**.
+* Otherwise build with ``mvn clean install`` and go on with **Installation**
