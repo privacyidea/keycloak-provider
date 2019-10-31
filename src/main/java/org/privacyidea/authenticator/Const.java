@@ -67,6 +67,7 @@ final class Const {
     static final String JSON_KEY_MESSAGES = "messages";
     static final String JSON_KEY_TRANSACTION_IDS = "transaction_ids";
     static final String JSON_KEY_TOKENS = "tokens";
+    static final String JSON_KEY_COUNT = "count";
 
     static final String CONFIG_PUSHTOKENINTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDEGROUPS = "piexcludegroups";
