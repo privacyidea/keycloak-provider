@@ -75,7 +75,7 @@
                             }
                         </script>
                         <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                               name="cancel" id="kc-cancel" type="submit" value="${msg("doCancel")}"/>
+                               onClick="window.history.go(-1)" name="cancel" id="kc-cancel" type="submit" value="${msg("doCancel")}"/>
                     </div>
                 </div>
             </div>
