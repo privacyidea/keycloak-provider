@@ -123,6 +123,15 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piExcludeGroups.setHelpText("You can select groups, which will not do 2FA. Enter the group names and separate them with comma e.g. 'group1,group2'");
         configProperties.add(piExcludeGroups);
 
+        ProviderConfigProperty piExcludeHeader = new ProviderConfigProperty();
+        piExcludeHeader.setType(ProviderConfigProperty.STRING_TYPE);
+        piExcludeHeader.setName(CONFIG_EXCLUDEHEADER);
+        piExcludeHeader.setLabel("Skip OTP for Header");
+        piExcludeHeader.setHelpText("OTP is skipped if a HTTP request header does matches the given pattern." +
+                "Can be used to specify trusted networks via: X-Forwarded-For: (1.2.3.4|1.2.3.5)." +
+                "In this case requests from 1.2.3.4 and 1.2.3.5 come from a trusted source.");
+        configProperties.add(piExcludeHeader);
+
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piEnrollToken.setName(CONFIG_ENROLLTOKEN);
