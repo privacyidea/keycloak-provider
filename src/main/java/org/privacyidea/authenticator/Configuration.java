@@ -16,6 +16,7 @@ class Configuration {
     private String _serviceAccountName;
     private String _serviceAccountPass;
     private List<String> _excludedGroups = new ArrayList<>();
+    private String _excludedHeader;
     private boolean _doEnrollToken;
     private String _enrollingTokenType;
     private List<Integer> _pushtokenPollingInterval = new ArrayList<>();
@@ -29,6 +30,7 @@ class Configuration {
         _serviceAccountPass = (configMap.get(CONFIG_SERVICEPASS) == null) ? "" : configMap.get(CONFIG_SERVICEPASS);
         _doEnrollToken = configMap.get(CONFIG_ENROLLTOKEN) != null && configMap.get(CONFIG_ENROLLTOKEN).equals(TRUE);
         _enrollingTokenType = configMap.get(CONFIG_ENROLLTOKENTYPE) == null ? "" : configMap.get(CONFIG_ENROLLTOKENTYPE);
+        _excludedHeader = configMap.get(CONFIG_EXCLUDEHEADER) == null ? "" : configMap.get(CONFIG_EXCLUDEHEADER);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDEGROUPS);
         if (excludedGroupsStr != null) {
@@ -79,6 +81,10 @@ class Configuration {
 
     List<String> getExcludedGroups() {
         return _excludedGroups;
+    }
+
+    String getExcludedHeader() {
+        return _excludedHeader;
     }
 
     boolean doEnrollToken() {
