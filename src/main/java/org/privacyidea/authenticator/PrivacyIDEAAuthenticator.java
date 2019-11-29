@@ -14,6 +14,7 @@ import javax.json.JsonObject;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static org.privacyidea.authenticator.Const.*;
 
@@ -74,6 +75,35 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 }
             }
         }
+
+        /**
+         * This adds support for conditional OTP
+         * You can specify a pattern for which OTP authentication is not required
+         * Ideas and code taken from keycloaks conditonal OTP code
+         */
+        if (_config.getExcludedHeader() != null) {
+
+            MultivaluedMap < String, String > requestHeaders = context.getHttpRequest().getHttpHeaders().getRequestHeaders();
+
+            Pattern pattern = Pattern.compile(_config.getExcludedHeader(), Pattern.DOTALL);
+
+            for (Map.Entry < String, List < String >> entry: requestHeaders.entrySet()) {
+
+                String key = entry.getKey();
+
+                for (String value: entry.getValue()) {
+
+                    String headerEntry = key.trim() + ": " + value.trim();
+
+                    if (pattern.matcher(headerEntry).matches()) {
+                        context.success();
+                        return;
+                    }
+                }
+            }
+
+        }
+
 
         // Trigger challenge for current user
         int tokenCounter = 0;
