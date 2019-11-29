@@ -1,7 +1,7 @@
 # Keycloak privacyIDEA provider
 
-This provider allows you to use privacyIDEA's 2FA with Keycloak.  
-We added a detailed how to in our [blog](https://community.privacyidea.org/t/how-to-use-keycloak-with-privacyidea/1132).  
+This provider allows you to use privacyIDEA's 2FA with Keycloak.
+We added a detailed how to in our [blog](https://community.privacyidea.org/t/how-to-use-keycloak-with-privacyidea/1132).
 In this blog entry, you can find an example with Keycloak, privacyIDEA and Drupal.
 
 ## Download
@@ -11,10 +11,10 @@ In this blog entry, you can find an example with Keycloak, privacyIDEA and Drupa
 
 ## Installation
 
-* Move the packed jar file into your deployment directory `standalone/deployment`.  
+* Move the packed jar file into your deployment directory `standalone/deployment`.
 * Move the template privacyIDEA.ftl to `themes/base/login`.
 
-Now you can enable the execution for your auth flow.  
+Now you can enable the execution for your auth flow.
 If you set the execution as 'required', every user needs to login with a second factor.
 
 ## Configuration
@@ -30,6 +30,7 @@ You can find different preferences in your configuration, which are explained be
 | Service account | The username of your service account to trigger challenges, enroll tokens or check if push tokens are confirmed. Please make sure, that the service account has the correct rights. |
 | Service account password | The password of your service account |
 | Exclude groups | You can exclude groups from 2FA |
+| Exclude headers | You can specify a regex pattern against HTTP headers for which 2FA is excluded |
 | Enable token enrollment | If the current user does not have a token yet, it can be enrolled. The service account has to be set up |
 | Token type | Select the token type for the token enrollment |
 | Refresh interval for push tokens | Choose your custom interval in seconds to check if the push token is confirmed. This can be a comma separated list, if you want to change the interval |
