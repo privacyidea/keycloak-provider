@@ -71,6 +71,7 @@ final class Const {
 
     static final String CONFIG_PUSHTOKENINTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDEGROUPS = "piexcludegroups";
+    static final String CONFIG_EXCLUDEHEADER = "piexcludeheader";
     static final String CONFIG_ENROLLTOKENTYPE = "pienrolltokentype";
     static final String CONFIG_ENROLLTOKEN = "pienrolltoken";
     static final String CONFIG_SERVICEPASS = "piservicepass";
