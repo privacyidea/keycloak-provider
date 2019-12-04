@@ -16,7 +16,7 @@ final class Const {
     static final String ENDPOINT_AUTH = "/auth";
     static final String ENDPOINT_TOKEN_INIT = "/token/init";
     static final String ENDPOINT_TRIGGERCHALLENGE = "/validate/triggerchallenge";
-    static final String ENDPOINT_TOKEN_CHALLENGES = "/token/challenges";
+    static final String ENDPOINT_POLL_TRANSACTION = "/validate/polltransaction";
     static final String ENDPOINT_VALIDATE_CHECK = "/validate/check";
     static final String ENDPOINT_TOKEN = "/token";
 

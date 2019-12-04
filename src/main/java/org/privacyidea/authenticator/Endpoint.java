@@ -13,10 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.privacyidea.authenticator.Const.*;
 
@@ -25,7 +22,7 @@ class Endpoint {
     private Logger _log = Logger.getLogger(getClass().getName());
     private String _authToken;
     private Configuration _config;
-    private List<String> excludedEndpointPrints = Arrays.asList(ENDPOINT_TOKEN_CHALLENGES);
+    private List<String> excludedEndpointPrints = Collections.emptyList(); //Arrays.asList(ENDPOINT_AUTH);
 
     Endpoint(Configuration config) {
         this._config = config;
@@ -46,12 +43,21 @@ class Endpoint {
         StringBuilder paramsSB = new StringBuilder();
         params.forEach((key, value) -> {
             try {
-                paramsSB.append(key).append("=").append(URLEncoder.encode(value, StandardCharsets.UTF_8.toString())).append("&");
+                if (key != null) {
+                    paramsSB.append(key).append("=");
+                }
+                if (value != null) {
+                    paramsSB.append(URLEncoder.encode(value, StandardCharsets.UTF_8.toString()));
+                }
+                paramsSB.append("&");
             } catch (Exception e) {
                 _log.error(e);
             }
         });
         paramsSB.deleteCharAt(paramsSB.length() - 1);
+
+        //_log.info("Params: " + paramsSB);
+
         try {
             URL serverURL;
             if (method.equals(GET)) {
