@@ -1,3 +1,5 @@
+![](https://github.com/privacyidea/keycloak-provider/workflows/Java%20CI/badge.svg)
+
 # Keycloak privacyIDEA provider
 
 This provider allows you to use privacyIDEA's 2FA with Keycloak.  
