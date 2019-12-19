@@ -1,4 +1,4 @@
-![](https://github.com/privacyidea/keycloak-provider/workflows/Java%20CI/badge.svg)
+[![Actions Status](https://github.com/privacyidea/keycloak-provider/workflows/Java%20CI/badge.svg)](https://github.com/privacyidea/keycloak-provider/actions)
 
 # Keycloak privacyIDEA provider
 
