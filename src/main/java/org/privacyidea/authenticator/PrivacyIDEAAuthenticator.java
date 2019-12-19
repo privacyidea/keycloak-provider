@@ -233,16 +233,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (tokenType.equals(TOKEN_TYPE_PUSH)) {
             Map<String, String> params = new HashMap<>();
             params.put(PARAM_KEY_TRANSACTION_ID, _transactionID);
-            JsonObject body = _endpoint.sendRequest(ENDPOINT_TOKEN_CHALLENGES, params, true, GET);
+            JsonObject body = _endpoint.sendRequest(ENDPOINT_POLL_TRANSACTION, params, false, GET);
             try {
                 JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-                JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
-                JsonArray challenges = value.getJsonArray(JSON_KEY_CHALLENGES);
-                for (int i = 0; i < challenges.size(); i++) {
-                    JsonObject challenge = challenges.getJsonObject(i);
-                    if (challenge.getBoolean(JSON_KEY_OTP_VALID)) {
-                        return true;
-                    }
+                if (result.getBoolean(JSON_KEY_VALUE, false)) {
+                    // Finalize the authentication with a call to /validate/check which gives the real success value
+                    // https://privacyidea.readthedocs.io/en/latest/configuration/authentication_modes.html#outofband-mode
+                    params.clear();
+                    params.put(PARAM_KEY_USER, _currentUserName);
+                    params.put(PARAM_KEY_TRANSACTION_ID, _transactionID);
+                    params.put(PARAM_KEY_PASS, null);
+                    JsonObject response = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
+                    JsonObject result2 = response.getJsonObject(JSON_KEY_RESULT);
+                    return result2.getBoolean(JSON_KEY_VALUE, false);
                 }
             } catch (Exception e) {
                 _log.error("Push token verification failed.");
@@ -261,7 +264,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         JsonObject body = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
         try {
             JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-            return result.getBoolean(JSON_KEY_VALUE);
+            return result.getBoolean(JSON_KEY_VALUE, false);
         } catch (Exception e) {
             _log.error("Verification was not successful: Invalid response from privacyIDEA");
         }
