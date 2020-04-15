@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
-            <version>7.0.0</version>
+            <version>9.0.0</version>
         </dependency>
 
         <dependency>
