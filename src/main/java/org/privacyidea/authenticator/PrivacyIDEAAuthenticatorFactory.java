@@ -75,7 +75,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
 
     static {
         ProviderConfigProperty piServerUrl = new ProviderConfigProperty();
-        piServerUrl.setType(ProviderConfigProperty.STRING_TYPE);
+        piServerUrl.setType(ProviderConfigProperty.TEXT_TYPE);
         piServerUrl.setName(CONFIG_SERVER);
         piServerUrl.setLabel("URL");
         piServerUrl.setHelpText("The URL of the privacyIDEA server (complete with scheme, host and port like \"https://<piserver>:port\")");
