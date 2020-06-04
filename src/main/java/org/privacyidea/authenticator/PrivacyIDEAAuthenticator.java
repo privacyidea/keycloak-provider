@@ -43,8 +43,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
     private static Logger _log = Logger.getLogger(PrivacyIDEAAuthenticator.class);
 
-    private String _transactionID;
-    private String _currentUserName;
     private Configuration _config;
     private Endpoint _endpoint;
 
@@ -60,13 +58,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         _endpoint = new Endpoint(_config);
 
         UserModel user = context.getUser();
-        _currentUserName = user.getUsername();
-
-        Set<GroupModel> groupModelSet = user.getGroups();
-        GroupModel[] groupModels = groupModelSet.toArray(new GroupModel[0]);
+        String currentUser = user.getUsername();
+        String transactionID = null;
+        //Set<GroupModel> groupModelSet = ;
+        //GroupModel[] groupModels = groupModelSet.toArray(new GroupModel[0]);
 
         // Check if privacyIDEA is enabled for the current user
-        for (GroupModel groupModel : groupModels) {
+        for (GroupModel groupModel : user.getGroups()) {
             for (String excludedGroup : _config.getExcludedGroups()) {
                 if (groupModel.getName().equals(excludedGroup)) {
                     context.success();
@@ -86,14 +84,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         List<String> otpMessages = new ArrayList<>();
         if (_config.doTriggerChallenge()) {
             Map<String, String> params = new HashMap<>();
-            params.put(PARAM_KEY_USER, _currentUserName);
+            params.put(PARAM_KEY_USER, currentUser);
             JsonObject body = _endpoint.sendRequest(ENDPOINT_TRIGGERCHALLENGE, params, true, POST);
             try {
                 JsonObject detail = body.getJsonObject(JSON_KEY_DETAIL);
                 JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
                 tokenCounter = result.getInt(JSON_KEY_VALUE);
                 if (tokenCounter > 0) {
-                    _transactionID = detail.getString(JSON_KEY_TRANSACTION_ID);
+                    transactionID = detail.getString(JSON_KEY_TRANSACTION_ID);
                     JsonArray multi_challenge = detail.getJsonArray(JSON_KEY_MULTI_CHALLENGE);
                     for (int i = 0; i < multi_challenge.size(); i++) {
                         JsonObject challenge = multi_challenge.getJsonObject(i);
@@ -115,7 +113,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     }
                 }
             } catch (Exception e) {
-                _log.error(e);
+                e.printStackTrace();
                 _log.error("Trigger challenge was not successful.");
             }
         }
@@ -124,30 +122,35 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String tokenEnrollmentQR = "";
         if (_config.doEnrollToken()) {
             try {
+                _log.info("Check if token has to be enrolled...");
                 // Get the current list of tokens for the user
                 Map<String, String> params = new HashMap<>();
-                params.put(PARAM_KEY_USER, _currentUserName);
+                params.put(PARAM_KEY_USER, currentUser);
                 JsonObject body = _endpoint.sendRequest(ENDPOINT_TOKEN, params, true, GET);
-                JsonObject value = body.getJsonObject(JSON_KEY_RESULT).getJsonObject(JSON_KEY_VALUE);
-                tokenCounter = value.getInt(JSON_KEY_COUNT, 0);
-                if (tokenCounter < 1) {
-                    // User has no tokens - request rollout
-                    params = new HashMap<>();
-                    params.put(PARAM_KEY_USER, _currentUserName);
-                    params.put(PARAM_KEY_TYPE, _config.getEnrollingTokenType());
-                    params.put(PARAM_KEY_GENKEY, "1");
-                    JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
-                    JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
-                    JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
-                    tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
+                if (body != null) {
+                    JsonObject value = body.getJsonObject(JSON_KEY_RESULT).getJsonObject(JSON_KEY_VALUE);
+                    tokenCounter = value.getInt(JSON_KEY_COUNT, 0);
+                    if (tokenCounter < 1) {
+                        // User has no tokens - request rollout
+                        params = new HashMap<>();
+                        params.put(PARAM_KEY_USER, currentUser);
+                        params.put(PARAM_KEY_TYPE, _config.getEnrollingTokenType());
+                        params.put(PARAM_KEY_GENKEY, "1");
+                        JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
+                        JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
+                        JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
+                        tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
+                    }
                 }
             } catch (Exception e) {
-                _log.error(e);
+                e.printStackTrace();
                 _log.error("Token enrollment was not successful.");
             }
         }
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
-
+        if (transactionID != null && !transactionID.isEmpty()) {
+            context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
+        }
         // Create login form
         String pushMessage = Utilities.buildPromptMessage(pushMessages, DEFAULT_PUSH_MESSAGE);
         String otpMessage = Utilities.buildPromptMessage(otpMessages, DEFAULT_OTP_MESSAGE);
@@ -229,10 +232,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Get data from form
         String tokenEnrollmentQR = formData.getFirst(FORM_TOKEN_ENROLLMENT_QR);
         String tokenType = formData.getFirst(FORM_TOKENTYPE);
+        String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
+        String currentUserName = context.getUser().getUsername();
 
         if (tokenType.equals(TOKEN_TYPE_PUSH)) {
             Map<String, String> params = new HashMap<>();
-            params.put(PARAM_KEY_TRANSACTION_ID, _transactionID);
+            params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
             JsonObject body = _endpoint.sendRequest(ENDPOINT_POLL_TRANSACTION, params, false, GET);
             try {
                 JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
@@ -240,8 +245,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     // Finalize the authentication with a call to /validate/check which gives the real success value
                     // https://privacyidea.readthedocs.io/en/latest/configuration/authentication_modes.html#outofband-mode
                     params.clear();
-                    params.put(PARAM_KEY_USER, _currentUserName);
-                    params.put(PARAM_KEY_TRANSACTION_ID, _transactionID);
+                    params.put(PARAM_KEY_USER, currentUserName);
+                    if (transactionID != null && !transactionID.isEmpty()) {
+                        params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
+                    }
                     params.put(PARAM_KEY_PASS, null);
                     JsonObject response = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
                     JsonObject result2 = response.getJsonObject(JSON_KEY_RESULT);
@@ -255,11 +262,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         String otp = formData.getFirst(FORM_PI_OTP);
         Map<String, String> params = new HashMap<>();
-        params.put(PARAM_KEY_USER, _currentUserName);
+        params.put(PARAM_KEY_USER, currentUserName);
         params.put(PARAM_KEY_PASS, otp);
         params.put(PARAM_KEY_REALM, _config.getRealm());
         if (_config.doTriggerChallenge() && tokenEnrollmentQR.isEmpty()) {
-            params.put(PARAM_KEY_TRANSACTION_ID, _transactionID);
+            params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
         }
         JsonObject body = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
         try {
