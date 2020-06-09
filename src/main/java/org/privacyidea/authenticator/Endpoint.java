@@ -88,7 +88,7 @@ class Endpoint {
             if (authTokenRequired) {
                 String authToken = getAuthorizationToken();
                 if (authToken == null) {
-
+                    return null;
                 }
                 //_log.info("Setting auth token: " + authToken);
                 con.setRequestProperty("Authorization", authToken);
@@ -176,11 +176,13 @@ class Endpoint {
         params.put(PARAM_KEY_USERNAME, _config.getServiceAccountName());
         params.put(PARAM_KEY_PASSWORD, _config.getServiceAccountPass());
         JsonObject body = sendRequest(ENDPOINT_AUTH, params, false, POST);
-        JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-        if (result != null) {
-            JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
-            if (value != null) {
-                authToken = value.getString(JSON_KEY_TOKEN, null);
+        if (body != null) {
+            JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
+            if (result != null) {
+                JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
+                if (value != null) {
+                    authToken = value.getString(JSON_KEY_TOKEN, null);
+                }
             }
         }
 

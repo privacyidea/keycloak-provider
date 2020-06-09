@@ -87,29 +87,33 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             params.put(PARAM_KEY_USER, currentUser);
             JsonObject body = _endpoint.sendRequest(ENDPOINT_TRIGGERCHALLENGE, params, true, POST);
             try {
-                JsonObject detail = body.getJsonObject(JSON_KEY_DETAIL);
-                JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-                tokenCounter = result.getInt(JSON_KEY_VALUE);
-                if (tokenCounter > 0) {
-                    transactionID = detail.getString(JSON_KEY_TRANSACTION_ID);
-                    JsonArray multi_challenge = detail.getJsonArray(JSON_KEY_MULTI_CHALLENGE);
-                    for (int i = 0; i < multi_challenge.size(); i++) {
-                        JsonObject challenge = multi_challenge.getJsonObject(i);
-                        String msg = challenge.getString(JSON_KEY_MESSAGE);
-                        if (challenge.getString(JSON_KEY_TYPE).equals(TOKEN_TYPE_PUSH)) {
-                            userHasPushToken = true;
-                            if (!pushMessages.contains(msg)) {
-                                pushMessages.add(msg);
+                if (body != null) {
+                    JsonObject detail = body.getJsonObject(JSON_KEY_DETAIL);
+                    if (detail != null) {
+                        JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
+                        tokenCounter = result.getInt(JSON_KEY_VALUE);
+                        if (tokenCounter > 0) {
+                            transactionID = detail.getString(JSON_KEY_TRANSACTION_ID);
+                            JsonArray multi_challenge = detail.getJsonArray(JSON_KEY_MULTI_CHALLENGE);
+                            for (int i = 0; i < multi_challenge.size(); i++) {
+                                JsonObject challenge = multi_challenge.getJsonObject(i);
+                                String msg = challenge.getString(JSON_KEY_MESSAGE);
+                                if (challenge.getString(JSON_KEY_TYPE).equals(TOKEN_TYPE_PUSH)) {
+                                    userHasPushToken = true;
+                                    if (!pushMessages.contains(msg)) {
+                                        pushMessages.add(msg);
+                                    }
+                                } else {
+                                    userHasOTPToken = true;
+                                    if (!otpMessages.contains(msg)) {
+                                        otpMessages.add(msg);
+                                    }
+                                }
                             }
-                        } else {
-                            userHasOTPToken = true;
-                            if (!otpMessages.contains(msg)) {
-                                otpMessages.add(msg);
+                            if (userHasPushToken) {
+                                tokenType = TOKEN_TYPE_PUSH;
                             }
                         }
-                    }
-                    if (userHasPushToken) {
-                        tokenType = TOKEN_TYPE_PUSH;
                     }
                 }
             } catch (Exception e) {
@@ -137,9 +141,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                         params.put(PARAM_KEY_TYPE, _config.getEnrollingTokenType());
                         params.put(PARAM_KEY_GENKEY, "1");
                         JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
-                        JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
-                        JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
-                        tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
+                        if (response != null) {
+                            JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
+                            if (detail != null) {
+                                JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
+                                tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -240,19 +248,25 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
             JsonObject body = _endpoint.sendRequest(ENDPOINT_POLL_TRANSACTION, params, false, GET);
             try {
-                JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-                if (result.getBoolean(JSON_KEY_VALUE, false)) {
-                    // Finalize the authentication with a call to /validate/check which gives the real success value
-                    // https://privacyidea.readthedocs.io/en/latest/configuration/authentication_modes.html#outofband-mode
-                    params.clear();
-                    params.put(PARAM_KEY_USER, currentUserName);
-                    if (transactionID != null && !transactionID.isEmpty()) {
-                        params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
+                if (body != null) {
+                    JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
+                    if (result != null) {
+                        if (result.getBoolean(JSON_KEY_VALUE, false)) {
+                            // Finalize the authentication with a call to /validate/check which gives the real success value
+                            // https://privacyidea.readthedocs.io/en/latest/configuration/authentication_modes.html#outofband-mode
+                            params.clear();
+                            params.put(PARAM_KEY_USER, currentUserName);
+                            if (transactionID != null && !transactionID.isEmpty()) {
+                                params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
+                            }
+                            params.put(PARAM_KEY_PASS, null);
+                            JsonObject response = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
+                            if (response != null) {
+                                JsonObject result2 = response.getJsonObject(JSON_KEY_RESULT);
+                                return result2.getBoolean(JSON_KEY_VALUE, false);
+                            }
+                        }
                     }
-                    params.put(PARAM_KEY_PASS, null);
-                    JsonObject response = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
-                    JsonObject result2 = response.getJsonObject(JSON_KEY_RESULT);
-                    return result2.getBoolean(JSON_KEY_VALUE, false);
                 }
             } catch (Exception e) {
                 _log.error("Push token verification failed.");
@@ -270,8 +284,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
         JsonObject body = _endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
         try {
-            JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-            return result.getBoolean(JSON_KEY_VALUE, false);
+            if (body != null) {
+                JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
+                return result.getBoolean(JSON_KEY_VALUE, false);
+            }
         } catch (Exception e) {
             _log.error("Verification was not successful: Invalid response from privacyIDEA");
         }
