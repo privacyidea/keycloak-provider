@@ -66,8 +66,8 @@ class Endpoint {
             } else {
                 serverURL = new URL(_config.getServerURL() + path);
             }
-            _log.info("Connecting to: " + serverURL.toExternalForm() + " with " + method);
-            _log.info("Params: " + paramsSB.toString());
+            //_log.info("Connecting to: " + serverURL.toExternalForm() + " with " + method);
+            //_log.info("Params: " + paramsSB.toString());
             HttpURLConnection con;
             if (serverURL.getProtocol().equals("https")) {
                 con = (HttpsURLConnection) (serverURL.openConnection());
@@ -90,7 +90,7 @@ class Endpoint {
                 if (authToken == null) {
 
                 }
-                _log.info("Setting auth token: " + authToken);
+                //_log.info("Setting auth token: " + authToken);
                 con.setRequestProperty("Authorization", authToken);
             }
 
@@ -110,7 +110,7 @@ class Endpoint {
             }
 
             if (!excludedEndpointPrints.contains(path)) {
-                _log.info(path + " RESPONSE: " + Utilities.prettyPrintJson(response));
+                //_log.info(path + " RESPONSE: " + Utilities.prettyPrintJson(response));
             }
 
             JsonReader jsonReader = Json.createReader(new StringReader(response));
@@ -171,7 +171,7 @@ class Endpoint {
         }
 
         String authToken = null;
-        _log.info("Getting auth token from PI");
+        //_log.info("Getting auth token from PI");
         Map<String, String> params = new HashMap<>();
         params.put(PARAM_KEY_USERNAME, _config.getServiceAccountName());
         params.put(PARAM_KEY_PASSWORD, _config.getServiceAccountPass());

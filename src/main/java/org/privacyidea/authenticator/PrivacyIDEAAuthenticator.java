@@ -122,7 +122,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String tokenEnrollmentQR = "";
         if (_config.doEnrollToken()) {
             try {
-                _log.info("Check if token has to be enrolled...");
+                //_log.info("Check if token has to be enrolled...");
                 // Get the current list of tokens for the user
                 Map<String, String> params = new HashMap<>();
                 params.put(PARAM_KEY_USER, currentUser);
