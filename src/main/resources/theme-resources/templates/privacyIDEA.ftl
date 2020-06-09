@@ -70,6 +70,7 @@
                                name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('push')"
                                type="button" value="Use Push Token"/>
                         </#if>
+                        </#if>
                         <#--If we change the token type, this information must be transmitted to privacyIDEAAuthenticator-->
                         <script>
                             function changeTokenType(tokenType) {
