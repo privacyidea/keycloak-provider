@@ -20,7 +20,6 @@ import static org.privacyidea.authenticator.Const.*;
 class Endpoint {
 
     private Logger _log = Logger.getLogger(getClass().getName());
-    private String _authToken;
     private Configuration _config;
     private List<String> excludedEndpointPrints = Collections.emptyList(); //Arrays.asList(ENDPOINT_AUTH);
 
@@ -54,8 +53,10 @@ class Endpoint {
                 _log.error(e);
             }
         });
-        paramsSB.deleteCharAt(paramsSB.length() - 1);
 
+        if (paramsSB.length() > 0) {
+            paramsSB.deleteCharAt(paramsSB.length() - 1);
+        }
         //_log.info("Params: " + paramsSB);
 
         try {
@@ -65,7 +66,8 @@ class Endpoint {
             } else {
                 serverURL = new URL(_config.getServerURL() + path);
             }
-
+            //_log.info("Connecting to: " + serverURL.toExternalForm() + " with " + method);
+            //_log.info("Params: " + paramsSB.toString());
             HttpURLConnection con;
             if (serverURL.getProtocol().equals("https")) {
                 con = (HttpsURLConnection) (serverURL.openConnection());
@@ -77,18 +79,21 @@ class Endpoint {
                 con = turnOffSSLVerification((HttpsURLConnection) con);
             }
 
-            con.setDoOutput(true);
             con.setRequestMethod(method);
 
-            if (_authToken == null && authTokenRequired) {
-                getAuthorizationToken();
+            if (method.equals("POST")) {
+                con.setDoOutput(true);
             }
 
-            if (_authToken != null && authTokenRequired) {
-                con.setRequestProperty("Authorization", _authToken);
-            } else if (authTokenRequired) {
-                throw new IllegalStateException("No authorization token found but is needed!");
+            if (authTokenRequired) {
+                String authToken = getAuthorizationToken();
+                if (authToken == null) {
+                    return null;
+                }
+                //_log.info("Setting auth token: " + authToken);
+                con.setRequestProperty("Authorization", authToken);
             }
+
             con.connect();
 
             if (method.equals(POST)) {
@@ -104,9 +109,9 @@ class Endpoint {
                 response = br.lines().reduce("", (a, s) -> a += s);
             }
 
-            /*if (!excludedEndpointPrints.contains(path)) {
-                _log.info(path + " RESPONSE: " + Utilities.prettyPrintJson(response));
-            }*/
+            if (!excludedEndpointPrints.contains(path)) {
+                //_log.info(path + " RESPONSE: " + Utilities.prettyPrintJson(response));
+            }
 
             JsonReader jsonReader = Json.createReader(new StringReader(response));
             JsonObject body = jsonReader.readObject();
@@ -114,7 +119,8 @@ class Endpoint {
 
             return body;
         } catch (Exception e) {
-            _log.error(e);
+            // So can have many causes to print the stack trace
+            e.printStackTrace();
         }
         return null;
     }
@@ -158,22 +164,34 @@ class Endpoint {
         return con;
     }
 
-    private void getAuthorizationToken() {
-        if (_authToken != null) {
-            //_log.info("Auth token already set.");
-            return;
+    private String getAuthorizationToken() {
+        if (_config.getServiceAccountName() == null || _config.getServiceAccountName().isEmpty() || _config.getServiceAccountPass() == null
+                || _config.getServiceAccountPass().isEmpty()) {
+            _log.error("Cannot retrieve authorization token without service account!");
+            return null;
         }
+
+        String authToken = null;
         //_log.info("Getting auth token from PI");
         Map<String, String> params = new HashMap<>();
         params.put(PARAM_KEY_USERNAME, _config.getServiceAccountName());
         params.put(PARAM_KEY_PASSWORD, _config.getServiceAccountPass());
         JsonObject body = sendRequest(ENDPOINT_AUTH, params, false, POST);
-        JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-        JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
-        _authToken = value.getString(JSON_KEY_TOKEN);
-        if (_authToken == null) {
-            _log.error("Failed to get authorization token.");
-            _log.error("Unable to read response from privacyIDEA.");
+        if (body != null) {
+            JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
+            if (result != null) {
+                JsonObject value = result.getJsonObject(JSON_KEY_VALUE);
+                if (value != null) {
+                    authToken = value.getString(JSON_KEY_TOKEN, null);
+                }
+            }
         }
+
+        //_log.info("Auth Token: " + authToken);
+        if (authToken == null) {
+            _log.error("Failed to get authorization token.");
+            //_log.error("Unable to read response from privacyIDEA.");
+        }
+        return authToken;
     }
 }

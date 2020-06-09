@@ -52,7 +52,9 @@
                             </script>
                         <#if otpToken>
                         <#--The token type can be changed if we can use push or otp-->
-                            <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}" name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('otp')" type="button" value="Use OTP"/>
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                               name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('otp')"
+                               type="button" value="Use OTP"/>
                         </#if>
                         <#else>
                         <#--If token type is not push, an input field and login button is needed-->
@@ -60,10 +62,13 @@
                                 document.getElementById("pi_otp").type = "password";
                                 document.getElementById("pi_otp").required = true;
                             </script>
-                            <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
+                               name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
                         <#if pushToken>
                         <#--The token type can be changed if we can use push or otp-->
-                            <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}" name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('push')" type="button" value="Use Push Token"/>
+                        <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                               name="changeTokenTypeButton" id="changeTokenTypeButton" onClick="changeTokenType('push')"
+                               type="button" value="Use Push Token"/>
                         </#if>
                         </#if>
                         <#--If we change the token type, this information must be transmitted to privacyIDEAAuthenticator-->
