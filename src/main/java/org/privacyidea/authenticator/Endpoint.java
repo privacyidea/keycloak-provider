@@ -119,6 +119,7 @@ class Endpoint {
 
             return body;
         } catch (Exception e) {
+            // So can have many causes to print the stack trace
             e.printStackTrace();
         }
         return null;
