@@ -18,7 +18,7 @@ final class Const {
     static final String ENDPOINT_TRIGGERCHALLENGE = "/validate/triggerchallenge";
     static final String ENDPOINT_POLL_TRANSACTION = "/validate/polltransaction";
     static final String ENDPOINT_VALIDATE_CHECK = "/validate/check";
-    static final String ENDPOINT_TOKEN = "/token";
+    static final String ENDPOINT_TOKEN = "/token/";
 
     static final String DEFAULT_PUSH_MESSAGE = "Please confirm the authentication on your mobile device";
     static final String DEFAULT_OTP_MESSAGE = "Please enter the OTP";
