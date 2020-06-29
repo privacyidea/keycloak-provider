@@ -5,48 +5,46 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.privacyidea.authenticator.Const.*;
-
 class Configuration {
 
-    private String _serverURL;
-    private String _realm;
-    private boolean _doSSLVerify;
-    private boolean _doTriggerChallenge;
-    private String _serviceAccountName;
-    private String _serviceAccountPass;
-    private List<String> _excludedGroups = new ArrayList<>();
-    private boolean _doEnrollToken;
-    private String _enrollingTokenType;
-    private List<Integer> _pushtokenPollingInterval = new ArrayList<>();
+    private final String _serverURL;
+    private final String _realm;
+    private final boolean _doSSLVerify;
+    private final boolean _doTriggerChallenge;
+    private final String _serviceAccountName;
+    private final String _serviceAccountPass;
+    private final List<String> _excludedGroups = new ArrayList<>();
+    private final boolean _doEnrollToken;
+    private final String _enrollingTokenType;
+    private final List<Integer> pushtokenPollingInterval = new ArrayList<>();
 
     Configuration(Map<String, String> configMap) {
-        _serverURL = configMap.get(CONFIG_SERVER);
-        _realm = configMap.get(CONFIG_REALM) == null ? "" : configMap.get(CONFIG_REALM);
-        _doSSLVerify = configMap.get(CONFIG_VERIFYSSL) != null && configMap.get(CONFIG_VERIFYSSL).equals(TRUE);
-        _doTriggerChallenge = configMap.get(CONFIG_DOTRIGGERCHALLENGE) != null && configMap.get(CONFIG_DOTRIGGERCHALLENGE).equals(TRUE);
-        _serviceAccountName = configMap.get(CONFIG_SERVICEACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICEACCOUNT);
-        _serviceAccountPass = (configMap.get(CONFIG_SERVICEPASS) == null) ? "" : configMap.get(CONFIG_SERVICEPASS);
-        _doEnrollToken = configMap.get(CONFIG_ENROLLTOKEN) != null && configMap.get(CONFIG_ENROLLTOKEN).equals(TRUE);
-        _enrollingTokenType = configMap.get(CONFIG_ENROLLTOKENTYPE) == null ? "" : configMap.get(CONFIG_ENROLLTOKENTYPE);
+        _serverURL = configMap.get(Const.CONFIG_SERVER);
+        _realm = configMap.get(Const.CONFIG_REALM) == null ? "" : configMap.get(Const.CONFIG_REALM);
+        _doSSLVerify = configMap.get(Const.CONFIG_VERIFYSSL) != null && configMap.get(Const.CONFIG_VERIFYSSL).equals(Const.TRUE);
+        _doTriggerChallenge = configMap.get(Const.CONFIG_DOTRIGGERCHALLENGE) != null && configMap.get(Const.CONFIG_DOTRIGGERCHALLENGE).equals(Const.TRUE);
+        _serviceAccountName = configMap.get(Const.CONFIG_SERVICEACCOUNT) == null ? "" : configMap.get(Const.CONFIG_SERVICEACCOUNT);
+        _serviceAccountPass = (configMap.get(Const.CONFIG_SERVICEPASS) == null) ? "" : configMap.get(Const.CONFIG_SERVICEPASS);
+        _doEnrollToken = configMap.get(Const.CONFIG_ENROLLTOKEN) != null && configMap.get(Const.CONFIG_ENROLLTOKEN).equals(Const.TRUE);
+        _enrollingTokenType = configMap.get(Const.CONFIG_ENROLLTOKENTYPE) == null ? "" : configMap.get(Const.CONFIG_ENROLLTOKENTYPE);
 
-        String excludedGroupsStr = configMap.get(CONFIG_EXCLUDEGROUPS);
+        String excludedGroupsStr = configMap.get(Const.CONFIG_EXCLUDEGROUPS);
         if (excludedGroupsStr != null) {
             _excludedGroups.addAll(Arrays.asList(excludedGroupsStr.split(",")));
         }
 
         // Set default, overwrite if configured
-        _pushtokenPollingInterval.addAll(DEFAULT_POLLING_ARRAY);
-        String s = configMap.get(CONFIG_PUSHTOKENINTERVAL);
+        pushtokenPollingInterval.addAll(Const.DEFAULT_POLLING_ARRAY);
+        String s = configMap.get(Const.CONFIG_PUSHTOKENINTERVAL);
         if (s != null) {
             List<String> strPollingIntervals = Arrays.asList(s.split(","));
             if (!strPollingIntervals.isEmpty()) {
-                _pushtokenPollingInterval.clear();
+                pushtokenPollingInterval.clear();
                 for (String str : strPollingIntervals) {
                     try {
-                        _pushtokenPollingInterval.add(Integer.parseInt(str));
+                        pushtokenPollingInterval.add(Integer.parseInt(str));
                     } catch (NumberFormatException e) {
-                        _pushtokenPollingInterval.add(DEFAULT_POLLING_INTERVAL);
+                        pushtokenPollingInterval.add(Const.DEFAULT_POLLING_INTERVAL);
                     }
                 }
             }
@@ -90,6 +88,6 @@ class Configuration {
     }
 
     List<Integer> getPushtokenPollingInterval() {
-        return _pushtokenPollingInterval;
+        return pushtokenPollingInterval;
     }
 }

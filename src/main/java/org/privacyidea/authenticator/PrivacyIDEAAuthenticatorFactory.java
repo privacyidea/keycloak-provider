@@ -1,15 +1,13 @@
 package org.privacyidea.authenticator;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.keycloak.Config;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.privacyidea.authenticator.Const.*;
 
 /**
  * Copyright 2019 NetKnights GmbH - micha.preusser@netknights.it
@@ -40,7 +38,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
 
     @Override
     public String getId() {
-        return PROVIDER_ID;
+        return Const.PROVIDER_ID;
     }
 
     @Override
@@ -76,56 +74,56 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
     static {
         ProviderConfigProperty piServerUrl = new ProviderConfigProperty();
         piServerUrl.setType(ProviderConfigProperty.TEXT_TYPE);
-        piServerUrl.setName(CONFIG_SERVER);
+        piServerUrl.setName(Const.CONFIG_SERVER);
         piServerUrl.setLabel("URL");
         piServerUrl.setHelpText("The URL of the privacyIDEA server (complete with scheme, host and port like \"https://<piserver>:port\")");
         configProperties.add(piServerUrl);
 
         ProviderConfigProperty piRealm = new ProviderConfigProperty();
         piRealm.setType(ProviderConfigProperty.STRING_TYPE);
-        piRealm.setName(CONFIG_REALM);
+        piRealm.setName(Const.CONFIG_REALM);
         piRealm.setLabel("Realm");
         piRealm.setHelpText("Select the realm where your users are stored. Leave empty for default.");
         configProperties.add(piRealm);
 
         ProviderConfigProperty piVerifySSL = new ProviderConfigProperty();
         piVerifySSL.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piVerifySSL.setName(CONFIG_VERIFYSSL);
+        piVerifySSL.setName(Const.CONFIG_VERIFYSSL);
         piVerifySSL.setLabel("Verify SSL");
         piVerifySSL.setHelpText("Do not uncheck this in productive environment");
         configProperties.add(piVerifySSL);
 
         ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
         piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoTriggerChallenge.setName(CONFIG_DOTRIGGERCHALLENGE);
+        piDoTriggerChallenge.setName(Const.CONFIG_DOTRIGGERCHALLENGE);
         piDoTriggerChallenge.setLabel("Enable trigger challenge");
         piDoTriggerChallenge.setHelpText("Choose if you want to do trigger challenge");
         configProperties.add(piDoTriggerChallenge);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
         piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
-        piServiceAccount.setName(CONFIG_SERVICEACCOUNT);
+        piServiceAccount.setName(Const.CONFIG_SERVICEACCOUNT);
         piServiceAccount.setLabel("Service account");
         piServiceAccount.setHelpText("Username of the service account. Needed for trigger challenge, token enrollment and push tokens.");
         configProperties.add(piServiceAccount);
 
         ProviderConfigProperty piServicePass = new ProviderConfigProperty();
         piServicePass.setType(ProviderConfigProperty.PASSWORD);
-        piServicePass.setName(CONFIG_SERVICEPASS);
+        piServicePass.setName(Const.CONFIG_SERVICEPASS);
         piServicePass.setLabel("Service account password");
         piServicePass.setHelpText("Password of the service account. Needed for trigger challenge, token enrollment and push tokens");
         configProperties.add(piServicePass);
 
         ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
         piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
-        piExcludeGroups.setName(CONFIG_EXCLUDEGROUPS);
+        piExcludeGroups.setName(Const.CONFIG_EXCLUDEGROUPS);
         piExcludeGroups.setLabel("Exclude groups");
         piExcludeGroups.setHelpText("You can select groups, which will not do 2FA. Enter the group names and separate them with comma e.g. 'group1,group2'");
         configProperties.add(piExcludeGroups);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piEnrollToken.setName(CONFIG_ENROLLTOKEN);
+        piEnrollToken.setName(Const.CONFIG_ENROLLTOKEN);
         piEnrollToken.setLabel("Enable token enrollment");
         piEnrollToken.setHelpText("If enabled, the user gets a token enrolled automatically for them, if they do not have one yet. The Service account is needed");
         piEnrollToken.setDefaultValue("false");
@@ -136,7 +134,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         tokenTypes.add("TOTP");
         ProviderConfigProperty piTokenType = new ProviderConfigProperty();
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
-        piTokenType.setName(CONFIG_ENROLLTOKENTYPE);
+        piTokenType.setName(Const.CONFIG_ENROLLTOKENTYPE);
         piTokenType.setLabel("Enrollment Token type");
         piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
         piTokenType.setOptions(tokenTypes);
@@ -145,7 +143,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
 
         ProviderConfigProperty piPushTokenInterval = new ProviderConfigProperty();
         piPushTokenInterval.setType(ProviderConfigProperty.STRING_TYPE);
-        piPushTokenInterval.setName(CONFIG_PUSHTOKENINTERVAL);
+        piPushTokenInterval.setName(Const.CONFIG_PUSHTOKENINTERVAL);
         piPushTokenInterval.setLabel("Refresh interval for push tokens");
         piPushTokenInterval.setHelpText("Set the refresh interval for push tokens in seconds. Use a comma separated list. The last entry will be repeated.");
         configProperties.add(piPushTokenInterval);

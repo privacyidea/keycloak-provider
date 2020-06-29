@@ -26,8 +26,9 @@
     <groupId>org.privacyidea</groupId>
     <artifactId>privacyidea-keycloak-provider</artifactId>
     <version>0.5</version>
+
     <packaging>jar</packaging>
-    <description/>
+
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
@@ -35,6 +36,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.privacyidea</groupId>
+            <artifactId>sdk-java</artifactId>
+            <version>0.1</version>
+        </dependency>
+
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
@@ -66,18 +73,6 @@
         </dependency>
 
         <dependency>
-            <groupId>javax.json</groupId>
-            <artifactId>javax.json-api</artifactId>
-            <version>1.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.json</artifactId>
-            <version>1.0.4</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-common</artifactId>
             <version>9.0.3</version>
@@ -89,12 +84,31 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
         <finalName>PrivacyIDEA-Provider</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.privacyidea:sdk-java</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
