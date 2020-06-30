@@ -2,6 +2,7 @@ package org.privacyidea.authenticator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -94,7 +95,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             triggerResponse = privacyIDEA.triggerChallenges(currentUser);
             transactionID = triggerResponse.getTransactionID();
 
-            if (triggerResponse.getMultiChallenge() != null) {
+            if (!triggerResponse.getMultiChallenge().isEmpty()) {
                 pushMessage.setLength(0);
                 pushMessage.append(triggerResponse
                         .getMultiChallenge()
@@ -141,19 +142,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
 
-        // Create login form
+        // For which to tokentype to show the UI first
         String tokenType = userHasPushToken ? "push" : "otp";
 
-        Response challenge = context.form()
+        Response responseForm = context.form()
                 .setAttribute(Const.FORM_PUSHTOKEN_INTERVAL, config.getPushtokenPollingInterval().get(0))
                 .setAttribute(Const.FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
                 .setAttribute(Const.FORM_TOKENTYPE, tokenType)
                 .setAttribute(Const.FORM_PUSHTOKEN, userHasPushToken)
                 .setAttribute(Const.FORM_OTPTOKEN, userHasOTPToken)
-                .setAttribute(Const.FORM_PUSH_MESSAGE, pushMessage)
-                .setAttribute(Const.FORM_OTP_MESSAGE, otpMessage)
+                .setAttribute(Const.FORM_PUSH_MESSAGE, pushMessage.toString())
+                .setAttribute(Const.FORM_OTP_MESSAGE, otpMessage.toString())
                 .createForm(Const.FORM_FILE_NAME);
-        context.challenge(challenge);
+        context.challenge(responseForm);
     }
 
     /**
@@ -168,6 +169,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.cancelLogin();
             return;
         }
+        LoginFormsProvider form = context.form();
+
         /*log.info("formData:");
         formData.forEach((k, v) -> log.info("key=" + k + ", value=" + v)); */
 
@@ -180,63 +183,69 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String otpMessage = formData.getFirst(Const.FORM_OTP_MESSAGE);
         String tokenTypeChanged = formData.getFirst(Const.FORM_TOKENTYPE_CHANGED);
 
-        if (!validateResponse(context)) {
-            int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(Const.AUTH_NOTE_AUTH_COUNTER)) + 1;
-            authCounter = (authCounter >= config.getPushtokenPollingInterval().size() ? config.getPushtokenPollingInterval().size() - 1 : authCounter);
-            context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
-
-            LoginFormsProvider form = context.form()
-                    .setAttribute(Const.FORM_PUSHTOKEN_INTERVAL, config.getPushtokenPollingInterval().get(authCounter))
-                    .setAttribute(Const.FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
-                    .setAttribute(Const.FORM_TOKENTYPE, tokenType)
-                    .setAttribute(Const.FORM_PUSHTOKEN, pushToken)
-                    .setAttribute(Const.FORM_OTPTOKEN, otpToken)
-                    .setAttribute(Const.FORM_PUSH_MESSAGE, pushMessage == null ? Const.DEFAULT_PUSH_MESSAGE : pushMessage)
-                    .setAttribute(Const.FORM_OTP_MESSAGE, otpMessage == null ? Const.DEFAULT_OTP_MESSAGE : otpMessage);
-
-            // Dont display the error if the token type was switched
-            if (!tokenTypeChanged.equals(Const.TRUE)) {
-                form.setError(tokenType.equals(Const.TOKEN_TYPE_PUSH) ? "Authentication not verified yet." : "Authentication failed.");
-            }
-
-            Response challenge = form.createForm(Const.FORM_FILE_NAME);
-            context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
-            return;
-        }
-        context.success();
-    }
-
-    /**
-     * Check if authentication is successful
-     *
-     * @param context AuthenticationFlowContext
-     * @return true if authentication was successful, else false
-     */
-    private boolean validateResponse(AuthenticationFlowContext context) {
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        if (formData.getFirst(Const.FORM_TOKENTYPE_CHANGED).equals(Const.TRUE)) {
-            return false;
-        }
-
-        // Get data from form
-        String tokenEnrollmentQR = formData.getFirst(Const.FORM_TOKEN_ENROLLMENT_QR);
-        String tokenType = formData.getFirst(Const.FORM_TOKENTYPE);
         String transactionID = context.getAuthenticationSession().getAuthNote(Const.AUTH_NOTE_TRANSACTION_ID);
         String currentUserName = context.getUser().getUsername();
 
-        if (tokenType.equals(Const.TOKEN_TYPE_PUSH)) {
+        // Set the "old" values again
+        form.setAttribute(Const.FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+                .setAttribute(Const.FORM_TOKENTYPE, tokenType)
+                .setAttribute(Const.FORM_PUSHTOKEN, pushToken)
+                .setAttribute(Const.FORM_OTPTOKEN, otpToken);
 
+        boolean didTrigger = false; // To not show the error message if something was triggered
+
+        if (tokenType.equals(Const.TOKEN_TYPE_PUSH)) {
             if (privacyIDEA.pollTransaction(transactionID)) {
                 PIResponse response = privacyIDEA.validateCheck(currentUserName, "", transactionID);
-                return response.getValue();
+                if (response.getValue()) {
+                    context.success();
+                    return;
+                }
             }
-            return false;
+        } else {
+            String otp = formData.getFirst(Const.FORM_PI_OTP);
+            PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
+
+            if (response != null) {
+                // A challenge was triggered, display its message and pass the transaction id
+                if (!response.getMultiChallenge().isEmpty()) {
+                    otpMessage = response.getMessage();
+                    context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_TRANSACTION_ID, response.getTransactionID());
+                    didTrigger = true;
+
+                    if (response.getTriggeredTokenTypes().contains("push")) {
+                        form.setAttribute(Const.FORM_PUSHTOKEN, true);
+                        // Set the message of the push token explicitly since those are 2 different UIs
+                        Optional<Challenge> optChal = response.getMultiChallenge().stream().filter(c -> c.getType().equals("push")).findFirst();
+                        if (optChal.isPresent()) {
+                            pushMessage = optChal.get().getMessage();
+                        }
+                    }
+                }
+
+                if (response.getValue()) {
+                    context.success();
+                    return;
+                }
+            }
         }
 
-        String otp = formData.getFirst(Const.FORM_PI_OTP);
-        PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
+        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(Const.AUTH_NOTE_AUTH_COUNTER)) + 1;
+        authCounter = (authCounter >= config.getPushtokenPollingInterval().size() ? config.getPushtokenPollingInterval().size() - 1 : authCounter);
+        context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
 
-        return response != null && response.getValue();
+        // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
+        form.setAttribute(Const.FORM_PUSHTOKEN_INTERVAL, config.getPushtokenPollingInterval().get(authCounter))
+                .setAttribute(Const.FORM_PUSH_MESSAGE, (pushMessage == null ? Const.DEFAULT_PUSH_MESSAGE : pushMessage))
+                .setAttribute(Const.FORM_OTP_MESSAGE, (otpMessage == null ? Const.DEFAULT_OTP_MESSAGE : otpMessage));
+
+        // Dont display the error if the token type was switched
+        if (!tokenTypeChanged.equals(Const.TRUE) && !didTrigger) {
+            form.setError(tokenType.equals(Const.TOKEN_TYPE_PUSH) ? "Authentication not verified yet." : "Authentication failed.");
+        }
+
+        Response responseForm = form.createForm(Const.FORM_FILE_NAME);
+        context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
     @Override
