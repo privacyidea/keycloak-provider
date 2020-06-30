@@ -7,30 +7,33 @@ import java.util.Map;
 
 class Configuration {
 
-    private final String _serverURL;
-    private final String _realm;
-    private final boolean _doSSLVerify;
-    private final boolean _doTriggerChallenge;
-    private final String _serviceAccountName;
-    private final String _serviceAccountPass;
-    private final List<String> _excludedGroups = new ArrayList<>();
-    private final boolean _doEnrollToken;
-    private final String _enrollingTokenType;
+    private final String serverURL;
+    private final String realm;
+    private final boolean doSSLVerify;
+    private final boolean doTriggerChallenge;
+    private final String serviceAccountName;
+    private final String serviceAccountPass;
+    private final List<String> excludedGroups = new ArrayList<>();
+    private final boolean doEnrollToken;
+    private final boolean doLog;
+    private final String enrollingTokenType;
     private final List<Integer> pushtokenPollingInterval = new ArrayList<>();
 
     Configuration(Map<String, String> configMap) {
-        _serverURL = configMap.get(Const.CONFIG_SERVER);
-        _realm = configMap.get(Const.CONFIG_REALM) == null ? "" : configMap.get(Const.CONFIG_REALM);
-        _doSSLVerify = configMap.get(Const.CONFIG_VERIFYSSL) != null && configMap.get(Const.CONFIG_VERIFYSSL).equals(Const.TRUE);
-        _doTriggerChallenge = configMap.get(Const.CONFIG_DOTRIGGERCHALLENGE) != null && configMap.get(Const.CONFIG_DOTRIGGERCHALLENGE).equals(Const.TRUE);
-        _serviceAccountName = configMap.get(Const.CONFIG_SERVICEACCOUNT) == null ? "" : configMap.get(Const.CONFIG_SERVICEACCOUNT);
-        _serviceAccountPass = (configMap.get(Const.CONFIG_SERVICEPASS) == null) ? "" : configMap.get(Const.CONFIG_SERVICEPASS);
-        _doEnrollToken = configMap.get(Const.CONFIG_ENROLLTOKEN) != null && configMap.get(Const.CONFIG_ENROLLTOKEN).equals(Const.TRUE);
-        _enrollingTokenType = configMap.get(Const.CONFIG_ENROLLTOKENTYPE) == null ? "" : configMap.get(Const.CONFIG_ENROLLTOKENTYPE);
+        serverURL = configMap.get(Const.CONFIG_SERVER);
+        realm = configMap.get(Const.CONFIG_REALM) == null ? "" : configMap.get(Const.CONFIG_REALM);
+        doSSLVerify = configMap.get(Const.CONFIG_VERIFYSSL) != null && configMap.get(Const.CONFIG_VERIFYSSL).equals(Const.TRUE);
+        doTriggerChallenge = configMap.get(Const.CONFIG_DOTRIGGERCHALLENGE) != null && configMap.get(Const.CONFIG_DOTRIGGERCHALLENGE).equals(Const.TRUE);
+        serviceAccountName = configMap.get(Const.CONFIG_SERVICEACCOUNT) == null ? "" : configMap.get(Const.CONFIG_SERVICEACCOUNT);
+        serviceAccountPass = (configMap.get(Const.CONFIG_SERVICEPASS) == null) ? "" : configMap.get(Const.CONFIG_SERVICEPASS);
+        doEnrollToken = configMap.get(Const.CONFIG_ENROLLTOKEN) != null && configMap.get(Const.CONFIG_ENROLLTOKEN).equals(Const.TRUE);
+        enrollingTokenType = configMap.get(Const.CONFIG_ENROLLTOKENTYPE) == null ? "" : configMap.get(Const.CONFIG_ENROLLTOKENTYPE);
+
+        doLog = configMap.get(Const.CONFIG_DO_LOG) != null && configMap.get(Const.CONFIG_DO_LOG).equals(Const.TRUE);
 
         String excludedGroupsStr = configMap.get(Const.CONFIG_EXCLUDEGROUPS);
         if (excludedGroupsStr != null) {
-            _excludedGroups.addAll(Arrays.asList(excludedGroupsStr.split(",")));
+            excludedGroups.addAll(Arrays.asList(excludedGroupsStr.split(",")));
         }
 
         // Set default, overwrite if configured
@@ -52,42 +55,46 @@ class Configuration {
     }
 
     String getServerURL() {
-        return _serverURL;
+        return serverURL;
     }
 
     String getRealm() {
-        return _realm;
+        return realm;
     }
 
     boolean doSSLVerify() {
-        return _doSSLVerify;
+        return doSSLVerify;
     }
 
     boolean doTriggerChallenge() {
-        return _doTriggerChallenge;
+        return doTriggerChallenge;
     }
 
     String getServiceAccountName() {
-        return _serviceAccountName;
+        return serviceAccountName;
     }
 
     String getServiceAccountPass() {
-        return _serviceAccountPass;
+        return serviceAccountPass;
     }
 
     List<String> getExcludedGroups() {
-        return _excludedGroups;
+        return excludedGroups;
     }
 
     boolean doEnrollToken() {
-        return _doEnrollToken;
+        return doEnrollToken;
     }
 
     String getEnrollingTokenType() {
-        return _enrollingTokenType;
+        return enrollingTokenType;
     }
 
     List<Integer> getPushtokenPollingInterval() {
         return pushtokenPollingInterval;
+    }
+
+    public boolean doLog() {
+        return doLog;
     }
 }

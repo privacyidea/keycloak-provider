@@ -68,12 +68,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setServiceAccount(config.getServiceAccountName(), config.getServiceAccountPass())
                 .build();
 
-        privacyIDEA.setLogExcludedEndpoints(new ArrayList<String>() {{
-            add(Constants.ENDPOINT_VALIDATE_CHECK);
-            add(Constants.ENDPOINT_POLL_TRANSACTION);
-            add(Constants.ENDPOINT_AUTH);
-        }});
-
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
         String transactionID = null;
@@ -89,18 +83,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Trigger challenge for current user
-        int tokenCounter = 0;
-        //String tokenType = TOKEN_TYPE_OTP;
-        // Check which kinds of tokens the user has to adapt the options of the form
-        //boolean userHasPushToken = false;
-        //boolean userHasOTPToken = false;
-        // Collect the messages for the tokens to display
-        //List<String> pushMessages = new ArrayList<>();
-        //List<String> otpMessages = new ArrayList<>();
         PIResponse triggerResponse = null;
-
-        String pushMessage = Const.DEFAULT_PUSH_MESSAGE;
-        String otpMessage = Const.DEFAULT_OTP_MESSAGE;
+        StringBuilder pushMessage = new StringBuilder(Const.DEFAULT_PUSH_MESSAGE);
+        StringBuilder otpMessage = new StringBuilder(Const.DEFAULT_OTP_MESSAGE);
+        // Always show an OTP field, if push is present is evaluated when triggering challenges
         boolean userHasPushToken = false;
         boolean userHasOTPToken = true;
 
@@ -109,103 +95,48 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             transactionID = triggerResponse.getTransactionID();
 
             if (triggerResponse.getMultiChallenge() != null) {
-                pushMessage = triggerResponse
+                pushMessage.setLength(0);
+                pushMessage.append(triggerResponse
                         .getMultiChallenge()
                         .stream()
                         .filter(c -> c.getType().equals("push"))
                         .map(Challenge::getMessage)
-                        .reduce("", (a, c) -> a + c + ", ").trim();
+                        .reduce("", (a, c) -> a + c + ", ").trim());
 
-                otpMessage = triggerResponse
+                if (pushMessage.length() > 0) {
+                    pushMessage.deleteCharAt(pushMessage.length() - 1);
+                }
+
+                otpMessage.setLength(0);
+                otpMessage.append(triggerResponse
                         .getMultiChallenge()
                         .stream()
                         .filter(c -> (c.getType().equals("hotp") || c.getType().equals("totp")))
                         .map(Challenge::getMessage)
-                        .reduce("", (a, c) -> a + c + ", ").trim();
+                        .reduce("", (a, c) -> a + c + ", ").trim());
+
+                if (otpMessage.length() > 0) {
+                    otpMessage.deleteCharAt(otpMessage.length() - 1);
+                }
 
                 userHasPushToken = triggerResponse.getMultiChallenge().stream().anyMatch(c -> c.getType().equals("push"));
                 // Any non-push token required an input field
                 // userHasOTPToken = triggerResponse.getMultiChallenge().stream().anyMatch(c -> !c.getType().equals("push"));
             }
-
-           /* Map<String, String> params = new HashMap<>();
-            params.put(PARAM_KEY_USER, currentUser);
-            JsonObject body = endpoint.sendRequest(ENDPOINT_TRIGGERCHALLENGE, params, true, POST);
-            if (body != null) {
-                JsonObject detail = body.getJsonObject(JSON_KEY_DETAIL);
-                if (detail != null) {
-                    JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-                    tokenCounter = result.getInt(JSON_KEY_VALUE);
-                    if (tokenCounter > 0) {
-                        transactionID = detail.getString(JSON_KEY_TRANSACTION_ID);
-                        JsonArray multi_challenge = detail.getJsonArray(JSON_KEY_MULTI_CHALLENGE);
-                        for (int i = 0; i < multi_challenge.size(); i++) {
-                            JsonObject challenge = multi_challenge.getJsonObject(i);
-                            String msg = challenge.getString(JSON_KEY_MESSAGE);
-                            if (challenge.getString(JSON_KEY_TYPE).equals(TOKEN_TYPE_PUSH)) {
-                                userHasPushToken = true;
-                                if (!pushMessages.contains(msg)) {
-                                    pushMessages.add(msg);
-                                }
-                            } else {
-                                userHasOTPToken = true;
-                                if (!otpMessages.contains(msg)) {
-                                    otpMessages.add(msg);
-                                }
-                            }
-                        }
-                        if (userHasPushToken) {
-                            tokenType = TOKEN_TYPE_PUSH;
-                        }
-                    }
-                } else {
-                    logger.error("Trigger challenge response did not contain 'detail'");
-                }
-            } else {
-                logger.error("Trigger challenge response was invalid");
-            } */
         }
 
         // Enroll token if enabled and user does not have one
         String tokenEnrollmentQR = "";
         if (config.doEnrollToken()) {
-            //_log.info("Check if token has to be enrolled...");
-            // Get the current list of tokens for the user
-
-
             List<TokenInfo> tokenInfos = privacyIDEA.getTokenInfo(currentUser);
 
             if (tokenInfos == null || tokenInfos.isEmpty()) {
                 RolloutInfo rolloutInfo = privacyIDEA.tokenRollout(currentUser, config.getEnrollingTokenType());
                 tokenEnrollmentQR = rolloutInfo.googleurl.img;
             }
-
-            /*Map<String, String> params = new HashMap<>();
-            params.put(PARAM_KEY_USER, currentUser);
-            JsonObject body = endpoint.sendRequest(ENDPOINT_TOKEN, params, true, GET);
-            if (body != null) {
-                JsonObject value = body.getJsonObject(JSON_KEY_RESULT).getJsonObject(JSON_KEY_VALUE);
-                tokenCounter = value.getInt(JSON_KEY_COUNT, 0);
-                if (tokenCounter < 1) {
-                    // User has no tokens - request rollout
-                    params = new HashMap<>();
-                    params.put(PARAM_KEY_USER, currentUser);
-                    params.put(PARAM_KEY_TYPE, config.getEnrollingTokenType());
-                    params.put(PARAM_KEY_GENKEY, "1");
-                    JsonObject response = endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
-                    if (response != null) {
-                        JsonObject detail = response.getJsonObject(JSON_KEY_DETAIL);
-                        if (detail != null) {
-                            JsonObject googleurl = detail.getJsonObject(JSON_KEY_GOOGLEURL);
-                            tokenEnrollmentQR = googleurl.getString(JSON_KEY_IMG);
-                        }
-                    } else {
-                        logger.error("Token info response was empty or malformed!");
-                    }
-                }
-            } */
         }
         context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_AUTH_COUNTER, "0");
+
         if (transactionID != null && !transactionID.isEmpty()) {
             context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
@@ -266,8 +197,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             // Dont display the error if the token type was switched
             if (!tokenTypeChanged.equals(Const.TRUE)) {
                 form.setError(tokenType.equals(Const.TOKEN_TYPE_PUSH) ? "Authentication not verified yet." : "Authentication failed.");
-                //log.info("Authentication failed for user " + context.getUser().getUsername());
             }
+
             Response challenge = form.createForm(Const.FORM_FILE_NAME);
             context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
             return;
@@ -300,55 +231,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return response.getValue();
             }
             return false;
-
-            /*Map<String, String> params = new HashMap<>();
-            params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
-            JsonObject body = endpoint.sendRequest(ENDPOINT_POLL_TRANSACTION, params, false, GET);
-            if (body != null) {
-                JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-                if (result != null) {
-                    if (result.getBoolean(JSON_KEY_VALUE, false)) {
-                        // Finalize the authentication with a call to /validate/check which gives the real success value
-                        // https://privacyidea.readthedocs.io/en/latest/configuration/authentication_modes.html#outofband-mode
-                        params.clear();
-                        params.put(PARAM_KEY_USER, currentUserName);
-                        if (transactionID != null && !transactionID.isEmpty()) {
-                            params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
-                        }
-                        params.put(PARAM_KEY_PASS, null);
-                        JsonObject response = endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
-                        if (response != null) {
-                            JsonObject result2 = response.getJsonObject(JSON_KEY_RESULT);
-                            return result2.getBoolean(JSON_KEY_VALUE, false);
-                        }
-                    }
-                }
-            } else {
-                logger.error("Polling response was empty or malformed!");
-            }
-            return false; */
         }
 
         String otp = formData.getFirst(Const.FORM_PI_OTP);
-        return privacyIDEA.validateCheck(currentUserName, otp).getValue();
+        PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
 
-
-        /*Map<String, String> params = new HashMap<>();
-        params.put(PARAM_KEY_USER, currentUserName);
-        params.put(PARAM_KEY_PASS, otp);
-        params.put(PARAM_KEY_REALM, config.getRealm());
-        if (config.doTriggerChallenge() && tokenEnrollmentQR.isEmpty()) {
-            params.put(PARAM_KEY_TRANSACTION_ID, transactionID);
-        }
-
-        JsonObject body = endpoint.sendRequest(ENDPOINT_VALIDATE_CHECK, params, false, POST);
-        if (body != null) {
-            JsonObject result = body.getJsonObject(JSON_KEY_RESULT);
-            return result.getBoolean(JSON_KEY_VALUE, false);
-        } else {
-            logger.error("Validate check response was empty or malformed!");
-        }
-        return false; */
+        return response != null && response.getValue();
     }
 
     @Override
@@ -367,25 +255,35 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
     @Override
     public void close() {
+        // Just to make sure
+        privacyIDEA.stopPolling();
     }
 
     @Override
     public void log(String message) {
-        logger.info(message);
+        if (config.doLog()) {
+            logger.info(message);
+        }
     }
 
     @Override
     public void error(String message) {
-        logger.error(message);
+        if (config.doLog()) {
+            logger.error(message);
+        }
     }
 
     @Override
     public void log(Throwable t) {
-        logger.info(t);
+        if (config.doLog()) {
+            logger.info(t);
+        }
     }
 
     @Override
     public void error(Throwable t) {
-        logger.error(t);
+        if (config.doLog()) {
+            logger.error(t);
+        }
     }
 }

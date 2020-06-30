@@ -79,4 +79,5 @@ final class Const {
     static final String CONFIG_VERIFYSSL = "piverifyssl";
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
+    static final String CONFIG_DO_LOG = "pidolog";
 }

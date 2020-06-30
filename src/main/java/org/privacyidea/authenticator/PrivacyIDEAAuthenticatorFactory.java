@@ -46,7 +46,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         return SINGLETON;
     }
 
-    private static AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
+    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
             AuthenticationExecutionModel.Requirement.REQUIRED,
             AuthenticationExecutionModel.Requirement.DISABLED
     };
@@ -147,6 +147,14 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPushTokenInterval.setLabel("Refresh interval for push tokens");
         piPushTokenInterval.setHelpText("Set the refresh interval for push tokens in seconds. Use a comma separated list. The last entry will be repeated.");
         configProperties.add(piPushTokenInterval);
+
+        ProviderConfigProperty piDoLog = new ProviderConfigProperty();
+        piDoLog.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piDoLog.setName(Const.CONFIG_DO_LOG);
+        piDoLog.setLabel("Enable logging");
+        piDoLog.setHelpText("If enabled, log messages will be written to the JBoss logger.");
+        piDoLog.setDefaultValue("false");
+        configProperties.add(piDoLog);
     }
 
     @Override
