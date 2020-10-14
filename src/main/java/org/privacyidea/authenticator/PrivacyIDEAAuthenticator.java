@@ -85,6 +85,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (_config.doTriggerChallenge()) {
             Map<String, String> params = new HashMap<>();
             params.put(PARAM_KEY_USER, currentUser);
+            params.put(PARAM_KEY_REALM, _config.getRealm());
             JsonObject body = _endpoint.sendRequest(ENDPOINT_TRIGGERCHALLENGE, params, true, POST);
             if (body != null) {
                 JsonObject detail = body.getJsonObject(JSON_KEY_DETAIL);
@@ -128,6 +129,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             // Get the current list of tokens for the user
             Map<String, String> params = new HashMap<>();
             params.put(PARAM_KEY_USER, currentUser);
+            params.put(PARAM_KEY_REALM, _config.getRealm());
             JsonObject body = _endpoint.sendRequest(ENDPOINT_TOKEN, params, true, GET);
             if (body != null) {
                 JsonObject value = body.getJsonObject(JSON_KEY_RESULT).getJsonObject(JSON_KEY_VALUE);
@@ -136,6 +138,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     // User has no tokens - request rollout
                     params = new HashMap<>();
                     params.put(PARAM_KEY_USER, currentUser);
+                    params.put(PARAM_KEY_REALM, _config.getRealm());
                     params.put(PARAM_KEY_TYPE, _config.getEnrollingTokenType());
                     params.put(PARAM_KEY_GENKEY, "1");
                     JsonObject response = _endpoint.sendRequest(ENDPOINT_TOKEN_INIT, params, true, POST);
