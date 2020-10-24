@@ -5,7 +5,7 @@
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
     <#elseif section = "form">
-        <form id="loginform" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+        <form id="kc-otp-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if tokenType = "push">
@@ -20,7 +20,7 @@
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
-                    <input id="pi_otp" name="pi_otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
+                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
                 </div>
             </div>
 
@@ -46,7 +46,7 @@
                             <script>
                                 window.onload = function () {
                                     window.setTimeout(function () {
-                                        document.forms["loginform"].submit();
+                                        document.forms["kc-otp-login-form"].submit();
                                     }, parseInt(${pushTokenInterval}) * 1000);
                                 };
                             </script>
@@ -59,8 +59,8 @@
                         <#else>
                         <#--If token type is not push, an input field and login button is needed-->
                             <script>
-                                document.getElementById("pi_otp").type = "password";
-                                document.getElementById("pi_otp").required = true;
+                                document.getElementById("otp").type = "password";
+                                document.getElementById("otp").required = true;
                             </script>
                         <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
                                name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
@@ -76,7 +76,7 @@
                             function changeTokenType(tokenType) {
                                 document.getElementById("tokenType").value = tokenType;
                                 document.getElementById("tokenTypeChanged").value = "true";
-                                document.forms["loginform"].submit();
+                                document.forms["kc-otp-login-form"].submit();
                             }
                         </script>
                         <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"

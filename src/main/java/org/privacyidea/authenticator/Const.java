@@ -35,7 +35,7 @@ final class Const {
     static final String FORM_OTP_MESSAGE = "otpMessage";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_TOKENTYPE_CHANGED = "tokenTypeChanged";
-    static final String FORM_PI_OTP = "pi_otp";
+    static final String FORM_PI_OTP = "otp";
 
     static final String PARAM_KEY_USERNAME = "username";
     static final String PARAM_KEY_USER = "user";
