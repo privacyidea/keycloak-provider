@@ -19,11 +19,11 @@ In this blog entry, you can find an example with Keycloak, privacyIDEA and Drupa
 Now you can enable the execution for your auth flow.  
 If you set the execution as 'required', every user needs to login with a second factor.
 
-## Configuration
+## org.privacyidea.org.privacyidea.authenticator.Configuration
 
 You can find different preferences in your configuration, which are explained below.
 
-| Configuration | Explanation |
+| org.privacyidea.org.privacyidea.authenticator.Configuration | Explanation |
 | ----- | ----- |
 | URL | The URL of your privacyIDEA server, which must be reachable from the keycloak server |
 | Realm | This is the realm, where the users are located in. Leave empty to use the privacyIDEA default realm|

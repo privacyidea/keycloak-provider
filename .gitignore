@@ -2,3 +2,4 @@
 .idea/
 *.iml
 template.ftl
+dependency-reduced-pom.xml
