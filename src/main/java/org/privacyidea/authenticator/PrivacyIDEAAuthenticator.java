@@ -121,7 +121,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 }
 
                 userHasPushToken = triggerResponse.getMultiChallenge().stream().anyMatch(c -> c.getType().equals("push"));
-                // Any non-push token required an input field
+                // Any non-push token require an input field
                 // userHasOTPToken = triggerResponse.getMultiChallenge().stream().anyMatch(c -> !c.getType().equals("push"));
             }
         }
