@@ -61,7 +61,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     public void authenticate(AuthenticationFlowContext context) {
         config = new Configuration(context.getAuthenticatorConfig().getConfig());
 
-        privacyIDEA = new PrivacyIDEA.Builder(config.getServerURL())
+        privacyIDEA = new PrivacyIDEA.Builder(config.getServerURL(), Const.PLUGIN_USER_AGENT)
                 .setSSLVerify(config.doSSLVerify())
                 .setLogger(this)
                 .setPollingIntervals(config.getPushtokenPollingInterval())

@@ -8,6 +8,7 @@ final class Const {
     }
 
     static final String PROVIDER_ID = "privacyidea-authenticator";
+    static final String PLUGIN_USER_AGENT = "privacyIDEA-Keycloak";
 
     static final String GET = "GET";
     static final String POST = "POST";
