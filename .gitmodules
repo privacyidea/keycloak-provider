@@ -1,7 +1,4 @@
-[submodule "sdk-java"]
-	path = lib/sdk-java
-	url = https://github.com/privacyidea/sdk-java.git
-	branch = master
 [submodule "lib/sdk-java"]
 	path = lib/sdk-java
 	url = https://github.com/privacyidea/sdk-java.git
+	branch = master
