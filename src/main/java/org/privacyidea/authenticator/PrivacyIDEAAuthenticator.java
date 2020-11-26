@@ -1,10 +1,5 @@
 package org.privacyidea.authenticator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -13,13 +8,12 @@ import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.privacyidea.Challenge;
-import org.privacyidea.Constants;
-import org.privacyidea.PILoggerBridge;
-import org.privacyidea.PIResponse;
-import org.privacyidea.PrivacyIDEA;
-import org.privacyidea.RolloutInfo;
-import org.privacyidea.TokenInfo;
+import org.privacyidea.*;
+
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Optional;
 
 
 /**
