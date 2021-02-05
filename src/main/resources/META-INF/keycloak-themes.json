@@ -1,0 +1,6 @@
+{
+    "themes" : [{
+        "name" : "privacyidea",
+        "types" : [ "login" ]
+    }]
+}

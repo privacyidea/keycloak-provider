@@ -1,3 +1,25 @@
+/*
+ * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
+ * nils.behlen@netknights.it
+ * - Modified
+ *
+ * Based on original code:
+ *
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.privacyidea.authenticator;
 
 import org.jboss.logging.Logger;
@@ -15,30 +37,14 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 
+import static org.privacyidea.PIConstants.PASSWORD;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_HOTP;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_TOTP;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
+import static org.privacyidea.authenticator.Const.*;
 
-/**
- * Copyright 2019 NetKnights GmbH - micha.preusser@netknights.it
- * nils.behlen@netknights.it
- * - Modified
- * <p>
- * Based on original code:
- * <p>
- * Copyright 2016 Red Hat, Inc. and/or its affiliates
- * and other contributors as indicated by the @author tags.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, PILoggerBridge {
+public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger {
 
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
 
@@ -55,46 +61,66 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     public void authenticate(AuthenticationFlowContext context) {
         config = new Configuration(context.getAuthenticatorConfig().getConfig());
 
-        privacyIDEA = new PrivacyIDEA.Builder(config.getServerURL(), Const.PLUGIN_USER_AGENT)
+        privacyIDEA = new PrivacyIDEA.Builder(config.getServerURL(), PLUGIN_USER_AGENT)
                 .setSSLVerify(config.doSSLVerify())
                 .setLogger(this)
-                .setPollingIntervals(config.getPushtokenPollingInterval())
+                .setPollingIntervals(config.getPollingInterval())
                 .setRealm(config.getRealm())
                 .setServiceAccount(config.getServiceAccountName(), config.getServiceAccountPass())
+                .setServiceAccountRealm(config.getServiceAccountRealm())
                 .build();
 
+        // Get the things that were submitted in the first username+password form
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
-        String transactionID = null;
+        String currentPassword = null;
+        //log("[authenticate] http form params: " + context.getHttpRequest().getDecodedFormParameters().toString());
+        if (context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null) {
+            currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
+        }
 
         // Check if privacyIDEA is enabled for the current user
         for (GroupModel groupModel : user.getGroups()) {
             for (String excludedGroup : config.getExcludedGroups()) {
-                if (groupModel.getName().equals(excludedGroup)) {
+                if (excludedGroup.equals(groupModel.getName())) {
                     context.success();
                     return;
                 }
             }
         }
 
-        // Trigger challenge for current user
+        // Prepare for possibly triggering challenges
         PIResponse triggerResponse = null;
-        StringBuilder pushMessage = new StringBuilder(Const.DEFAULT_PUSH_MESSAGE);
-        StringBuilder otpMessage = new StringBuilder(Const.DEFAULT_OTP_MESSAGE);
-        // Always show an OTP field, if push is present is evaluated when triggering challenges
-        boolean userHasPushToken = false;
-        boolean userHasOTPToken = true;
+        String transactionID = null;
+        StringBuilder pushMessage = new StringBuilder(DEFAULT_PUSH_MESSAGE);
+        StringBuilder otpMessage = new StringBuilder(DEFAULT_OTP_MESSAGE);
 
+        // Variables to configure the UI
+        boolean pushAvailable = false;
+        boolean otpAvailable = true; // Always assume an OTP token
+        String startingMode = "otp";
+        String webAuthnSignRequest = "";
+
+        // Trigger challenges if configured. Service account has precedence over send password
         if (config.doTriggerChallenge()) {
             triggerResponse = privacyIDEA.triggerChallenges(currentUser);
-            transactionID = triggerResponse.getTransactionID();
+        } else if (config.doSendPassword()) {
+            if (currentPassword != null) {
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword);
+            } else {
+                log("Cannot send password because it is null!");
+            }
+        }
 
+        // Evaluate for possibly triggered token
+        if (triggerResponse != null) {
+            transactionID = triggerResponse.getTransactionID();
             if (!triggerResponse.getMultiChallenge().isEmpty()) {
                 pushMessage.setLength(0);
                 pushMessage.append(triggerResponse
                         .getMultiChallenge()
                         .stream()
-                        .filter(c -> c.getType().equals("push"))
+                        .filter(c -> TOKEN_TYPE_PUSH.equals(c.getType()))
                         .map(Challenge::getMessage)
                         .reduce("", (a, c) -> a + c + ", ").trim());
 
@@ -106,7 +132,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 otpMessage.append(triggerResponse
                         .getMultiChallenge()
                         .stream()
-                        .filter(c -> (c.getType().equals("hotp") || c.getType().equals("totp")))
+                        .filter(c -> (TOKEN_TYPE_HOTP.equals(c.getType()) || TOKEN_TYPE_TOTP.equals(c.getType())))
                         .map(Challenge::getMessage)
                         .reduce("", (a, c) -> a + c + ", ").trim());
 
@@ -114,12 +140,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     otpMessage.deleteCharAt(otpMessage.length() - 1);
                 }
 
-                userHasPushToken = triggerResponse.getMultiChallenge().stream().anyMatch(c -> c.getType().equals("push"));
-                // Any non-push token require an input field
-                // userHasOTPToken = triggerResponse.getMultiChallenge().stream().anyMatch(c -> !c.getType().equals("push"));
+                pushAvailable = triggerResponse.getMultiChallenge().stream().anyMatch(c -> TOKEN_TYPE_PUSH.equals(c.getType()));
+
+                // Check for WebAuthnSignRequest
+                // TODO currently only gets the first sign request
+                if (triggerResponse.getTriggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN)) {
+                    Optional<Challenge> opt = triggerResponse.getMultiChallenge().stream().filter(c -> TOKEN_TYPE_WEBAUTHN.equals(c.getType())).findFirst();
+                    if (opt.isPresent()) {
+                        webAuthnSignRequest = ((WebAuthn) opt.get()).getSignRequest();
+                    }
+                }
+            }
+            // Check if any triggered token matches the preferred token type
+            if (triggerResponse.getTriggeredTokenTypes().contains(config.getPrefTokenType())) {
+                startingMode = config.getPrefTokenType();
             }
         }
-
         // Enroll token if enabled and user does not have one
         String tokenEnrollmentQR = "";
         if (config.doEnrollToken()) {
@@ -130,29 +166,27 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 tokenEnrollmentQR = rolloutInfo.googleurl.img;
             }
         }
-        context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_AUTH_COUNTER, "0");
+        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
 
         if (transactionID != null && !transactionID.isEmpty()) {
-            context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_TRANSACTION_ID, transactionID);
+            context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
 
-        // For which to tokentype to show the UI first
-        String tokenType = userHasPushToken ? "push" : "otp";
-
         Response responseForm = context.form()
-                .setAttribute(Const.FORM_PUSHTOKEN_INTERVAL, config.getPushtokenPollingInterval().get(0))
-                .setAttribute(Const.FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
-                .setAttribute(Const.FORM_TOKENTYPE, tokenType)
-                .setAttribute(Const.FORM_PUSHTOKEN, userHasPushToken)
-                .setAttribute(Const.FORM_OTPTOKEN, userHasOTPToken)
-                .setAttribute(Const.FORM_PUSH_MESSAGE, pushMessage.toString())
-                .setAttribute(Const.FORM_OTP_MESSAGE, otpMessage.toString())
-                .createForm(Const.FORM_FILE_NAME);
+                .setAttribute(FORM_POLL_INTERVAL, config.getPollingInterval().get(0))
+                .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+                .setAttribute(FORM_MODE, startingMode)
+                .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
+                .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
+                .setAttribute(FORM_PUSH_MESSAGE, pushMessage.toString())
+                .setAttribute(FORM_OTP_MESSAGE, otpMessage.toString())
+                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+                .createForm(FORM_FILE_NAME);
         context.challenge(responseForm);
     }
 
     /**
-     * This function will be called if the user submitted the our form
+     * This function will be called when our form is submitted.
      *
      * @param context AuthenticationFlowContext
      */
@@ -169,26 +203,33 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         formData.forEach((k, v) -> log.info("key=" + k + ", value=" + v)); */
 
         // Get data from form
-        String tokenEnrollmentQR = formData.getFirst(Const.FORM_TOKEN_ENROLLMENT_QR);
-        String tokenType = formData.getFirst(Const.FORM_TOKENTYPE);
-        boolean pushToken = formData.getFirst(Const.FORM_PUSHTOKEN).equals(Const.TRUE);
-        boolean otpToken = formData.getFirst(Const.FORM_OTPTOKEN).equals(Const.TRUE);
-        String pushMessage = formData.getFirst(Const.FORM_PUSH_MESSAGE);
-        String otpMessage = formData.getFirst(Const.FORM_OTP_MESSAGE);
-        String tokenTypeChanged = formData.getFirst(Const.FORM_TOKENTYPE_CHANGED);
+        String tokenEnrollmentQR = formData.getFirst(FORM_TOKEN_ENROLLMENT_QR);
+        String currentMode = formData.getFirst(FORM_MODE);
+        boolean pushToken = TRUE.equals(formData.getFirst(FORM_PUSH_AVAILABLE));
+        boolean otpToken = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
+        String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
+        String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
+        String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
 
-        String transactionID = context.getAuthenticationSession().getAuthNote(Const.AUTH_NOTE_TRANSACTION_ID);
+        String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
         String currentUserName = context.getUser().getUsername();
 
+        String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
+        String webAuthnSignResponse = formData.getFirst(FORM_WEBAUTHN_SIGN_RESPONSE);
+
+        // Prepare the failure message, the message from privacyidea will be appended if possible
+        String authenticationFailureMessage = "Authentication failed.";
+
         // Set the "old" values again
-        form.setAttribute(Const.FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
-                .setAttribute(Const.FORM_TOKENTYPE, tokenType)
-                .setAttribute(Const.FORM_PUSHTOKEN, pushToken)
-                .setAttribute(Const.FORM_OTPTOKEN, otpToken);
+        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+                .setAttribute(FORM_MODE, currentMode)
+                .setAttribute(FORM_PUSH_AVAILABLE, pushToken)
+                .setAttribute(FORM_OTP_AVAILABLE, otpToken)
+                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest);
 
         boolean didTrigger = false; // To not show the error message if something was triggered
 
-        if (tokenType.equals(Const.TOKEN_TYPE_PUSH)) {
+        if (TOKEN_TYPE_PUSH.equals(currentMode)) {
             if (privacyIDEA.pollTransaction(transactionID)) {
                 PIResponse response = privacyIDEA.validateCheck(currentUserName, "", transactionID);
                 if (response.getValue()) {
@@ -196,49 +237,61 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     return;
                 }
             }
+        } else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty()) {
+            PIResponse response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, "https://keycloak-testserver.office.netknights.it:8443");
+            if (response.getValue()) {
+                context.success();
+                return;
+            }
         } else {
-            String otp = formData.getFirst(Const.FORM_PI_OTP);
-            PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
+            if (!(TRUE.equals(tokenTypeChanged))) {
+                String otp = formData.getFirst(FORM_PI_OTP);
+                // TODO add txid if present
+                PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
 
-            if (response != null) {
-                // A challenge was triggered, display its message and pass the transaction id
-                if (!response.getMultiChallenge().isEmpty()) {
-                    otpMessage = response.getMessage();
-                    context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_TRANSACTION_ID, response.getTransactionID());
-                    didTrigger = true;
+                if (response != null) {
+                    // A challenge was triggered, display its message and pass the transaction id
+                    if (!response.getMultiChallenge().isEmpty()) {
+                        otpMessage = response.getMessage();
+                        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.getTransactionID());
+                        didTrigger = true;
 
-                    if (response.getTriggeredTokenTypes().contains("push")) {
-                        form.setAttribute(Const.FORM_PUSHTOKEN, true);
-                        // Set the message of the push token explicitly since those are 2 different UIs
-                        Optional<Challenge> optChal = response.getMultiChallenge().stream().filter(c -> c.getType().equals("push")).findFirst();
-                        if (optChal.isPresent()) {
-                            pushMessage = optChal.get().getMessage();
+                        if (response.getTriggeredTokenTypes().contains(TOKEN_TYPE_PUSH)) {
+                            form.setAttribute(FORM_PUSH_AVAILABLE, true);
+                            // Set the message of the push token explicitly since those are 2 different UIs
+                            Optional<Challenge> optChal = response.getMultiChallenge().stream().filter(c -> TOKEN_TYPE_PUSH.equals(c.getType())).findFirst();
+                            if (optChal.isPresent()) {
+                                pushMessage = optChal.get().getMessage();
+                            }
                         }
+                        // TODO add multiple challenge response
                     }
-                }
 
-                if (response.getValue()) {
-                    context.success();
-                    return;
+                    if (response.getValue()) {
+                        context.success();
+                        return;
+                    }
+
+                    authenticationFailureMessage += "\n" + response.getMessage();
                 }
             }
         }
 
-        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(Const.AUTH_NOTE_AUTH_COUNTER)) + 1;
-        authCounter = (authCounter >= config.getPushtokenPollingInterval().size() ? config.getPushtokenPollingInterval().size() - 1 : authCounter);
-        context.getAuthenticationSession().setAuthNote(Const.AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
+        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
+        authCounter = (authCounter >= config.getPollingInterval().size() ? config.getPollingInterval().size() - 1 : authCounter);
+        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
 
         // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
-        form.setAttribute(Const.FORM_PUSHTOKEN_INTERVAL, config.getPushtokenPollingInterval().get(authCounter))
-                .setAttribute(Const.FORM_PUSH_MESSAGE, (pushMessage == null ? Const.DEFAULT_PUSH_MESSAGE : pushMessage))
-                .setAttribute(Const.FORM_OTP_MESSAGE, (otpMessage == null ? Const.DEFAULT_OTP_MESSAGE : otpMessage));
+        form.setAttribute(FORM_POLL_INTERVAL, config.getPollingInterval().get(authCounter))
+                .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE : pushMessage))
+                .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE : otpMessage));
 
         // Dont display the error if the token type was switched
-        if (!tokenTypeChanged.equals(Const.TRUE) && !didTrigger) {
-            form.setError(tokenType.equals(Const.TOKEN_TYPE_PUSH) ? "Authentication not verified yet." : "Authentication failed.");
+        if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger) {
+            form.setError(TOKEN_TYPE_PUSH.equals(currentMode) ? "Authentication not verified yet." : authenticationFailureMessage);
         }
 
-        Response responseForm = form.createForm(Const.FORM_FILE_NAME);
+        Response responseForm = form.createForm(FORM_FILE_NAME);
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
