@@ -198,7 +198,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         } else {
             String otp = formData.getFirst(Const.FORM_PI_OTP);
-            PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
+            // validateCheck can take an empty transactionID so just pass it here and it will be checked later if it is set
+            PIResponse response = privacyIDEA.validateCheck(currentUserName, otp, transactionID);
 
             if (response != null) {
                 // A challenge was triggered, display its message and pass the transaction id
