@@ -39,7 +39,7 @@
         <dependency>
             <groupId>org.privacyidea</groupId>
             <artifactId>sdk-java</artifactId>
-            <version>0.1</version>
+            <version>0.2</version>
         </dependency>
 
         <dependency>
@@ -110,9 +110,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
+                            <!-- add okhttp3 to the manifest to that the classloader finds it -->
                             <Dependencies>com.squareup.okhttp3</Dependencies>
                         </manifestEntries>
                     </archive>
@@ -132,7 +134,6 @@
                             <artifactSet>
                                 <includes>
                                     <include>org.privacyidea:sdk-java</include>
-                                    <include>com.squareup.okhttp3</include>
                                 </includes>
                             </artifactSet>
                         </configuration>

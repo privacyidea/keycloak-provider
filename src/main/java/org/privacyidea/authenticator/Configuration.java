@@ -51,9 +51,10 @@ class Configuration {
         this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
 
         this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
-        this.enrollingTokenType = configMap.get(CONFIG_ENROLL_TOKENTYPE) == null ? "" : configMap.get(CONFIG_ENROLL_TOKENTYPE);
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
-        this.prefTokenType = configMap.get(CONFIG_PREF_TOKENTYPE) == null ? TOKEN_TYPE_OTP : configMap.get(CONFIG_PREF_TOKENTYPE);
+        // PI uses all lowercase letters for token types so change it here to match it internally
+        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKENTYPE) == null ? TOKEN_TYPE_OTP : configMap.get(CONFIG_PREF_TOKENTYPE)).toLowerCase();
+        this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKENTYPE) == null ? "" : configMap.get(CONFIG_ENROLL_TOKENTYPE)).toLowerCase();
 
         this.doLog = configMap.get(CONFIG_DO_LOG) != null && configMap.get(CONFIG_DO_LOG).equals(TRUE);
 

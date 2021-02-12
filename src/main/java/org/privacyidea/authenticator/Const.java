@@ -32,7 +32,7 @@ final class Const {
     static final String TRUE = "true";
 
     static final int DEFAULT_POLLING_INTERVAL = 2; // Will be used if single value from config cannot be parsed
-    static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(5, 1, 1, 1, 2, 3); // Will be used if no intervals are specified
+    static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3); // Will be used if no intervals are specified
 
     static final String FORM_POLL_INTERVAL = "pollingInterval";
     static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
@@ -48,6 +48,7 @@ final class Const {
     // Webauthn form fields
     static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnsignrequest";
     static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnsignresponse";
+    static final String FORM_WEBAUTHN_ORIGIN = "origin";
 
     static final String AUTH_NOTE_TRANSACTION_ID = "pi.transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";

@@ -38,21 +38,22 @@
                     <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest}"
                            type="hidden">
                     <input id="webauthnsignresponse" name="webauthnsignresponse" value="" type="hidden">
+                    <input id="origin" name="origin" value="" type="hidden">
 
+                    <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
 
-                    <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
-                        <div class="${properties.kcFormButtonsWrapperClass!}">
-
-                        </div>
-                        <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
-                               name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
-                    </div>
                     <#-- ALTERNATE LOGIN OPTIONS -->
                     <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
                         <h3>Alternate Login Options</h3>
                         <div class="${properties.kcFormButtonsWrapperClass!}">
                             <script>
                                 'use strict';
+
+                                if (!window.location.origin) {
+                                    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                                }
+                                document.getElementById("origin").value = window.origin;
+
                                 function changeMode(newMode) {
                                     // Submit the form to pass the change to the authenticator
                                     document.getElementById("mode").value = newMode;
@@ -76,7 +77,7 @@
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                    name="changeModeButton" id="changeModeButton"
                                    onClick="changeMode('otp')"
-                                   type="button" value="Use OTP"/>
+                                   type="button" value="One-Time-Password"/>
                             </#if>
                             <#else>
                             <#--If token type is not push, an input field and login button is needed-->
@@ -89,7 +90,7 @@
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                    name="changeModeButton" id="changeModeButton"
                                    onClick="changeMode('push')"
-                                   type="button" value="Use Push Token"/>
+                                   type="button" value="Push"/>
                             </#if>
                             </#if>
 
@@ -98,7 +99,7 @@
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="useWebAuthnButton" id="useWebAuthnButton"
                                        onClick="doWebAuthn()"
-                                       type="button" value="Use WebAuthn"/>
+                                       type="button" value="WebAuthn"/>
 
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
                                 <script>
@@ -133,6 +134,11 @@
                                             alert("Error while trying WebAuthn: " + err);
                                         }
                                     }
+                                </script>
+                            </#if>
+                            <#if !push_available && (webauthnsignrequest = "")>
+                                <script>
+                                    document.getElementById("alternateToken").style.display = "none";
                                 </script>
                             </#if>
                         </div>

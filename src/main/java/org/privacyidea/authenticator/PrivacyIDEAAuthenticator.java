@@ -93,7 +93,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         PIResponse triggerResponse = null;
         String transactionID = null;
         StringBuilder pushMessage = new StringBuilder(DEFAULT_PUSH_MESSAGE);
-        StringBuilder otpMessage = new StringBuilder(DEFAULT_OTP_MESSAGE);
+        String otpMessage = DEFAULT_OTP_MESSAGE;
+        StringBuilder otpMessageSB = new StringBuilder();
 
         // Variables to configure the UI
         boolean pushAvailable = false;
@@ -116,31 +117,35 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (triggerResponse != null) {
             transactionID = triggerResponse.getTransactionID();
             if (!triggerResponse.getMultiChallenge().isEmpty()) {
-                pushMessage.setLength(0);
-                pushMessage.append(triggerResponse
-                        .getMultiChallenge()
-                        .stream()
-                        .filter(c -> TOKEN_TYPE_PUSH.equals(c.getType()))
-                        .map(Challenge::getMessage)
-                        .reduce("", (a, c) -> a + c + ", ").trim());
 
-                if (pushMessage.length() > 0) {
-                    pushMessage.deleteCharAt(pushMessage.length() - 1);
+                pushAvailable = triggerResponse.getMultiChallenge().stream().anyMatch(c -> TOKEN_TYPE_PUSH.equals(c.getType()));
+             
+                if (pushAvailable) {
+                    pushMessage.setLength(0);
+                    pushMessage.append(triggerResponse
+                            .getMultiChallenge()
+                            .stream()
+                            .filter(c -> TOKEN_TYPE_PUSH.equals(c.getType()))
+                            .map(Challenge::getMessage)
+                            .reduce("", (a, c) -> a + c + ", ").trim());
+
+                    if (pushMessage.length() > 0) {
+                        pushMessage.deleteCharAt(pushMessage.length() - 1);
+                    }
                 }
 
-                otpMessage.setLength(0);
-                otpMessage.append(triggerResponse
+                otpMessageSB.append(triggerResponse
                         .getMultiChallenge()
                         .stream()
                         .filter(c -> (TOKEN_TYPE_HOTP.equals(c.getType()) || TOKEN_TYPE_TOTP.equals(c.getType())))
                         .map(Challenge::getMessage)
                         .reduce("", (a, c) -> a + c + ", ").trim());
 
-                if (otpMessage.length() > 0) {
-                    otpMessage.deleteCharAt(otpMessage.length() - 1);
+                if (otpMessageSB.length() > 0) {
+                    // If there is an OTP message, overwrite the default message
+                    otpMessageSB.deleteCharAt(otpMessageSB.length() - 1);
+                    otpMessage = otpMessageSB.toString();
                 }
-
-                pushAvailable = triggerResponse.getMultiChallenge().stream().anyMatch(c -> TOKEN_TYPE_PUSH.equals(c.getType()));
 
                 // Check for WebAuthnSignRequest
                 // TODO currently only gets the first sign request
@@ -156,6 +161,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 startingMode = config.getPrefTokenType();
             }
         }
+
         // Enroll token if enabled and user does not have one
         String tokenEnrollmentQR = "";
         if (config.doEnrollToken()) {
@@ -199,8 +205,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
         LoginFormsProvider form = context.form();
 
-        /*log.info("formData:");
-        formData.forEach((k, v) -> log.info("key=" + k + ", value=" + v)); */
+        //logger.info("formData:");
+        //formData.forEach((k, v) -> logger.info("key=" + k + ", value=" + v));
 
         // Get data from form
         String tokenEnrollmentQR = formData.getFirst(FORM_TOKEN_ENROLLMENT_QR);
@@ -216,8 +222,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
         String webAuthnSignResponse = formData.getFirst(FORM_WEBAUTHN_SIGN_RESPONSE);
+        // The origin is set by the form every time, no need to put it in the form again
+        String origin = formData.getFirst(FORM_WEBAUTHN_ORIGIN);
 
-        // Prepare the failure message, the message from privacyidea will be appended if possible
+        // Prepare the failure message, the message from privacyIDEA will be appended if possible
         String authenticationFailureMessage = "Authentication failed.";
 
         // Set the "old" values again
@@ -228,55 +236,53 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest);
 
         boolean didTrigger = false; // To not show the error message if something was triggered
+        PIResponse response = null;
 
+        // Determine to which endpoint we send the data from the form based on the mode the form was in
+        // Or if a WebAuthnSignResponse is present
         if (TOKEN_TYPE_PUSH.equals(currentMode)) {
+            // In push mode, we poll for the transaction id to see if the challenge has been answered
             if (privacyIDEA.pollTransaction(transactionID)) {
-                PIResponse response = privacyIDEA.validateCheck(currentUserName, "", transactionID);
-                if (response.getValue()) {
-                    context.success();
-                    return;
-                }
+                // If the challenge has been answered, finalize with a call to validate check
+                response = privacyIDEA.validateCheck(currentUserName, "", transactionID);
             }
         } else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty()) {
-            PIResponse response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, "https://keycloak-testserver.office.netknights.it:8443");
-            if (response.getValue()) {
-                context.success();
-                return;
+            if (origin == null || origin.isEmpty()) {
+                logger.error("Origin is missing for WebAuthn authentication!");
+            } else {
+                response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin);
             }
         } else {
             if (!(TRUE.equals(tokenTypeChanged))) {
                 String otp = formData.getFirst(FORM_PI_OTP);
-                // TODO add txid if present
-                PIResponse response = privacyIDEA.validateCheck(currentUserName, otp);
-
-                if (response != null) {
-                    // A challenge was triggered, display its message and pass the transaction id
-                    if (!response.getMultiChallenge().isEmpty()) {
-                        otpMessage = response.getMessage();
-                        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.getTransactionID());
-                        didTrigger = true;
-
-                        if (response.getTriggeredTokenTypes().contains(TOKEN_TYPE_PUSH)) {
-                            form.setAttribute(FORM_PUSH_AVAILABLE, true);
-                            // Set the message of the push token explicitly since those are 2 different UIs
-                            Optional<Challenge> optChal = response.getMultiChallenge().stream().filter(c -> TOKEN_TYPE_PUSH.equals(c.getType())).findFirst();
-                            if (optChal.isPresent()) {
-                                pushMessage = optChal.get().getMessage();
-                            }
-                        }
-                        // TODO add multiple challenge response
-                    }
-
-                    if (response.getValue()) {
-                        context.success();
-                        return;
-                    }
-
-                    authenticationFailureMessage += "\n" + response.getMessage();
-                }
+                // If the transaction id is not present, it will be not be added in validateCheck, so no need to check here
+                response = privacyIDEA.validateCheck(currentUserName, otp, transactionID);
             }
         }
 
+        // Evaluate the response
+        if (response != null) {
+            // On success we finish our execution
+            if (response.getValue()) {
+                context.success();
+                return;
+            }
+
+            // If the authentication was not successful (yet), either the provided data was wrong
+            // or another challenge was triggered
+            if (!response.getMultiChallenge().isEmpty()) {
+                // A challenge was triggered, display its message and save the transaction id in the session
+                otpMessage = response.getMessage();
+                context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.getTransactionID());
+                didTrigger = true;
+            } else {
+                // The authentication failed without triggering anything so the things that have been sent before were wrong
+                authenticationFailureMessage += "\n" + response.getMessage();
+            }
+        }
+
+        // The authCounter is also used to determine the polling interval for push
+        // If the authCounter is bigger than the size of the polling interval list, repeat the lists last value
         int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
         authCounter = (authCounter >= config.getPollingInterval().size() ? config.getPollingInterval().size() - 1 : authCounter);
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
@@ -286,7 +292,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE : pushMessage))
                 .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE : otpMessage));
 
-        // Dont display the error if the token type was switched
+        // Do not display the error if the token type was switched or if another challenge was triggered
         if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger) {
             form.setError(TOKEN_TYPE_PUSH.equals(currentMode) ? "Authentication not verified yet." : authenticationFailureMessage);
         }
@@ -315,6 +321,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         privacyIDEA.stopPolling();
     }
 
+    // IPILogger implementation
     @Override
     public void log(String message) {
         if (config.doLog()) {
