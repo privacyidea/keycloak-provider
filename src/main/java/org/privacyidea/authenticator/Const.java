@@ -26,10 +26,15 @@ final class Const {
     static final String PROVIDER_ID = "privacyidea-authenticator";
     static final String PLUGIN_USER_AGENT = "privacyIDEA-Keycloak";
 
-    static final String DEFAULT_PUSH_MESSAGE = "Please confirm the authentication on your mobile device!";
-    static final String DEFAULT_OTP_MESSAGE = "Please enter your One-Time-Password!";
+    static final String DEFAULT_PUSH_MESSAGE_EN = "Please confirm the authentication on your mobile device!";
+    static final String DEFAULT_PUSH_MESSAGE_DE = "Bitte bestätigen Sie die Authentifizierung auf ihrem Smartphone!";
+
+    static final String DEFAULT_OTP_MESSAGE_EN = "Please enter your One-Time-Password!";
+    static final String DEFAULT_OTP_MESSAGE_DE = "Bitte geben Sie ihr Einmalpassword ein!";
 
     static final String TRUE = "true";
+
+    static final String HEADER_ACCEPT_LANGUAGE = "accept-language";
 
     static final int DEFAULT_POLLING_INTERVAL = 2; // Will be used if single value from config cannot be parsed
     static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3); // Will be used if no intervals are specified
@@ -43,7 +48,8 @@ final class Const {
     static final String FORM_OTP_MESSAGE = "otpMessage";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
-    static final String FORM_PI_OTP = "pi_otp";
+    static final String FORM_OTP = "otp";
+    static final String FORM_UI_LANGUAGE = "uilanguage";
 
     // Webauthn form fields
     static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnsignrequest";
@@ -52,6 +58,7 @@ final class Const {
 
     static final String AUTH_NOTE_TRANSACTION_ID = "pi.transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
+    static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
 
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";

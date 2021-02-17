@@ -5,7 +5,7 @@
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
     <#elseif section = "form">
-        <form id="loginform" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+        <form id="kc-otp-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if mode = "push">
@@ -20,7 +20,7 @@
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
-                    <input id="pi_otp" name="pi_otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
+                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
                 </div>
             </div>
 
@@ -40,17 +40,24 @@
                     <input id="webauthnsignresponse" name="webauthnsignresponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
 
-                    <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}"/>
+                    <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
+                           value="Sign in"/>
+                    <input id="uilanguage" name="uilanguage" value="${uilanguage}" type="hidden">
 
                     <#-- ALTERNATE LOGIN OPTIONS -->
                     <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
-                        <h3>Alternate Login Options</h3>
+                        <h3 id="alternateTokenHeader">Alternate Login Options</h3>
                         <div class="${properties.kcFormButtonsWrapperClass!}">
                             <script>
                                 'use strict';
 
+                                if (document.getElementById("uilanguage").value === "de") {
+                                    document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
+                                    document.getElementById("kc-login").value = "Anmelden";
+                                }
+
                                 if (!window.location.origin) {
-                                    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
+                                    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
                                 }
                                 document.getElementById("origin").value = window.origin;
 
@@ -58,7 +65,7 @@
                                     // Submit the form to pass the change to the authenticator
                                     document.getElementById("mode").value = newMode;
                                     document.getElementById("modeChanged").value = "true";
-                                    document.forms["loginform"].submit();
+                                    document.forms["kc-otp-login-form"].submit();
                                 }
                             </script>
 
@@ -69,7 +76,7 @@
                                     document.getElementById("kc-login").style.display = "none";
                                     window.onload = () => {
                                         window.setTimeout(() => {
-                                            document.forms["loginform"].submit();
+                                            document.forms["kc-otp-login-form"].submit();
                                         }, parseInt(${pollingInterval}) * 1000);
                                     };
                                 </script>
@@ -83,8 +90,8 @@
                             <#--If token type is not push, an input field and login button is needed-->
                                 <script>
                                     document.getElementById("kc-login").style.display = "initial";
-                                    document.getElementById("pi_otp").type = "password";
-                                    document.getElementById("pi_otp").required = true;
+                                    document.getElementById("otp").type = "password";
+                                    document.getElementById("otp").required = true;
                                 </script>
                             <#if push_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
@@ -127,7 +134,7 @@
                                             const webAuthnSignResponse = window.pi_webauthn.sign(requestjson);
                                             webAuthnSignResponse.then((webauthnresponse) => {
                                                 document.getElementById("webauthnsignresponse").value = JSON.stringify(webauthnresponse);
-                                                document.forms["loginform"].submit();
+                                                document.forms["kc-otp-login-form"].submit();
                                             });
                                         } catch (err) {
                                             console.log("Error while trying WebAuthn: " + err);

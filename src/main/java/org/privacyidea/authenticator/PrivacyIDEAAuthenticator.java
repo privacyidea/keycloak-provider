@@ -22,6 +22,8 @@
  */
 package org.privacyidea.authenticator;
 
+import java.util.Collections;
+import java.util.Map;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -38,9 +40,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.privacyidea.PIConstants.PASSWORD;
-import static org.privacyidea.PIConstants.TOKEN_TYPE_HOTP;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
-import static org.privacyidea.PIConstants.TOKEN_TYPE_TOTP;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.*;
 
@@ -74,12 +74,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
         String currentPassword = null;
+
         //log("[authenticate] http form params: " + context.getHttpRequest().getDecodedFormParameters().toString());
         if (context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null) {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
 
-        // Check if privacyIDEA is enabled for the current user
+        // Check if the current user is member of an excluded group
         for (GroupModel groupModel : user.getGroups()) {
             for (String excludedGroup : config.getExcludedGroups()) {
                 if (excludedGroup.equals(groupModel.getName())) {
@@ -89,12 +90,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
+        // Get the language from the request headers to pass it to the ui and the privacyIDEA requests
+        String acceptLanguage = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(HEADER_ACCEPT_LANGUAGE).get(0);
+        String uiLanguage = "en";
+        Map<String, String> languageHeader = Collections.emptyMap();
+        if (acceptLanguage != null) {
+            languageHeader = Collections.singletonMap(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
+            if (acceptLanguage.toLowerCase().startsWith("de")) {
+                uiLanguage = "de";
+            }
+        }
+
         // Prepare for possibly triggering challenges
         PIResponse triggerResponse = null;
         String transactionID = null;
-        StringBuilder pushMessage = new StringBuilder(DEFAULT_PUSH_MESSAGE);
-        String otpMessage = DEFAULT_OTP_MESSAGE;
-        StringBuilder otpMessageSB = new StringBuilder();
+        String pushMessage = uiLanguage.equals("en") ? DEFAULT_PUSH_MESSAGE_EN : DEFAULT_PUSH_MESSAGE_DE;
+        String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
 
         // Variables to configure the UI
         boolean pushAvailable = false;
@@ -104,10 +115,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.doTriggerChallenge()) {
-            triggerResponse = privacyIDEA.triggerChallenges(currentUser);
+            triggerResponse = privacyIDEA.triggerChallenges(currentUser, languageHeader);
         } else if (config.doSendPassword()) {
             if (currentPassword != null) {
-                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword);
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, languageHeader);
             } else {
                 log("Cannot send password because it is null!");
             }
@@ -116,43 +127,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Evaluate for possibly triggered token
         if (triggerResponse != null) {
             transactionID = triggerResponse.getTransactionID();
+
             if (!triggerResponse.getMultiChallenge().isEmpty()) {
 
-                pushAvailable = triggerResponse.getMultiChallenge().stream().anyMatch(c -> TOKEN_TYPE_PUSH.equals(c.getType()));
-             
+                pushAvailable = triggerResponse.isPushAvailable();
                 if (pushAvailable) {
-                    pushMessage.setLength(0);
-                    pushMessage.append(triggerResponse
-                            .getMultiChallenge()
-                            .stream()
-                            .filter(c -> TOKEN_TYPE_PUSH.equals(c.getType()))
-                            .map(Challenge::getMessage)
-                            .reduce("", (a, c) -> a + c + ", ").trim());
-
-                    if (pushMessage.length() > 0) {
-                        pushMessage.deleteCharAt(pushMessage.length() - 1);
-                    }
+                    pushMessage = triggerResponse.getPushMessage();
                 }
 
-                otpMessageSB.append(triggerResponse
-                        .getMultiChallenge()
-                        .stream()
-                        .filter(c -> (TOKEN_TYPE_HOTP.equals(c.getType()) || TOKEN_TYPE_TOTP.equals(c.getType())))
-                        .map(Challenge::getMessage)
-                        .reduce("", (a, c) -> a + c + ", ").trim());
-
-                if (otpMessageSB.length() > 0) {
-                    // If there is an OTP message, overwrite the default message
-                    otpMessageSB.deleteCharAt(otpMessageSB.length() - 1);
-                    otpMessage = otpMessageSB.toString();
-                }
+                otpMessage = triggerResponse.getOTPMessage();
 
                 // Check for WebAuthnSignRequest
                 // TODO currently only gets the first sign request
                 if (triggerResponse.getTriggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN)) {
-                    Optional<Challenge> opt = triggerResponse.getMultiChallenge().stream().filter(c -> TOKEN_TYPE_WEBAUTHN.equals(c.getType())).findFirst();
-                    if (opt.isPresent()) {
-                        webAuthnSignRequest = ((WebAuthn) opt.get()).getSignRequest();
+                    List<WebAuthn> signRequests = triggerResponse.getWebAuthnSignRequests();
+                    if (!signRequests.isEmpty()) {
+                        webAuthnSignRequest = signRequests.get(0).getSignRequest();
                     }
                 }
             }
@@ -172,7 +162,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 tokenEnrollmentQR = rolloutInfo.googleurl.img;
             }
         }
+
+        // Prepare the form and auth notes to pass infos to the UI or the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
+        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
 
         if (transactionID != null && !transactionID.isEmpty()) {
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
@@ -187,6 +180,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_PUSH_MESSAGE, pushMessage.toString())
                 .setAttribute(FORM_OTP_MESSAGE, otpMessage.toString())
                 .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+                .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
                 .createForm(FORM_FILE_NAME);
         context.challenge(responseForm);
     }
@@ -216,9 +210,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
         String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
-
+        String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
         String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
         String currentUserName = context.getUser().getUsername();
+
+        // Reuse the accept language for any requests made in this step
+        String acceptLanguage = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE);
+        Map<String, String> languageHeader = Collections.singletonMap(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
 
         String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
         String webAuthnSignResponse = formData.getFirst(FORM_WEBAUTHN_SIGN_RESPONSE);
@@ -233,7 +231,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_MODE, currentMode)
                 .setAttribute(FORM_PUSH_AVAILABLE, pushToken)
                 .setAttribute(FORM_OTP_AVAILABLE, otpToken)
-                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest);
+                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+                .setAttribute(FORM_UI_LANGUAGE, uiLanguage);
 
         boolean didTrigger = false; // To not show the error message if something was triggered
         PIResponse response = null;
@@ -244,19 +243,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             // In push mode, we poll for the transaction id to see if the challenge has been answered
             if (privacyIDEA.pollTransaction(transactionID)) {
                 // If the challenge has been answered, finalize with a call to validate check
-                response = privacyIDEA.validateCheck(currentUserName, "", transactionID);
+                response = privacyIDEA.validateCheck(currentUserName, "", transactionID, languageHeader);
             }
         } else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty()) {
             if (origin == null || origin.isEmpty()) {
                 logger.error("Origin is missing for WebAuthn authentication!");
             } else {
-                response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin);
+                response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin, languageHeader);
             }
         } else {
             if (!(TRUE.equals(tokenTypeChanged))) {
-                String otp = formData.getFirst(FORM_PI_OTP);
+                String otp = formData.getFirst(FORM_OTP);
                 // If the transaction id is not present, it will be not be added in validateCheck, so no need to check here
-                response = privacyIDEA.validateCheck(currentUserName, otp, transactionID);
+                response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, languageHeader);
             }
         }
 
@@ -289,8 +288,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
         form.setAttribute(FORM_POLL_INTERVAL, config.getPollingInterval().get(authCounter))
-                .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE : pushMessage))
-                .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE : otpMessage));
+                .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
+                .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 
         // Do not display the error if the token type was switched or if another challenge was triggered
         if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger) {
