@@ -25,6 +25,7 @@
 
     <groupId>org.privacyidea</groupId>
     <artifactId>privacyidea-keycloak-provider</artifactId>
+
     <version>0.5.2</version>
 
     <packaging>jar</packaging>
