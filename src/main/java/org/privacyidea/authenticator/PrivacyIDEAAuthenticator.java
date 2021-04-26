@@ -146,6 +146,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     }
                 }
             }
+
             // Check if any triggered token matches the preferred token type
             if (triggerResponse.getTriggeredTokenTypes().contains(config.getPrefTokenType())) {
                 startingMode = config.getPrefTokenType();
