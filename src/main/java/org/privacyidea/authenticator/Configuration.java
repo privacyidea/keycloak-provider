@@ -21,7 +21,23 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
-import static org.privacyidea.authenticator.Const.*;
+import static org.privacyidea.authenticator.Const.CONFIG_DO_LOG;
+import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
+import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKENTYPE;
+import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKENTYPE;
+import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
+import static org.privacyidea.authenticator.Const.CONFIG_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
+import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
+import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
+import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
+import static org.privacyidea.authenticator.Const.TRUE;
 
 class Configuration {
 
@@ -82,47 +98,47 @@ class Configuration {
         }
     }
 
-    String getServerURL() {
+    String serverURL() {
         return serverURL;
     }
 
-    String getRealm() {
+    String realm() {
         return realm;
     }
 
-    boolean doSSLVerify() {
+    boolean sslVerify() {
         return doSSLVerify;
     }
 
-    boolean doTriggerChallenge() {
+    boolean triggerChallenge() {
         return doTriggerChallenge;
     }
 
-    String getServiceAccountName() {
+    String serviceAccountName() {
         return serviceAccountName;
     }
 
-    String getServiceAccountPass() {
+    String serviceAccountPass() {
         return serviceAccountPass;
     }
 
-    String getServiceAccountRealm() {
+    String serviceAccountRealm() {
         return serviceAccountRealm;
     }
 
-    List<String> getExcludedGroups() {
+    List<String> excludedGroups() {
         return excludedGroups;
     }
 
-    boolean doEnrollToken() {
+    boolean enrollToken() {
         return doEnrollToken;
     }
 
-    String getEnrollingTokenType() {
+    String enrollingTokenType() {
         return enrollingTokenType;
     }
 
-    List<Integer> getPollingInterval() {
+    List<Integer> pollingInterval() {
         return pollingInterval;
     }
 
@@ -130,11 +146,11 @@ class Configuration {
         return doLog;
     }
 
-    boolean doSendPassword() {
+    boolean sendPassword() {
         return doSendPassword;
     }
 
-    String getPrefTokenType() {
+    String prefTokenType() {
         return prefTokenType;
     }
 }
