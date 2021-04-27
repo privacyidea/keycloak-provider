@@ -5,6 +5,11 @@
 * WebAuthn support
 * PIN change via challenge-response
 
+### v0.5.1 - 2020-11-26
+
+* Use java sdk for communication with privacyIDEA
+* Added user-agent to http requests
+
 ### v0.5 - 2020-06-10
 
 * Fixed a bug where overlapping logins could override the username in the login process
