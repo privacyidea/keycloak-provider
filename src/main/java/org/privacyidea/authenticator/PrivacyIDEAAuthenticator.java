@@ -93,7 +93,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Get the configuration and privacyIDEA instance for the current realm
         // If none is found create new ones
         String kcRealm = context.getRealm().getName();
-        context.getSession().setAttribute("realm", kcRealm);
         PrivacyIDEA privacyIDEA;
         Configuration config;
         if (piInstanceMap.containsKey(kcRealm))
