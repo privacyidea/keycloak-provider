@@ -114,13 +114,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Check if the current user is member of an excluded group
-        for (GroupModel groupModel : user.getGroups()) {
-            for (String excludedGroup : config.excludedGroups()) {
-                if (excludedGroup.equals(groupModel.getName())) {
-                    context.success();
-                    return;
-                }
-            }
+        if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains)) {
+            context.success();
+            return;
         }
 
         // Get the language from the request headers to pass it to the ui and the privacyIDEA requests
@@ -192,7 +188,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
             if (tokenInfos == null || tokenInfos.isEmpty()) {
                 RolloutInfo rolloutInfo = privacyIDEA.tokenRollout(currentUser, config.enrollingTokenType());
-                tokenEnrollmentQR = rolloutInfo.googleurl.img;
+                if (rolloutInfo != null) {
+                    tokenEnrollmentQR = rolloutInfo.googleurl.img;
+                } else {
+                    context.form().setError("Configuration error, please check the log.");
+                }
             }
         }
 
@@ -210,8 +210,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_MODE, startingMode)
                 .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
                 .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
-                .setAttribute(FORM_PUSH_MESSAGE, pushMessage.toString())
-                .setAttribute(FORM_OTP_MESSAGE, otpMessage.toString())
+                .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
+                .setAttribute(FORM_OTP_MESSAGE, otpMessage)
                 .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                 .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
                 .createForm(FORM_FILE_NAME);
