@@ -1,5 +1,4 @@
-/*
- * Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
+ /* Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +56,10 @@ final class Const
     static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnsignrequest";
     static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnsignresponse";
     static final String FORM_WEBAUTHN_ORIGIN = "origin";
+
+    // U2F form fields
+    static final String FORM_U2F_SIGN_REQUEST = "u2fsignrequest";
+    static final String FORM_U2F_SIGN_RESPONSE = "u2fsignresponse";
 
     static final String AUTH_NOTE_TRANSACTION_ID = "pi.transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";

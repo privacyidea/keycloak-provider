@@ -27,7 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -44,10 +43,12 @@ import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 import org.privacyidea.RolloutInfo;
 import org.privacyidea.TokenInfo;
+import org.privacyidea.U2F;
 import org.privacyidea.WebAuthn;
 
 import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_U2F;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_ACCEPT_LANGUAGE;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_AUTH_COUNTER;
@@ -66,6 +67,8 @@ import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_TOKEN_ENROLLMENT_QR;
+import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_REQUEST;
+import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_RESPONSE;
 import static org.privacyidea.authenticator.Const.FORM_UI_LANGUAGE;
 import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_ORIGIN;
 import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_SIGN_REQUEST;
@@ -92,7 +95,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         // Get the configuration and privacyIDEA instance for the current realm
         // If none is found create new ones
-        String kcRealm = context.getRealm().getName();
+        String kcRealm = context.getRealm()
+                                .getName();
         PrivacyIDEA privacyIDEA;
         Configuration config;
         if (piInstanceMap.containsKey(kcRealm))
@@ -103,10 +107,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
         else
         {
-            config = new Configuration(context.getAuthenticatorConfig().getConfig());
+            config = new Configuration(context.getAuthenticatorConfig()
+                                              .getConfig());
             privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), PLUGIN_USER_AGENT)
                                      .sslVerify(config.sslVerify())
-                                     .logger(this).pollingIntervals(config.pollingInterval())
+                                     .logger(this)
+                                     .pollingIntervals(config.pollingInterval())
                                      .realm(config.realm())
                                      .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
                                      .serviceRealm(config.serviceAccountRealm())
@@ -122,27 +128,39 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentUser = user.getUsername();
 
         // Check if the current user is member of an excluded group
-        if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
+        if (user.getGroupsStream()
+                .map(GroupModel::getName)
+                .anyMatch(config.excludedGroups()::contains))
         {
             context.success();
             return;
         }
 
         String currentPassword = null;
-        if (context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        if (context.getHttpRequest()
+                   .getDecodedFormParameters()
+                   .get(PASSWORD) != null)
         {
-            currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
+            currentPassword = context.getHttpRequest()
+                                     .getDecodedFormParameters()
+                                     .get(PASSWORD)
+                                     .get(0);
         }
 
         // Get the language from the request headers to pass it to the ui and the privacyIDEA requests
-        String acceptLanguage = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
-                                       .get(HEADER_ACCEPT_LANGUAGE).get(0);
+        String acceptLanguage = context.getSession()
+                                       .getContext()
+                                       .getRequestHeaders()
+                                       .getRequestHeaders()
+                                       .get(HEADER_ACCEPT_LANGUAGE)
+                                       .get(0);
         String uiLanguage = "en";
         Map<String, String> languageHeader = new LinkedHashMap<>();
         if (acceptLanguage != null)
         {
             languageHeader.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
-            if (acceptLanguage.toLowerCase().startsWith("de"))
+            if (acceptLanguage.toLowerCase()
+                              .startsWith("de"))
             {
                 uiLanguage = "de";
             }
@@ -159,6 +177,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         boolean otpAvailable = true; // Always assume an OTP token
         String startingMode = "otp";
         String webAuthnSignRequest = "";
+        String u2fSignRequest = "";
+
 
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
@@ -182,7 +202,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             transactionID = triggerResponse.transactionID;
 
-            if (!triggerResponse.multiChallenge().isEmpty())
+            if (!triggerResponse.multiChallenge()
+                                .isEmpty())
             {
                 pushAvailable = triggerResponse.pushAvailable();
                 if (pushAvailable)
@@ -194,18 +215,34 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
                 // Check for WebAuthnSignRequest
                 // TODO currently only gets the first sign request
-                if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
+                if (triggerResponse.triggeredTokenTypes()
+                                   .contains(TOKEN_TYPE_WEBAUTHN))
                 {
                     List<WebAuthn> signRequests = triggerResponse.webAuthnSignRequests();
                     if (!signRequests.isEmpty())
                     {
-                        webAuthnSignRequest = signRequests.get(0).signRequest();
+                        webAuthnSignRequest = signRequests.get(0)
+                                                          .signRequest();
+                    }
+                }
+
+                // Check for U2FSignRequest
+                // TODO gets only first sign request for now
+                if (triggerResponse.triggeredTokenTypes()
+                                   .contains(TOKEN_TYPE_U2F))
+                {
+                    List<U2F> signRequests = triggerResponse.u2fSignRequests();
+                    if (!signRequests.isEmpty())
+                    {
+                        u2fSignRequest = signRequests.get(0)
+                                                     .signRequest();
                     }
                 }
             }
 
             // Check if any triggered token matches the preferred token type
-            if (triggerResponse.triggeredTokenTypes().contains(config.prefTokenType()))
+            if (triggerResponse.triggeredTokenTypes()
+                               .contains(config.prefTokenType()))
             {
                 startingMode = config.prefTokenType();
             }
@@ -227,22 +264,28 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 }
                 else
                 {
-                    context.form().setError("Configuration error, please check the log.");
+                    context.form()
+                           .setError("Configuration error, please check the log.");
                 }
             }
         }
 
         // Prepare the form and auth notes to pass infos to the UI and the next step
-        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
-        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
+        context.getAuthenticationSession()
+               .setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
+        context.getAuthenticationSession()
+               .setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
 
         if (transactionID != null && !transactionID.isEmpty())
         {
-            context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
+            context.getAuthenticationSession()
+                   .setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
 
 
-        Response responseForm = context.form().setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0))
+        Response responseForm = context.form()
+                                       .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval()
+                                                                               .get(0))
                                        .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
                                        .setAttribute(FORM_MODE, startingMode)
                                        .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
@@ -250,8 +293,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                        .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
                                        .setAttribute(FORM_OTP_MESSAGE, otpMessage)
                                        .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage).createForm(FORM_FILE_NAME);
-
+                                       .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
+                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+                                       .createForm(FORM_FILE_NAME);
         context.challenge(responseForm);
     }
 
@@ -263,7 +307,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void action(AuthenticationFlowContext context)
     {
-        String kcRealm = context.getRealm().getName();
+        String kcRealm = context.getRealm()
+                                .getName();
 
         PrivacyIDEA privacyIDEA;
         Configuration config;
@@ -279,7 +324,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                   AuthenticationFlowError.IDENTITY_PROVIDER_NOT_FOUND);
         }
 
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        MultivaluedMap<String, String> formData = context.getHttpRequest()
+                                                         .getDecodedFormParameters();
         if (formData.containsKey("cancel"))
         {
             context.cancelLogin();
@@ -298,11 +344,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
         String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
         String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
-        String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
-        String currentUserName = context.getUser().getUsername();
+        String transactionID = context.getAuthenticationSession()
+                                      .getAuthNote(AUTH_NOTE_TRANSACTION_ID);
+        String currentUserName = context.getUser()
+                                        .getUsername();
 
         // Reuse the accept-language for any requests made in this step
-        String acceptLanguage = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE);
+        String acceptLanguage = context.getAuthenticationSession()
+                                       .getAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE);
         Map<String, String> languageHeader = Collections.singletonMap(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
 
         String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
@@ -310,13 +359,20 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // The origin is set by the form every time, no need to put it in the form again
         String origin = formData.getFirst(FORM_WEBAUTHN_ORIGIN);
 
+        String u2fSignRequest = formData.getFirst(FORM_U2F_SIGN_REQUEST);
+        String u2fSignResponse = formData.getFirst(FORM_U2F_SIGN_RESPONSE);
+
         // Prepare the failure message, the message from privacyIDEA will be appended if possible
         String authenticationFailureMessage = "Authentication failed.";
 
         // Set the "old" values again
-        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR).setAttribute(FORM_MODE, currentMode)
-            .setAttribute(FORM_PUSH_AVAILABLE, pushToken).setAttribute(FORM_OTP_AVAILABLE, otpToken)
-            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest).setAttribute(FORM_UI_LANGUAGE, uiLanguage);
+        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+            .setAttribute(FORM_MODE, currentMode)
+            .setAttribute(FORM_PUSH_AVAILABLE, pushToken)
+            .setAttribute(FORM_OTP_AVAILABLE, otpToken)
+            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+            .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
+            .setAttribute(FORM_UI_LANGUAGE, uiLanguage);
 
         boolean didTrigger = false; // To not show the error message if something was triggered
         PIResponse response = null;
@@ -343,6 +399,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                              origin, languageHeader);
             }
         }
+        else if (u2fSignResponse != null && !u2fSignResponse.isEmpty())
+        {
+            response = privacyIDEA.validateCheckU2F(currentUserName, transactionID, u2fSignResponse, languageHeader);
+        }
         else if (!TRUE.equals(tokenTypeChanged))
         {
             String otp = formData.getFirst(FORM_OTP);
@@ -362,11 +422,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
             // If the authentication was not successful (yet), either the provided data was wrong
             // or another challenge was triggered
-            if (!response.multiChallenge().isEmpty())
+            if (!response.multiChallenge()
+                         .isEmpty())
             {
                 // A challenge was triggered, display its message and save the transaction id in the session
                 otpMessage = response.message;
-                context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.transactionID);
+                context.getAuthenticationSession()
+                       .setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.transactionID);
                 didTrigger = true;
             }
             else
@@ -378,13 +440,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // The authCounter is also used to determine the polling interval for push
         // If the authCounter is bigger than the size of the polling interval list, repeat the last value in the list
-        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
-        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 :
-                       authCounter);
-        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
+        int authCounter = Integer.parseInt(context.getAuthenticationSession()
+                                                  .getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
+        authCounter = (authCounter >= config.pollingInterval()
+                                            .size() ? config.pollingInterval()
+                                                            .size() - 1 : authCounter);
+        context.getAuthenticationSession()
+               .setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
 
         // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
-        form.setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(authCounter))
+        form.setAttribute(FORM_POLL_INTERVAL, config.pollingInterval()
+                                                    .get(authCounter))
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 

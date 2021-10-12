@@ -40,6 +40,11 @@
                     <input id="webauthnsignresponse" name="webauthnsignresponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
 
+                    <input id="u2fsignrequest" name="u2fsignrequest" value="${u2fsignrequest}"
+                           type="hidden">
+                    <input id="u2fsignresponse" name="u2fsignresponse" value="" type="hidden">
+                    <input id="origin" name="origin" value="" type="hidden">
+
                     <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
                            value="Sign in"/>
                     <input id="uilanguage" name="uilanguage" value="${uilanguage}" type="hidden">
@@ -105,7 +110,7 @@
                             <#if !(webauthnsignrequest = "")>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="useWebAuthnButton" id="useWebAuthnButton"
-                                       onClick="doWebAuthn()"
+                                       onclick="doWebAuthn()"
                                        type="button" value="WebAuthn"/>
 
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
@@ -143,7 +148,83 @@
                                     }
                                 </script>
                             </#if>
-                            <#if !push_available && (webauthnsignrequest = "")>
+
+                            <#-- U2F -->
+                            <#if !(u2fsignrequest = "")>
+                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                                       name="useU2FButton" id="useU2FButton"
+                                       onclick="doU2F()"
+                                       type="button" value="U2F"/>
+
+                                <script type="text/javascript" src="${url.resourcesPath}/pi-u2f.js"></script>
+
+                                <script>
+                                    'use strict';
+                                    if (document.getElementById("u2fsignrequest").value === "") {
+                                        document.getElementById("useU2FButton").style.display = "none";
+                                    }
+
+                                    if (document.getElementById("mode").value === "u2f") {
+                                        window.onload = () => {
+                                            doU2F();
+                                        }
+                                    }
+
+                                    function doU2F() {
+                                        // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt U2F
+                                        // Afterwards, U2F is started directly
+                                        if (document.getElementById("mode").value === "push") {
+                                            changeMode("u2f");
+                                        }
+
+                                        if (!window.isSecureContext) {
+                                            alert("Unable to proceed with U2F because the context is insecure!");
+                                            console.log("Insecure context detected: Aborting U2F authentication!")
+                                            changeMode("otp");
+                                            return;
+                                        }
+
+                                        const requestStr = document.getElementById("u2fsignrequest").value;
+
+                                        if (requestStr === null) {
+                                            alert("Could not load U2F library. Please try again or use other token.");
+                                            changeMode("otp");
+                                            return;
+                                        }
+
+                                        try {
+                                            const requestjson = JSON.parse(requestStr);
+                                            sign_u2f_request(requestjson);
+                                        } catch (err) {
+                                            console.log("Error while signing U2FSignRequest: " + err);
+                                            alert("Error while signing U2FSignRequest: " + err);
+                                        }
+                                    }
+
+                                    function sign_u2f_request(signRequest) {
+
+                                        let appId = signRequest["appId"];
+                                        let challenge = signRequest["challenge"];
+                                        let registeredKeys = [];
+
+                                        registeredKeys.push({
+                                            version: "U2F_V2",
+                                            keyHandle: signRequest["keyHandle"]
+                                        });
+
+                                        u2f.sign(appId, challenge, registeredKeys, function (result) {
+                                            const stringResult = JSON.stringify(result);
+                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData")) {
+                                                document.getElementById("u2fsignresponse").value = stringResult;
+                                                changeMode("u2f");
+                                                document.forms["kc-otp-login-form"].submit();
+                                            }
+                                        })
+                                    }
+                                </script>
+                            </#if>
+
+                            <#if !push_available && (u2fsignrequest = "") && (webauthnsignrequest = "")>
                                 <script>
                                     document.getElementById("alternateToken").style.display = "none";
                                 </script>

@@ -101,7 +101,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Do not set this to false in a productive environment. Disables the verification of the privacyIDEA server's certificate and hostname.");
         configProperties.add(piVerifySSL);
 
-        List<String> prefToken = Arrays.asList("OTP", "PUSH", "WebAuthn");
+        List<String> prefToken = Arrays.asList("OTP", "PUSH", "WebAuthn", "U2F");
         ProviderConfigProperty piPrefToken = new ProviderConfigProperty();
         piPrefToken.setType(ProviderConfigProperty.LIST_TYPE);
         piPrefToken.setName(Const.CONFIG_PREF_TOKENTYPE);
