@@ -220,6 +220,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (tokenInfos == null || tokenInfos.isEmpty())
             {
                 RolloutInfo rolloutInfo = privacyIDEA.tokenRollout(currentUser, config.enrollingTokenType());
+
                 if (rolloutInfo != null)
                 {
                     tokenEnrollmentQR = rolloutInfo.googleurl.img;
@@ -240,6 +241,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
 
+
         Response responseForm = context.form().setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0))
                                        .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
                                        .setAttribute(FORM_MODE, startingMode)
@@ -249,6 +251,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                        .setAttribute(FORM_OTP_MESSAGE, otpMessage)
                                        .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                                        .setAttribute(FORM_UI_LANGUAGE, uiLanguage).createForm(FORM_FILE_NAME);
+
         context.challenge(responseForm);
     }
 
