@@ -39,8 +39,8 @@ import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
 import static org.privacyidea.authenticator.Const.TRUE;
 
-class Configuration {
-
+class Configuration
+{
     private final String serverURL;
     private final String realm;
     private final boolean doSSLVerify;
@@ -57,100 +57,131 @@ class Configuration {
     private final List<Integer> pollingInterval = new ArrayList<>();
     private final String prefTokenType;
 
-    Configuration(Map<String, String> configMap) {
+    Configuration(Map<String, String> configMap)
+    {
         this.serverURL = configMap.get(CONFIG_SERVER);
         this.realm = configMap.get(CONFIG_REALM) == null ? "" : configMap.get(CONFIG_REALM);
         this.doSSLVerify = configMap.get(CONFIG_VERIFY_SSL) != null && configMap.get(CONFIG_VERIFY_SSL).equals(TRUE);
-        this.doTriggerChallenge = configMap.get(CONFIG_TRIGGER_CHALLENGE) != null && configMap.get(CONFIG_TRIGGER_CHALLENGE).equals(TRUE);
-        this.serviceAccountName = configMap.get(CONFIG_SERVICE_ACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICE_ACCOUNT);
+        this.doTriggerChallenge =
+                configMap.get(CONFIG_TRIGGER_CHALLENGE) != null && configMap.get(CONFIG_TRIGGER_CHALLENGE).equals(TRUE);
+        this.serviceAccountName =
+                configMap.get(CONFIG_SERVICE_ACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICE_ACCOUNT);
         this.serviceAccountPass = configMap.get(CONFIG_SERVICE_PASS) == null ? "" : configMap.get(CONFIG_SERVICE_PASS);
-        this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
+        this.serviceAccountRealm =
+                configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
 
-        this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
-        this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
+        this.doEnrollToken =
+                configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
+        this.doSendPassword =
+                configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         // PI uses all lowercase letters for token types so change it here to match it internally
-        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKENTYPE) == null ? TOKEN_TYPE_OTP : configMap.get(CONFIG_PREF_TOKENTYPE)).toLowerCase();
-        this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKENTYPE) == null ? "" : configMap.get(CONFIG_ENROLL_TOKENTYPE)).toLowerCase();
+        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKENTYPE) == null ? TOKEN_TYPE_OTP :
+                              configMap.get(CONFIG_PREF_TOKENTYPE)).toLowerCase();
+        this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKENTYPE) == null ? "" :
+                                   configMap.get(CONFIG_ENROLL_TOKENTYPE)).toLowerCase();
 
         this.doLog = configMap.get(CONFIG_DO_LOG) != null && configMap.get(CONFIG_DO_LOG).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
-        if (excludedGroupsStr != null) {
+        if (excludedGroupsStr != null)
+        {
             this.excludedGroups.addAll(Arrays.asList(excludedGroupsStr.split(",")));
         }
 
         // Set intervals to either default or configured values
         String s = configMap.get(CONFIG_PUSH_INTERVAL);
-        if (s != null) {
+        if (s != null)
+        {
             List<String> strPollingIntervals = Arrays.asList(s.split(","));
-            if (!strPollingIntervals.isEmpty()) {
+            if (!strPollingIntervals.isEmpty())
+            {
                 this.pollingInterval.clear();
-                for (String str : strPollingIntervals) {
-                    try {
+                for (String str : strPollingIntervals)
+                {
+                    try
+                    {
                         this.pollingInterval.add(Integer.parseInt(str));
-                    } catch (NumberFormatException e) {
+                    }
+                    catch (NumberFormatException e)
+                    {
                         this.pollingInterval.add(DEFAULT_POLLING_INTERVAL);
                     }
                 }
             }
-        } else {
+        }
+        else
+        {
             this.pollingInterval.addAll(DEFAULT_POLLING_ARRAY);
         }
     }
 
-    String serverURL() {
+    String serverURL()
+    {
         return serverURL;
     }
 
-    String realm() {
+    String realm()
+    {
         return realm;
     }
 
-    boolean sslVerify() {
+    boolean sslVerify()
+    {
         return doSSLVerify;
     }
 
-    boolean triggerChallenge() {
+    boolean triggerChallenge()
+    {
         return doTriggerChallenge;
     }
 
-    String serviceAccountName() {
+    String serviceAccountName()
+    {
         return serviceAccountName;
     }
 
-    String serviceAccountPass() {
+    String serviceAccountPass()
+    {
         return serviceAccountPass;
     }
 
-    String serviceAccountRealm() {
+    String serviceAccountRealm()
+    {
         return serviceAccountRealm;
     }
 
-    List<String> excludedGroups() {
+    List<String> excludedGroups()
+    {
         return excludedGroups;
     }
 
-    boolean enrollToken() {
+    boolean enrollToken()
+    {
         return doEnrollToken;
     }
 
-    String enrollingTokenType() {
+    String enrollingTokenType()
+    {
         return enrollingTokenType;
     }
 
-    List<Integer> pollingInterval() {
+    List<Integer> pollingInterval()
+    {
         return pollingInterval;
     }
 
-    boolean doLog() {
+    boolean doLog()
+    {
         return doLog;
     }
 
-    boolean sendPassword() {
+    boolean sendPassword()
+    {
         return doSendPassword;
     }
 
-    String prefTokenType() {
+    String prefTokenType()
+    {
         return prefTokenType;
     }
 }

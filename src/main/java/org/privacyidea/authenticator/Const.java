@@ -18,9 +18,10 @@ package org.privacyidea.authenticator;
 import java.util.Arrays;
 import java.util.List;
 
-final class Const {
-
-    private Const() {
+final class Const
+{
+    private Const()
+    {
     }
 
     static final String PROVIDER_ID = "privacyidea-authenticator";
@@ -35,9 +36,10 @@ final class Const {
     static final String TRUE = "true";
 
     static final String HEADER_ACCEPT_LANGUAGE = "accept-language";
-
-    static final int DEFAULT_POLLING_INTERVAL = 2; // Will be used if single value from config cannot be parsed
-    static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3); // Will be used if no intervals are specified
+    // Will be used if single value from config cannot be parsed
+    static final int DEFAULT_POLLING_INTERVAL = 2;
+    // Will be used if no intervals are specified
+    static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
 
     static final String FORM_POLL_INTERVAL = "pollingInterval";
     static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
