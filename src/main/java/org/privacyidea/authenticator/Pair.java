@@ -1,23 +1,25 @@
 package org.privacyidea.authenticator;
 
-public class Pair<F, S>
+import org.privacyidea.PrivacyIDEA;
+
+public class Pair
 {
-    private F first;
-    private S second;
+    private PrivacyIDEA privacyIDEA;
+    private Configuration configuration;
 
-    public Pair(F first, S second)
+    public Pair(PrivacyIDEA privacyIDEA, Configuration configuration)
     {
-        this.first = first;
-        this.second = second;
+        this.privacyIDEA = privacyIDEA;
+        this.configuration = configuration;
     }
 
-    public F first()
+    public PrivacyIDEA privacyIDEA()
     {
-        return first;
+        return privacyIDEA;
     }
 
-    public S second()
+    public Configuration configuration()
     {
-        return second;
+        return configuration;
     }
 }

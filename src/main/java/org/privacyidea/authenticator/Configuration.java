@@ -56,9 +56,11 @@ class Configuration
     private final String enrollingTokenType;
     private final List<Integer> pollingInterval = new ArrayList<>();
     private final String prefTokenType;
+    private final int configHash;
 
     Configuration(Map<String, String> configMap)
     {
+        this.configHash = configMap.hashCode();
         this.serverURL = configMap.get(CONFIG_SERVER);
         this.realm = configMap.get(CONFIG_REALM) == null ? "" : configMap.get(CONFIG_REALM);
         this.doSSLVerify = configMap.get(CONFIG_VERIFY_SSL) != null && configMap.get(CONFIG_VERIFY_SSL).equals(TRUE);
@@ -113,6 +115,11 @@ class Configuration
         {
             this.pollingInterval.addAll(DEFAULT_POLLING_ARRAY);
         }
+    }
+
+    int configHash()
+    {
+        return configHash;
     }
 
     String serverURL()
