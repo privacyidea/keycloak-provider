@@ -51,6 +51,7 @@ final class Const
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
     static final String FORM_UI_LANGUAGE = "uilanguage";
+    static final String FORM_ERROR = "hasError";
 
     // Webauthn form fields
     static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnsignrequest";

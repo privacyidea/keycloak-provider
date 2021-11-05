@@ -57,6 +57,7 @@ import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
+import static org.privacyidea.authenticator.Const.FORM_ERROR;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
 import static org.privacyidea.authenticator.Const.FORM_MODE;
 import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
@@ -204,7 +205,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (triggerResponse.error != null)
             {
                 context.form().setError(triggerResponse.error.message);
-                context.form().setAttribute("hasError", true);
+                context.form().setAttribute(FORM_ERROR, true);
             }
 
             transactionID = triggerResponse.transactionID;
@@ -266,7 +267,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     else
                     {
                         context.form().setError(rolloutInfo.error.message);
-                        context.form().setAttribute("hasError", true);
+                        context.form().setAttribute(FORM_ERROR, true);
                     }
                 }
                 else
@@ -408,6 +409,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (response.value)
             {
                 context.success();
+                return;
+            }
+
+            if (response.error != null)
+            {
+                form.setError(response.error.message);
+                form.setAttribute(FORM_ERROR, true);
+                context.failureChallenge(AuthenticationFlowError.INVALID_USER, form.createForm(FORM_FILE_NAME));
                 return;
             }
 
