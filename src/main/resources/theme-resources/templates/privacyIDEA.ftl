@@ -8,13 +8,15 @@
         <form id="kc-otp-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
-                    <#if mode = "push">
-                        ${pushMessage}
-                    <#else>
-                        ${otpMessage}
+                    <#if (!hasError)!true>
+                        <#if mode = "push">
+                          <h4 style="font-weight: bold">${pushMessage}</h4>
+                        <#else>
+                            <h4 style="font-weight: bold">${otpMessage}</h4>
+                        </#if>
                     </#if>
                     <#-- Show QR code for new token, if one has been enrolled -->
-                    <#if tokenEnrollmentQR != "">
+                    <#if (tokenEnrollmentQR!"") != "">
                         <div style="text-align: center;">
                             <img width="256" height="256" src="${tokenEnrollmentQR}">
                         </div>
@@ -26,8 +28,7 @@
 
             <div class="${properties.kcFormGroupClass!}">
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
-                    <#--These inputs will be returned to privacyIDEAAuthenticator-->
-                    <input id="tokenEnrollmentQR" name="tokenEnrollmentQR" value="${tokenEnrollmentQR}" type="hidden">
+                    <#-- These inputs will be returned to privacyIDEAAuthenticator -->
                     <input id="mode" name="mode" value="${mode}" type="hidden">
                     <input id="push_available" name="push_available" value="${push_available?c}" type="hidden">
                     <input id="otp_available" name="otp_available" value="${otp_available?c}" type="hidden">
@@ -35,23 +36,23 @@
                     <input id="otpMessage" name="otpMessage" value="${otpMessage}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
 
-                    <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest}"
+                    <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"
                            type="hidden">
                     <input id="webauthnsignresponse" name="webauthnsignresponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
 
-                    <input id="u2fsignrequest" name="u2fsignrequest" value="${u2fsignrequest}"
+                    <input id="u2fsignrequest" name="u2fsignrequest" value="${u2fsignrequest!""}"
                            type="hidden">
                     <input id="u2fsignresponse" name="u2fsignresponse" value="" type="hidden">
-                    <input id="origin" name="origin" value="" type="hidden">
 
                     <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
                            value="Sign in"/>
-                    <input id="uilanguage" name="uilanguage" value="${uilanguage}" type="hidden">
+                    <input id="uilanguage" name="uilanguage" value="${uilanguage!"en"}" type="hidden">
 
-                    <#-- ALTERNATE LOGIN OPTIONS -->
-                    <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
+                    <#-- ALTERNATE LOGIN OPTIONS class="${properties.kcFormButtonsClass!}" -->
+                    <div id="alternateToken" style="padding-top: 20px">
                         <h3 id="alternateTokenHeader">Alternate Login Options</h3>
+
                         <div class="${properties.kcFormButtonsWrapperClass!}">
                             <script>
                                 'use strict';
@@ -60,11 +61,6 @@
                                     document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
                                     document.getElementById("kc-login").value = "Anmelden";
                                 }
-
-                                if (!window.location.origin) {
-                                    window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-                                }
-                                document.getElementById("origin").value = window.origin;
 
                                 function changeMode(newMode) {
                                     // Submit the form to pass the change to the authenticator
@@ -126,9 +122,14 @@
                                         }
                                     }
 
+                                    if (!window.location.origin) {
+                                        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+                                    }
+                                    document.getElementById("origin").value = window.origin;
+
                                     function doWebAuthn() {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt webauthn
-                                        // Afterwards, webauthn is started directly
+                                        // Afterward, webauthn is started directly
                                         if (document.getElementById("mode").value === "push") {
                                             changeMode("webauthn");
                                         }
@@ -172,7 +173,7 @@
 
                                     function doU2F() {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt U2F
-                                        // Afterwards, U2F is started directly
+                                        // Afterward, U2F is started directly
                                         if (document.getElementById("mode").value === "push") {
                                             changeMode("u2f");
                                         }
@@ -202,7 +203,6 @@
                                     }
 
                                     function sign_u2f_request(signRequest) {
-
                                         let appId = signRequest["appId"];
                                         let challenge = signRequest["challenge"];
                                         let registeredKeys = [];
@@ -218,6 +218,8 @@
                                                 document.getElementById("u2fsignresponse").value = stringResult;
                                                 changeMode("u2f");
                                                 document.forms["kc-otp-login-form"].submit();
+                                            } else {
+                                                console.log("Malformed U2F signing result: " + stringResult);
                                             }
                                         })
                                     }
@@ -227,6 +229,15 @@
                             <#if !push_available && (u2fsignrequest = "") && (webauthnsignrequest = "")>
                                 <script>
                                     document.getElementById("alternateToken").style.display = "none";
+                                </script>
+                            </#if>
+
+                            <#if hasError!false>
+                                <script>
+                                    document.getElementById("alternateToken").style.display = "none";
+                                    document.getElementById("kc-login").style.display = "none";
+                                    document.getElementById("otp").style.display = "none";
+                                    document.getElementById("otpMessage").value = "";
                                 </script>
                             </#if>
                         </div>

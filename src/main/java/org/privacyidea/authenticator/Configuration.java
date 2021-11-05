@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
-import static org.privacyidea.authenticator.Const.CONFIG_DO_LOG;
+import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
-import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKENTYPE;
+import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKENTYPE;
+import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
 import static org.privacyidea.authenticator.Const.CONFIG_REALM;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
@@ -77,12 +77,12 @@ class Configuration
         this.doSendPassword =
                 configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         // PI uses all lowercase letters for token types so change it here to match it internally
-        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKENTYPE) == null ? TOKEN_TYPE_OTP :
-                              configMap.get(CONFIG_PREF_TOKENTYPE)).toLowerCase();
-        this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKENTYPE) == null ? "" :
-                                   configMap.get(CONFIG_ENROLL_TOKENTYPE)).toLowerCase();
+        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKEN_TYPE) == null ? TOKEN_TYPE_OTP :
+                              configMap.get(CONFIG_PREF_TOKEN_TYPE)).toLowerCase();
+        this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKEN_TYPE) == null ? "" :
+                                   configMap.get(CONFIG_ENROLL_TOKEN_TYPE)).toLowerCase();
 
-        this.doLog = configMap.get(CONFIG_DO_LOG) != null && configMap.get(CONFIG_DO_LOG).equals(TRUE);
+        this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)

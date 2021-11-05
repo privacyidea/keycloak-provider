@@ -61,13 +61,14 @@ final class Const
     static final String FORM_U2F_SIGN_REQUEST = "u2fsignrequest";
     static final String FORM_U2F_SIGN_RESPONSE = "u2fsignresponse";
 
-    static final String AUTH_NOTE_TRANSACTION_ID = "pi.transaction_id";
+    static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
     static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
 
+    // Changing the config value names will reset the current config
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
-    static final String CONFIG_ENROLL_TOKENTYPE = "pienrolltokentype";
+    static final String CONFIG_ENROLL_TOKEN_TYPE = "pienrolltokentype";
     static final String CONFIG_ENROLL_TOKEN = "pienrolltoken";
     static final String CONFIG_SEND_PASSWORD = "pisendpassword";
     static final String CONFIG_SERVICE_PASS = "piservicepass";
@@ -77,6 +78,6 @@ final class Const
     static final String CONFIG_VERIFY_SSL = "piverifyssl";
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
-    static final String CONFIG_DO_LOG = "pidolog";
-    static final String CONFIG_PREF_TOKENTYPE = "preftokentype";
+    static final String CONFIG_ENABLE_LOG = "pidolog";
+    static final String CONFIG_PREF_TOKEN_TYPE = "preftokentype";
 }

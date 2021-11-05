@@ -82,7 +82,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
 
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
-    private boolean doLog = false;
+    private boolean logEnabled = false;
 
     /**
      * Create new instances of PrivacyIDEA and the Configuration. Also adds them to the instance map.
@@ -136,7 +136,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
         Configuration config = currentPair.configuration();
-        doLog = config.doLog();
+        logEnabled = config.doLog();
         // Get the things that were submitted in the first username+password form
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
@@ -204,6 +204,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (triggerResponse.error != null)
             {
                 context.form().setError(triggerResponse.error.message);
+                context.form().setAttribute("hasError", true);
             }
 
             transactionID = triggerResponse.transactionID;
@@ -265,11 +266,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     else
                     {
                         context.form().setError(rolloutInfo.error.message);
+                        context.form().setAttribute("hasError", true);
                     }
                 }
                 else
                 {
-                    context.form().setError("Configuration error, please check the log.");
+                    context.form().setError("Configuration error, please check the log file.");
                 }
             }
         }
@@ -474,7 +476,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void log(String message)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.info("PrivacyIDEA SDK: " + message);
         }
@@ -483,7 +485,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void error(String message)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.error("PrivacyIDEA SDK: " + message);
         }
@@ -492,7 +494,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void log(Throwable t)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.info("PrivacyIDEA SDK: ", t);
         }
@@ -501,7 +503,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void error(Throwable t)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.error("PrivacyIDEA SDK: ", t);
         }
