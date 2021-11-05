@@ -104,7 +104,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         List<String> prefToken = Arrays.asList("OTP", "PUSH", "WebAuthn", "U2F");
         ProviderConfigProperty piPrefToken = new ProviderConfigProperty();
         piPrefToken.setType(ProviderConfigProperty.LIST_TYPE);
-        piPrefToken.setName(Const.CONFIG_PREF_TOKENTYPE);
+        piPrefToken.setName(Const.CONFIG_PREF_TOKEN_TYPE);
         piPrefToken.setLabel("Preferred Login Token Type");
         piPrefToken.setHelpText(
                 "Select the token type for which the login interface should be shown first. If other token types are available for login, it will be possible to change the interface when logging in. " +
@@ -172,7 +172,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         List<String> tokenTypes = Arrays.asList("HOTP", "TOTP");
         ProviderConfigProperty piTokenType = new ProviderConfigProperty();
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
-        piTokenType.setName(Const.CONFIG_ENROLL_TOKENTYPE);
+        piTokenType.setName(Const.CONFIG_ENROLL_TOKEN_TYPE);
         piTokenType.setLabel("Enrollment token type");
         piTokenType.setHelpText(
                 "Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
@@ -190,7 +190,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
 
         ProviderConfigProperty piDoLog = new ProviderConfigProperty();
         piDoLog.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoLog.setName(Const.CONFIG_DO_LOG);
+        piDoLog.setName(Const.CONFIG_ENABLE_LOG);
         piDoLog.setLabel("Enable logging");
         piDoLog.setHelpText("If enabled, log messages will be written to the keycloak server logfile.");
         piDoLog.setDefaultValue("false");

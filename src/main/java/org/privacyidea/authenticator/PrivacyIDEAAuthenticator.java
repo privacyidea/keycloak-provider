@@ -57,6 +57,7 @@ import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
+import static org.privacyidea.authenticator.Const.FORM_ERROR;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
 import static org.privacyidea.authenticator.Const.FORM_MODE;
 import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
@@ -82,7 +83,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
 
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
-    private boolean doLog = false;
+    private boolean logEnabled = false;
 
     /**
      * Create new instances of PrivacyIDEA and the Configuration. Also adds them to the instance map.
@@ -136,7 +137,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
         Configuration config = currentPair.configuration();
-        doLog = config.doLog();
+        logEnabled = config.doLog();
         // Get the things that were submitted in the first username+password form
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
@@ -204,6 +205,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (triggerResponse.error != null)
             {
                 context.form().setError(triggerResponse.error.message);
+                context.form().setAttribute(FORM_ERROR, true);
             }
 
             transactionID = triggerResponse.transactionID;
@@ -265,11 +267,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     else
                     {
                         context.form().setError(rolloutInfo.error.message);
+                        context.form().setAttribute(FORM_ERROR, true);
                     }
                 }
                 else
                 {
-                    context.form().setError("Configuration error, please check the log.");
+                    context.form().setError("Configuration error, please check the log file.");
                 }
             }
         }
@@ -409,6 +412,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
 
+            if (response.error != null)
+            {
+                form.setError(response.error.message);
+                form.setAttribute(FORM_ERROR, true);
+                context.failureChallenge(AuthenticationFlowError.INVALID_USER, form.createForm(FORM_FILE_NAME));
+                return;
+            }
+
             // If the authentication was not successful (yet), either the provided data was wrong
             // or another challenge was triggered
             if (!response.multiChallenge().isEmpty())
@@ -474,7 +485,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void log(String message)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.info("PrivacyIDEA SDK: " + message);
         }
@@ -483,7 +494,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void error(String message)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.error("PrivacyIDEA SDK: " + message);
         }
@@ -492,7 +503,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void log(Throwable t)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.info("PrivacyIDEA SDK: ", t);
         }
@@ -501,7 +512,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void error(Throwable t)
     {
-        if (doLog)
+        if (logEnabled)
         {
             logger.error("PrivacyIDEA SDK: ", t);
         }
