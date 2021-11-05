@@ -1,5 +1,10 @@
 # Changelog
 
+### v1.0.0 - 2021-11-06
+
+* Support for different configurations in different keycloak realms
+* U2F
+
 ### v0.6 - 2021-04-03
 
 * WebAuthn support
