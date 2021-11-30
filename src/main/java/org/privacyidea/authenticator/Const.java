@@ -30,7 +30,7 @@ final class Const
     static final String DEFAULT_PUSH_MESSAGE_DE = "Bitte bestätigen Sie die Authentifizierung auf ihrem Smartphone!";
 
     static final String DEFAULT_OTP_MESSAGE_EN = "Please enter your One-Time-Password!";
-    static final String DEFAULT_OTP_MESSAGE_DE = "Bitte geben Sie ihr Einmalpassword ein!";
+    static final String DEFAULT_OTP_MESSAGE_DE = "Bitte geben Sie ihr Einmalpasswort ein!";
 
     static final String TRUE = "true";
 
