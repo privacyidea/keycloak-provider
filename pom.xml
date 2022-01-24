@@ -39,7 +39,7 @@
     <dependencies>
         <dependency>
             <groupId>org.privacyidea</groupId>
-            <artifactId>sdk-java</artifactId>
+            <artifactId>privacyidea-java-client</artifactId>
             <version>1.0.0</version>
         </dependency>
 
