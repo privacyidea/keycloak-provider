@@ -42,7 +42,7 @@ The different configuration parameters that are available on the configuration p
 | Enable logging | Enable this to have the privacyIDEA Keycloak provider write log messages to the keycloak log file. |
 
 ## Manual build with source code
-* First, the SDK submodule has to be build using maven: ``mvn clean install`` in ``lib\sdk-java``.
+* First, the client submodule has to be build using maven: ``mvn clean install`` in ``java-client``.
 
 * If the wildfly server is running and remote deployment is configured in the ``pom.xml``, the authenticator can directly be deployed with
 ``mvn clean install wildfly:deploy``.
