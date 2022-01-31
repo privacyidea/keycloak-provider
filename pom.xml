@@ -134,7 +134,7 @@
                         <configuration>
                             <artifactSet>
                                 <includes>
-                                    <include>org.privacyidea:sdk-java</include>
+                                    <include>org.privacyidea:privacyidea-java-client</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
