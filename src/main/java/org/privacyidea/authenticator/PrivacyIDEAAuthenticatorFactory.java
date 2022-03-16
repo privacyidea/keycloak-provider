@@ -160,6 +160,14 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2)");
         configProperties.add(piExcludeGroups);
 
+        ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
+        piIncludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
+        piIncludeGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
+        piIncludeGroups.setLabel("Included groups");
+        piIncludeGroups.setHelpText(
+                "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ','. (E.g. group1,group2)");
+        configProperties.add(piIncludeGroups);
+
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piEnrollToken.setName(Const.CONFIG_ENROLL_TOKEN);

@@ -142,6 +142,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
 
+        // Check if the current user is member of an included group
+        // If not - skip privacyIDEA
+        if (!user.getGroupsStream().map(GroupModel::getName).anyMatch(config.includedGroups()::contains))
+        {
+            context.success();
+            return;
+        }
+
         // Check if the current user is member of an excluded group
         if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
         {

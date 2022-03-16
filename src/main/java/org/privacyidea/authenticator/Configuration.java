@@ -25,6 +25,7 @@ import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
 import static org.privacyidea.authenticator.Const.CONFIG_REALM;
@@ -51,6 +52,7 @@ class Configuration
     private final String serviceAccountPass;
     private final String serviceAccountRealm;
     private final List<String> excludedGroups = new ArrayList<>();
+    private final List<String> includedGroups = new ArrayList<>();
     private final boolean doEnrollToken;
     private final boolean doLog;
     private final String enrollingTokenType;
@@ -88,6 +90,12 @@ class Configuration
         if (excludedGroupsStr != null)
         {
             this.excludedGroups.addAll(Arrays.asList(excludedGroupsStr.split(",")));
+        }
+
+        String includedGroupsStr = configMap.get(CONFIG_INCLUDED_GROUPS);
+        if (includedGroupsStr != null)
+        {
+            this.includedGroups.addAll(Arrays.asList(includedGroupsStr.split(",")));
         }
 
         // Set intervals to either default or configured values
@@ -160,6 +168,11 @@ class Configuration
     List<String> excludedGroups()
     {
         return excludedGroups;
+    }
+
+    List<String> includedGroups()
+    {
+        return includedGroups;
     }
 
     boolean enrollToken()
