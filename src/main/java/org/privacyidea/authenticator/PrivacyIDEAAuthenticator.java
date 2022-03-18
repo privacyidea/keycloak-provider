@@ -221,10 +221,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 otpMessage = triggerResponse.otpMessage();
 
                 // Check for WebAuthn and U2F
-                // TODO currently only gets the first sign request
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
                 {
-                    List<WebAuthn> signRequests = triggerResponse.webAuthnSignRequests();
+                    List<WebAuthn> signRequests = triggerResponse.mergedSignRequest();
                     if (!signRequests.isEmpty())
                     {
                         webAuthnSignRequest = signRequests.get(0).signRequest();
