@@ -22,14 +22,10 @@
  */
 package org.privacyidea.authenticator;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import org.keycloak.Config;
-import org.keycloak.models.AuthenticationExecutionModel;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.KeycloakSessionFactory;
-import org.keycloak.provider.ProviderConfigProperty;
+import java.util.*;
+import org.keycloak.*;
+import org.keycloak.models.*;
+import org.keycloak.provider.*;
 
 public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authentication.AuthenticatorFactory, org.keycloak.authentication.ConfigurableAuthenticatorFactory
 {
@@ -106,9 +102,9 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPrefToken.setType(ProviderConfigProperty.LIST_TYPE);
         piPrefToken.setName(Const.CONFIG_PREF_TOKEN_TYPE);
         piPrefToken.setLabel("Preferred Login Token Type");
-        piPrefToken.setHelpText(
-                "Select the token type for which the login interface should be shown first. If other token types are available for login, it will be possible to change the interface when logging in. " +
-                "If the selected token type is not available, because no token of such type was triggered, the interface will default to OTP.");
+        piPrefToken.setHelpText("Select the token type for which the login interface should be shown first. " +
+                                "If other token types are available for login, it will be possible to change the interface when logging in. " +
+                                "If the selected token type is not available, because no token of such type was triggered, the interface will default to OTP.");
         piPrefToken.setOptions(prefToken);
         piPrefToken.setDefaultValue(prefToken.get(0));
         configProperties.add(piPrefToken);
@@ -118,7 +114,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
         piDoSendPassword.setLabel("Enable sending password");
         piDoSendPassword.setHelpText(
-                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. This setting is mutually exclusive with trigger challenge.");
+                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
+                "This setting is mutually exclusive with trigger challenge.");
         configProperties.add(piDoSendPassword);
 
         ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
@@ -126,7 +123,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
         piDoTriggerChallenge.setLabel("Enable trigger challenge");
         piDoTriggerChallenge.setHelpText(
-                "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. This setting is mutually exclusive with send password and will take precedence.");
+                "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. " +
+                "This setting is mutually exclusive with send password and will take precedence.");
         configProperties.add(piDoTriggerChallenge);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
@@ -149,16 +147,9 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServiceRealm.setName(Const.CONFIG_SERVICE_REALM);
         piServiceRealm.setLabel("Service account realm");
         piServiceRealm.setHelpText(
-                "Realm of the service account, if it is in a separate realm from the other accounts. Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
+                "Realm of the service account, if it is in a separate realm from the other accounts. " +
+                "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
         configProperties.add(piServiceRealm);
-
-        ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
-        piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
-        piExcludeGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
-        piExcludeGroups.setLabel("Excluded groups");
-        piExcludeGroups.setHelpText(
-                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2)");
-        configProperties.add(piExcludeGroups);
 
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
         piIncludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
@@ -167,6 +158,15 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piIncludeGroups.setHelpText(
                 "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ','. (E.g. group1,group2)");
         configProperties.add(piIncludeGroups);
+
+        ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
+        piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
+        piExcludeGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
+        piExcludeGroups.setLabel("Excluded groups");
+        piExcludeGroups.setHelpText(
+                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2). " +
+                "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
+        configProperties.add(piExcludeGroups);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);

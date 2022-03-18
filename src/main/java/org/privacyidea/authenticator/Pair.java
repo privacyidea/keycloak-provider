@@ -1,6 +1,6 @@
 package org.privacyidea.authenticator;
 
-import org.privacyidea.PrivacyIDEA;
+import org.privacyidea.*;
 
 public class Pair
 {

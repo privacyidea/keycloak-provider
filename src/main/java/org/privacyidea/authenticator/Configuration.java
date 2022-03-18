@@ -15,30 +15,12 @@
  */
 package org.privacyidea.authenticator;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
-import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
-import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
-import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
-import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
-import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
-import static org.privacyidea.authenticator.Const.CONFIG_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
-import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
+import static org.privacyidea.PIConstants.*;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
-import static org.privacyidea.authenticator.Const.TRUE;
+import static org.privacyidea.authenticator.Const.*;
 
 class Configuration
 {
@@ -65,26 +47,29 @@ class Configuration
         this.configHash = configMap.hashCode();
         this.serverURL = configMap.get(CONFIG_SERVER);
         this.realm = configMap.get(CONFIG_REALM) == null ? "" : configMap.get(CONFIG_REALM);
-        this.doSSLVerify = configMap.get(CONFIG_VERIFY_SSL) != null && configMap.get(CONFIG_VERIFY_SSL).equals(TRUE);
-        this.doTriggerChallenge =
-                configMap.get(CONFIG_TRIGGER_CHALLENGE) != null && configMap.get(CONFIG_TRIGGER_CHALLENGE).equals(TRUE);
+        this.doSSLVerify = configMap.get(CONFIG_VERIFY_SSL) != null && configMap.get(CONFIG_VERIFY_SSL)
+                                                                                .equals(TRUE);
+        this.doTriggerChallenge = configMap.get(CONFIG_TRIGGER_CHALLENGE) != null &&
+                                  configMap.get(CONFIG_TRIGGER_CHALLENGE)
+                                           .equals(TRUE);
         this.serviceAccountName =
                 configMap.get(CONFIG_SERVICE_ACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICE_ACCOUNT);
         this.serviceAccountPass = configMap.get(CONFIG_SERVICE_PASS) == null ? "" : configMap.get(CONFIG_SERVICE_PASS);
         this.serviceAccountRealm =
                 configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
 
-        this.doEnrollToken =
-                configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
-        this.doSendPassword =
-                configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
+        this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN)
+                                                                                    .equals(TRUE);
+        this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD)
+                                                                                      .equals(TRUE);
         // PI uses all lowercase letters for token types so change it here to match it internally
         this.prefTokenType = (configMap.get(CONFIG_PREF_TOKEN_TYPE) == null ? TOKEN_TYPE_OTP :
                               configMap.get(CONFIG_PREF_TOKEN_TYPE)).toLowerCase();
         this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKEN_TYPE) == null ? "" :
                                    configMap.get(CONFIG_ENROLL_TOKEN_TYPE)).toLowerCase();
 
-        this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
+        this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG)
+                                                                          .equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
