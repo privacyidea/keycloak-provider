@@ -162,7 +162,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         String currentPassword = null;
         if (context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
-
         {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
@@ -173,7 +172,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String uiLanguage = "en";
         Map<String, String> languageHeader = new LinkedHashMap<>();
         if (acceptLanguage != null)
-
         {
             languageHeader.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
             if (acceptLanguage.toLowerCase().startsWith("de"))
@@ -197,12 +195,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
-
         {
             triggerResponse = privacyIDEA.triggerChallenges(currentUser, languageHeader);
         }
         else if (config.sendPassword())
-
         {
             if (currentPassword != null)
             {
@@ -216,7 +212,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Evaluate for possibly triggered token
         if (triggerResponse != null)
-
         {
             if (triggerResponse.error != null)
             {
@@ -267,7 +262,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Enroll token if enabled and user does not have one. If something was triggered before, don't even try.
         String tokenEnrollmentQR = "";
         if (config.enrollToken() && (transactionID == null || transactionID.isEmpty()))
-
         {
             List<TokenInfo> tokenInfos = privacyIDEA.getTokenInfo(currentUser);
 
@@ -303,7 +297,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
 
         if (transactionID != null && !transactionID.isEmpty())
-
         {
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
