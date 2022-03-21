@@ -22,10 +22,14 @@
  */
 package org.privacyidea.authenticator;
 
-import java.util.*;
-import org.keycloak.*;
-import org.keycloak.models.*;
-import org.keycloak.provider.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.keycloak.Config;
+import org.keycloak.models.AuthenticationExecutionModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.provider.ProviderConfigProperty;
 
 public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authentication.AuthenticatorFactory, org.keycloak.authentication.ConfigurableAuthenticatorFactory
 {

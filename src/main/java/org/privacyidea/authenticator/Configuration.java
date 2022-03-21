@@ -15,12 +15,30 @@
  */
 package org.privacyidea.authenticator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
-import static org.privacyidea.PIConstants.*;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
+import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
+import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
+import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
+import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
+import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
+import static org.privacyidea.authenticator.Const.CONFIG_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
+import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
-import static org.privacyidea.authenticator.Const.*;
+import static org.privacyidea.authenticator.Const.TRUE;
 
 class Configuration
 {

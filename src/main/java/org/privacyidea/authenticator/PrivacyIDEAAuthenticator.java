@@ -22,17 +22,61 @@
  */
 package org.privacyidea.authenticator;
 
-import java.util.*;
-import java.util.concurrent.*;
-import javax.ws.rs.core.*;
-import org.jboss.logging.*;
-import org.keycloak.authentication.*;
-import org.keycloak.forms.login.*;
-import org.keycloak.models.*;
-import org.privacyidea.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.authentication.AuthenticationFlowError;
+import org.keycloak.authentication.AuthenticationFlowException;
+import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.models.GroupModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserModel;
+import org.privacyidea.IPILogger;
+import org.privacyidea.PIResponse;
+import org.privacyidea.PrivacyIDEA;
+import org.privacyidea.RolloutInfo;
+import org.privacyidea.TokenInfo;
+import org.privacyidea.U2F;
+import org.privacyidea.WebAuthn;
 
-import static org.privacyidea.PIConstants.*;
-import static org.privacyidea.authenticator.Const.*;
+import static org.privacyidea.PIConstants.PASSWORD;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_U2F;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
+import static org.privacyidea.authenticator.Const.AUTH_NOTE_ACCEPT_LANGUAGE;
+import static org.privacyidea.authenticator.Const.AUTH_NOTE_AUTH_COUNTER;
+import static org.privacyidea.authenticator.Const.AUTH_NOTE_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_DE;
+import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
+import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
+import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
+import static org.privacyidea.authenticator.Const.FORM_ERROR;
+import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
+import static org.privacyidea.authenticator.Const.FORM_MODE;
+import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
+import static org.privacyidea.authenticator.Const.FORM_OTP;
+import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
+import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
+import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
+import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
+import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
+import static org.privacyidea.authenticator.Const.FORM_TOKEN_ENROLLMENT_QR;
+import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_REQUEST;
+import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_RESPONSE;
+import static org.privacyidea.authenticator.Const.FORM_UI_LANGUAGE;
+import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_ORIGIN;
+import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_SIGN_REQUEST;
+import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_SIGN_RESPONSE;
+import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
+import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
+import static org.privacyidea.authenticator.Const.TRUE;
 
 public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger
 {
@@ -131,193 +175,197 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
-    String currentPassword = null;
-        if(context.getHttpRequest().
+        String currentPassword = null;
+        if (context.getHttpRequest()
+                   .
 
-    getDecodedFormParameters().
+                           getDecodedFormParameters()
+                   .
 
-    get(PASSWORD) !=null)
+                           get(PASSWORD) != null)
 
-    {
-        currentPassword = context.getHttpRequest()
-                                 .getDecodedFormParameters()
-                                 .get(PASSWORD)
-                                 .get(0);
-    }
-
-    // Get the language from the request headers to pass it to the ui and the privacyIDEA requests
-    String acceptLanguage = context.getSession()
-                                   .getContext()
-                                   .getRequestHeaders()
-                                   .getRequestHeaders()
-                                   .get(HEADER_ACCEPT_LANGUAGE)
-                                   .get(0);
-    String uiLanguage = "en";
-    Map<String, String> languageHeader = new LinkedHashMap<>();
-        if(acceptLanguage !=null)
-
-    {
-        languageHeader.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
-        if (acceptLanguage.toLowerCase()
-                          .startsWith("de"))
         {
-            uiLanguage = "de";
-        }
-    }
-
-    // Prepare for possibly triggering challenges
-    PIResponse triggerResponse = null;
-    String transactionID = null;
-    String pushMessage = uiLanguage.equals("en") ? DEFAULT_PUSH_MESSAGE_EN : DEFAULT_PUSH_MESSAGE_DE;
-    String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
-
-    // Variables to configure the UI
-    boolean pushAvailable = false;
-    boolean otpAvailable = true; // Always assume an OTP token
-    String startingMode = "otp";
-    String webAuthnSignRequest = "";
-    String u2fSignRequest = "";
-
-    // Trigger challenges if configured. Service account has precedence over send password
-        if(config.triggerChallenge())
-
-    {
-        triggerResponse = privacyIDEA.triggerChallenges(currentUser, languageHeader);
-    }
-        else if(config.sendPassword())
-
-    {
-        if (currentPassword != null)
-        {
-            triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, languageHeader);
-        }
-        else
-        {
-            log("Cannot send password because it is null!");
-        }
-    }
-
-    // Evaluate for possibly triggered token
-        if(triggerResponse !=null)
-
-    {
-        if (triggerResponse.error != null)
-        {
-            context.form()
-                   .setError(triggerResponse.error.message);
-            context.form()
-                   .setAttribute(FORM_ERROR, true);
+            currentPassword = context.getHttpRequest()
+                                     .getDecodedFormParameters()
+                                     .get(PASSWORD)
+                                     .get(0);
         }
 
-        transactionID = triggerResponse.transactionID;
+        // Get the language from the request headers to pass it to the ui and the privacyIDEA requests
+        String acceptLanguage = context.getSession()
+                                       .getContext()
+                                       .getRequestHeaders()
+                                       .getRequestHeaders()
+                                       .get(HEADER_ACCEPT_LANGUAGE)
+                                       .get(0);
+        String uiLanguage = "en";
+        Map<String, String> languageHeader = new LinkedHashMap<>();
+        if (acceptLanguage != null)
 
-        if (!triggerResponse.multiChallenge()
-                            .isEmpty())
         {
-            pushAvailable = triggerResponse.pushAvailable();
-            if (pushAvailable)
+            languageHeader.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
+            if (acceptLanguage.toLowerCase()
+                              .startsWith("de"))
             {
-                pushMessage = triggerResponse.pushMessage();
+                uiLanguage = "de";
+            }
+        }
+
+        // Prepare for possibly triggering challenges
+        PIResponse triggerResponse = null;
+        String transactionID = null;
+        String pushMessage = uiLanguage.equals("en") ? DEFAULT_PUSH_MESSAGE_EN : DEFAULT_PUSH_MESSAGE_DE;
+        String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
+
+        // Variables to configure the UI
+        boolean pushAvailable = false;
+        boolean otpAvailable = true; // Always assume an OTP token
+        String startingMode = "otp";
+        String webAuthnSignRequest = "";
+        String u2fSignRequest = "";
+
+        // Trigger challenges if configured. Service account has precedence over send password
+        if (config.triggerChallenge())
+
+        {
+            triggerResponse = privacyIDEA.triggerChallenges(currentUser, languageHeader);
+        }
+        else if (config.sendPassword())
+
+        {
+            if (currentPassword != null)
+            {
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, languageHeader);
+            }
+            else
+            {
+                log("Cannot send password because it is null!");
+            }
+        }
+
+        // Evaluate for possibly triggered token
+        if (triggerResponse != null)
+
+        {
+            if (triggerResponse.error != null)
+            {
+                context.form()
+                       .setError(triggerResponse.error.message);
+                context.form()
+                       .setAttribute(FORM_ERROR, true);
             }
 
-            otpMessage = triggerResponse.otpMessage();
+            transactionID = triggerResponse.transactionID;
 
-            // Check for WebAuthn and U2F
-            // TODO currently only gets the first sign request
-            if (triggerResponse.triggeredTokenTypes()
-                               .contains(TOKEN_TYPE_WEBAUTHN))
+            if (!triggerResponse.multiChallenge()
+                                .isEmpty())
             {
-                List<WebAuthn> signRequests = triggerResponse.webAuthnSignRequests();
-                if (!signRequests.isEmpty())
+                pushAvailable = triggerResponse.pushAvailable();
+                if (pushAvailable)
                 {
-                    webAuthnSignRequest = signRequests.get(0)
-                                                      .signRequest();
+                    pushMessage = triggerResponse.pushMessage();
+                }
+
+                otpMessage = triggerResponse.otpMessage();
+
+                // Check for WebAuthn and U2F
+                // TODO currently only gets the first sign request
+                if (triggerResponse.triggeredTokenTypes()
+                                   .contains(TOKEN_TYPE_WEBAUTHN))
+                {
+                    List<WebAuthn> signRequests = triggerResponse.webAuthnSignRequests();
+                    if (!signRequests.isEmpty())
+                    {
+                        webAuthnSignRequest = signRequests.get(0)
+                                                          .signRequest();
+                    }
+                }
+
+                if (triggerResponse.triggeredTokenTypes()
+                                   .contains(TOKEN_TYPE_U2F))
+                {
+                    List<U2F> signRequests = triggerResponse.u2fSignRequests();
+                    if (!signRequests.isEmpty())
+                    {
+                        u2fSignRequest = signRequests.get(0)
+                                                     .signRequest();
+                    }
                 }
             }
 
+            // Check if any triggered token matches the preferred token type
             if (triggerResponse.triggeredTokenTypes()
-                               .contains(TOKEN_TYPE_U2F))
+                               .contains(config.prefTokenType()))
             {
-                List<U2F> signRequests = triggerResponse.u2fSignRequests();
-                if (!signRequests.isEmpty())
-                {
-                    u2fSignRequest = signRequests.get(0)
-                                                 .signRequest();
-                }
+                startingMode = config.prefTokenType();
             }
         }
 
-        // Check if any triggered token matches the preferred token type
-        if (triggerResponse.triggeredTokenTypes()
-                           .contains(config.prefTokenType()))
+        // Enroll token if enabled and user does not have one. If something was triggered before, don't even try.
+        String tokenEnrollmentQR = "";
+        if (config.enrollToken() && (transactionID == null || transactionID.isEmpty()))
+
         {
-            startingMode = config.prefTokenType();
-        }
-    }
+            List<TokenInfo> tokenInfos = privacyIDEA.getTokenInfo(currentUser);
 
-    // Enroll token if enabled and user does not have one. If something was triggered before, don't even try.
-    String tokenEnrollmentQR = "";
-        if(config.enrollToken()&&(transactionID ==null||transactionID.isEmpty()))
-
-    {
-        List<TokenInfo> tokenInfos = privacyIDEA.getTokenInfo(currentUser);
-
-        if (tokenInfos == null || tokenInfos.isEmpty())
-        {
-            RolloutInfo rolloutInfo = privacyIDEA.tokenRollout(currentUser, config.enrollingTokenType());
-
-            if (rolloutInfo != null)
+            if (tokenInfos == null || tokenInfos.isEmpty())
             {
-                if (rolloutInfo.error == null)
+                RolloutInfo rolloutInfo = privacyIDEA.tokenRollout(currentUser, config.enrollingTokenType());
+
+                if (rolloutInfo != null)
                 {
-                    tokenEnrollmentQR = rolloutInfo.googleurl.img;
+                    if (rolloutInfo.error == null)
+                    {
+                        tokenEnrollmentQR = rolloutInfo.googleurl.img;
+                    }
+                    else
+                    {
+                        context.form()
+                               .setError(rolloutInfo.error.message);
+                        context.form()
+                               .setAttribute(FORM_ERROR, true);
+                    }
                 }
                 else
                 {
                     context.form()
-                           .setError(rolloutInfo.error.message);
-                    context.form()
-                           .setAttribute(FORM_ERROR, true);
+                           .setError("Configuration error, please check the log file.");
                 }
             }
-            else
-            {
-                context.form()
-                       .setError("Configuration error, please check the log file.");
-            }
         }
-    }
 
-    // Prepare the form and auth notes to pass infos to the UI and the next step
-        context.getAuthenticationSession().
-
-    setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
-        context.getAuthenticationSession().
-
-    setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
-
-        if(transactionID !=null&&!transactionID.isEmpty())
-
-    {
+        // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession()
-               .setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
-    }
+               .
 
-    Response responseForm = context.form()
-                                   .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval()
-                                                                           .get(0))
-                                   .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
-                                   .setAttribute(FORM_MODE, startingMode)
-                                   .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
-                                   .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
-                                   .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
-                                   .setAttribute(FORM_OTP_MESSAGE, otpMessage)
-                                   .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-                                   .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
-                                   .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
-                                   .createForm(FORM_FILE_NAME);
+                       setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
+        context.getAuthenticationSession()
+               .
+
+                       setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
+
+        if (transactionID != null && !transactionID.isEmpty())
+
+        {
+            context.getAuthenticationSession()
+                   .setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
+        }
+
+        Response responseForm = context.form()
+                                       .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval()
+                                                                               .get(0))
+                                       .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+                                       .setAttribute(FORM_MODE, startingMode)
+                                       .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
+                                       .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
+                                       .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
+                                       .setAttribute(FORM_OTP_MESSAGE, otpMessage)
+                                       .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+                                       .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
+                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+                                       .createForm(FORM_FILE_NAME);
         context.challenge(responseForm);
-}
+    }
 
     /**
      * This function will be called when the privacyIDEA form is submitted.

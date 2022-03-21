@@ -14,7 +14,8 @@
   */
  package org.privacyidea.authenticator;
 
- import java.util.*;
+ import java.util.Arrays;
+ import java.util.List;
 
  final class Const
  {
