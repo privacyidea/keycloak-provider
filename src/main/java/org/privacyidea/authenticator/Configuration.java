@@ -1,12 +1,12 @@
 /**
  * Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,29 +65,26 @@ class Configuration
         this.configHash = configMap.hashCode();
         this.serverURL = configMap.get(CONFIG_SERVER);
         this.realm = configMap.get(CONFIG_REALM) == null ? "" : configMap.get(CONFIG_REALM);
-        this.doSSLVerify = configMap.get(CONFIG_VERIFY_SSL) != null && configMap.get(CONFIG_VERIFY_SSL)
-                                                                                .equals(TRUE);
-        this.doTriggerChallenge = configMap.get(CONFIG_TRIGGER_CHALLENGE) != null &&
-                                  configMap.get(CONFIG_TRIGGER_CHALLENGE)
-                                           .equals(TRUE);
+        this.doSSLVerify = configMap.get(CONFIG_VERIFY_SSL) != null && configMap.get(CONFIG_VERIFY_SSL).equals(TRUE);
+        this.doTriggerChallenge =
+                configMap.get(CONFIG_TRIGGER_CHALLENGE) != null && configMap.get(CONFIG_TRIGGER_CHALLENGE).equals(TRUE);
         this.serviceAccountName =
                 configMap.get(CONFIG_SERVICE_ACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICE_ACCOUNT);
         this.serviceAccountPass = configMap.get(CONFIG_SERVICE_PASS) == null ? "" : configMap.get(CONFIG_SERVICE_PASS);
         this.serviceAccountRealm =
                 configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
 
-        this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN)
-                                                                                    .equals(TRUE);
-        this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD)
-                                                                                      .equals(TRUE);
+        this.doEnrollToken =
+                configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
+        this.doSendPassword =
+                configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         // PI uses all lowercase letters for token types so change it here to match it internally
         this.prefTokenType = (configMap.get(CONFIG_PREF_TOKEN_TYPE) == null ? TOKEN_TYPE_OTP :
                               configMap.get(CONFIG_PREF_TOKEN_TYPE)).toLowerCase();
         this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKEN_TYPE) == null ? "" :
                                    configMap.get(CONFIG_ENROLL_TOKEN_TYPE)).toLowerCase();
 
-        this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG)
-                                                                          .equals(TRUE);
+        this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
