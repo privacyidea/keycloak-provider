@@ -289,12 +289,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Prepare the form and auth notes to pass infos to the UI and the next step
-        context.getAuthenticationSession().
-
-                setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
-        context.getAuthenticationSession().
-
-                setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
+        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
+        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
 
         if (transactionID != null && !transactionID.isEmpty())
         {
@@ -502,7 +498,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.info("PrivacyIDEA SDK: " + message);
+            logger.info("PrivacyIDEA Client: " + message);
         }
     }
 
@@ -511,7 +507,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.error("PrivacyIDEA SDK: " + message);
+            logger.error("PrivacyIDEA Client: " + message);
         }
     }
 
@@ -520,7 +516,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.info("PrivacyIDEA SDK: ", t);
+            logger.info("PrivacyIDEA Client: ", t);
         }
     }
 
@@ -529,7 +525,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.error("PrivacyIDEA SDK: ", t);
+            logger.error("PrivacyIDEA Client: ", t);
         }
     }
 }
