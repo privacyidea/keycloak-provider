@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
  * - Modified
