@@ -143,7 +143,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentUser = user.getUsername();
 
         // Check if the current user is member of an included or excluded group
-        if (!(config.includedGroups().isEmpty()))
+        if (!config.includedGroups().isEmpty())
         {
             if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains))
             {
@@ -151,7 +151,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
         }
-        else if (!(config.excludedGroups().isEmpty()))
+        else if (!config.excludedGroups().isEmpty())
         {
             if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
             {
