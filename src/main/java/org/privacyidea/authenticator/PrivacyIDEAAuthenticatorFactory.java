@@ -1,19 +1,19 @@
-/*
+/**
  * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
  * - Modified
- *
+ * <p>
  * Based on original code:
- *
+ * <p>
  * Copyright 2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,9 +106,9 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPrefToken.setType(ProviderConfigProperty.LIST_TYPE);
         piPrefToken.setName(Const.CONFIG_PREF_TOKEN_TYPE);
         piPrefToken.setLabel("Preferred Login Token Type");
-        piPrefToken.setHelpText(
-                "Select the token type for which the login interface should be shown first. If other token types are available for login, it will be possible to change the interface when logging in. " +
-                "If the selected token type is not available, because no token of such type was triggered, the interface will default to OTP.");
+        piPrefToken.setHelpText("Select the token type for which the login interface should be shown first. " +
+                                "If other token types are available for login, it will be possible to change the interface when logging in. " +
+                                "If the selected token type is not available, because no token of such type was triggered, the interface will default to OTP.");
         piPrefToken.setOptions(prefToken);
         piPrefToken.setDefaultValue(prefToken.get(0));
         configProperties.add(piPrefToken);
@@ -118,7 +118,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
         piDoSendPassword.setLabel("Enable sending password");
         piDoSendPassword.setHelpText(
-                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. This setting is mutually exclusive with trigger challenge.");
+                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
+                "This setting is mutually exclusive with trigger challenge.");
         configProperties.add(piDoSendPassword);
 
         ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
@@ -126,7 +127,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
         piDoTriggerChallenge.setLabel("Enable trigger challenge");
         piDoTriggerChallenge.setHelpText(
-                "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. This setting is mutually exclusive with send password and will take precedence.");
+                "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. " +
+                "This setting is mutually exclusive with send password and will take precedence.");
         configProperties.add(piDoTriggerChallenge);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
@@ -149,15 +151,25 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServiceRealm.setName(Const.CONFIG_SERVICE_REALM);
         piServiceRealm.setLabel("Service account realm");
         piServiceRealm.setHelpText(
-                "Realm of the service account, if it is in a separate realm from the other accounts. Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
+                "Realm of the service account, if it is in a separate realm from the other accounts. " +
+                "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
         configProperties.add(piServiceRealm);
+
+        ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
+        piIncludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
+        piIncludeGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
+        piIncludeGroups.setLabel("Included groups");
+        piIncludeGroups.setHelpText(
+                "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ','. (E.g. group1,group2)");
+        configProperties.add(piIncludeGroups);
 
         ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
         piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
         piExcludeGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
         piExcludeGroups.setLabel("Excluded groups");
         piExcludeGroups.setHelpText(
-                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2)");
+                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2). " +
+                "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();

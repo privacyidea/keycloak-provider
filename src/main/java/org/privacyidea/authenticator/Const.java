@@ -1,5 +1,6 @@
- /* Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
- *
+/**
+ * Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -69,6 +70,7 @@ final class Const
     // Changing the config value names will reset the current config
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
+    static final String CONFIG_INCLUDED_GROUPS = "piincludegroups";
     static final String CONFIG_ENROLL_TOKEN_TYPE = "pienrolltokentype";
     static final String CONFIG_ENROLL_TOKEN = "pienrolltoken";
     static final String CONFIG_SEND_PASSWORD = "pisendpassword";

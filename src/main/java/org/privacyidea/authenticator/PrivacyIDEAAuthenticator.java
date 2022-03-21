@@ -1,19 +1,19 @@
-/*
+/**
  * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
  * - Modified
- *
+ * <p>
  * Based on original code:
- *
+ * <p>
  * Copyright 2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,11 +142,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         UserModel user = context.getUser();
         String currentUser = user.getUsername();
 
-        // Check if the current user is member of an excluded group
-        if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
+        // Check if the current user is member of an included or excluded group
+        if (!config.includedGroups().isEmpty())
         {
-            context.success();
-            return;
+            if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains))
+            {
+                context.success();
+                return;
+            }
+        }
+        else if (!config.excludedGroups().isEmpty())
+        {
+            if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
+            {
+                context.success();
+                return;
+            }
         }
 
         String currentPassword = null;
@@ -487,7 +498,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.info("PrivacyIDEA SDK: " + message);
+            logger.info("PrivacyIDEA Client: " + message);
         }
     }
 
@@ -496,7 +507,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.error("PrivacyIDEA SDK: " + message);
+            logger.error("PrivacyIDEA Client: " + message);
         }
     }
 
@@ -505,7 +516,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.info("PrivacyIDEA SDK: ", t);
+            logger.info("PrivacyIDEA Client: ", t);
         }
     }
 
@@ -514,7 +525,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.error("PrivacyIDEA SDK: ", t);
+            logger.error("PrivacyIDEA Client: ", t);
         }
     }
 }
