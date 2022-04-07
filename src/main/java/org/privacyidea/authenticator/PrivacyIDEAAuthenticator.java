@@ -234,10 +234,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 // Check for WebAuthn and U2F
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
                 {
-                    List<WebAuthn> signRequests = triggerResponse.mergedSignRequest();
-                    if (!signRequests.isEmpty())
+                    if (!triggerResponse.mergedSignRequest().isEmpty())
                     {
-                        webAuthnSignRequest = signRequests.get(0).signRequest();
+                        webAuthnSignRequest = triggerResponse.mergedSignRequest();
                     }
                 }
 
