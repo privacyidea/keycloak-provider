@@ -169,26 +169,25 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String acceptLanguage = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
                                        .get(HEADER_ACCEPT_LANGUAGE).get(0);
         String uiLanguage = "en";
-        Map<String, String> attachHeaders = new LinkedHashMap<>();
+        Map<String, String> forwardHeaders = new LinkedHashMap<>();
         if (acceptLanguage != null)
         {
-            attachHeaders.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
+            forwardHeaders.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
             if (acceptLanguage.toLowerCase().startsWith("de"))
             {
                 uiLanguage = "de";
             }
         }
 
-        // Attach headers set in config to the PI request
-        if (!config.attachHeaders().isEmpty())
+        // Forward headers set in config to the PI request
+        if (!config.headersListFromConfig().isEmpty())
         {
-            config.attachHeaders().forEach(header ->
+            config.headersListFromConfig().forEach(header ->
                                       {
-                                          String[] parts = header.split("=");
-                                          String part1 = parts[0];
-                                          String part2 = parts[1];
+                                          String temp = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
+                                                               .get(header).get(0);
 
-                                          attachHeaders.put(part1, part2);
+                                          forwardHeaders.put(header, temp);
                                       });
         }
 
@@ -208,13 +207,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
         {
-            triggerResponse = privacyIDEA.triggerChallenges(currentUser, attachHeaders);
+            triggerResponse = privacyIDEA.triggerChallenges(currentUser, forwardHeaders);
         }
         else if (config.sendPassword())
         {
             if (currentPassword != null)
             {
-                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, attachHeaders);
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, forwardHeaders);
             }
             else
             {

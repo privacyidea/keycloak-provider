@@ -160,7 +160,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piIncludeGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
         piIncludeGroups.setLabel("Included groups");
         piIncludeGroups.setHelpText(
-                "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ','. (E.g. group1,group2)");
+                "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ',' (E.g. group1,group2)");
         configProperties.add(piIncludeGroups);
 
         ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
@@ -168,18 +168,18 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piExcludeGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
         piExcludeGroups.setLabel("Excluded groups");
         piExcludeGroups.setHelpText(
-                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2). " +
+                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ',' (E.g. group1,group2). " +
                 "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
 
-        ProviderConfigProperty piAttachHeaders = new ProviderConfigProperty();
-        piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
-        piExcludeGroups.setName(Const.CONFIG_ATTACH_HEADERS);
-        piExcludeGroups.setLabel("Attach headers");
-        piExcludeGroups.setHelpText(
-                "Set the headers which should be forwarded to the privacyIDEA with every API request. " +
-                "The headers should be separated with ',' using no space (E.g. accept-language=en,Authorization=credentials).");
-        configProperties.add(piAttachHeaders);
+        ProviderConfigProperty piForwardHeaders = new ProviderConfigProperty();
+        piForwardHeaders.setType(ProviderConfigProperty.STRING_TYPE);
+        piForwardHeaders.setName(Const.CONFIG_FORWARD_HEADERS);
+        piForwardHeaders.setLabel("Forward headers");
+        piForwardHeaders.setHelpText(
+                "Set the headers which should be forwarded to the privacyIDEA with every API request if available. " +
+                "The headers should be separated with ',' (E.g. accept-language,Authorization).");
+        configProperties.add(piForwardHeaders);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
