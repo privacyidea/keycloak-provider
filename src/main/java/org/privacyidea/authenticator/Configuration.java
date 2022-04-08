@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
+import static org.privacyidea.authenticator.Const.CONFIG_ATTACH_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
@@ -53,6 +54,7 @@ class Configuration
     private final String serviceAccountRealm;
     private final List<String> excludedGroups = new ArrayList<>();
     private final List<String> includedGroups = new ArrayList<>();
+    private final List<String> attachHeaders = new ArrayList<>();
     private final boolean doEnrollToken;
     private final boolean doLog;
     private final String enrollingTokenType;
@@ -96,6 +98,12 @@ class Configuration
         if (includedGroupsStr != null)
         {
             this.includedGroups.addAll(Arrays.asList(includedGroupsStr.split(",")));
+        }
+
+        String attachHeadersStr = configMap.get(CONFIG_ATTACH_HEADERS);
+        if (attachHeadersStr != null)
+        {
+            this.attachHeaders.addAll(Arrays.asList(attachHeadersStr.split(",")));
         }
 
         // Set intervals to either default or configured values
@@ -173,6 +181,11 @@ class Configuration
     List<String> includedGroups()
     {
         return includedGroups;
+    }
+
+    List<String> attachHeaders()
+    {
+        return attachHeaders;
     }
 
     boolean enrollToken()
