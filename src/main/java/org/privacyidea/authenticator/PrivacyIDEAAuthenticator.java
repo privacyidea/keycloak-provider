@@ -44,7 +44,6 @@ import org.privacyidea.PrivacyIDEA;
 import org.privacyidea.RolloutInfo;
 import org.privacyidea.TokenInfo;
 import org.privacyidea.U2F;
-import org.privacyidea.WebAuthn;
 
 import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
@@ -170,14 +169,27 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String acceptLanguage = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
                                        .get(HEADER_ACCEPT_LANGUAGE).get(0);
         String uiLanguage = "en";
-        Map<String, String> languageHeader = new LinkedHashMap<>();
+        Map<String, String> attachHeaders = new LinkedHashMap<>();
         if (acceptLanguage != null)
         {
-            languageHeader.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
+            attachHeaders.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
             if (acceptLanguage.toLowerCase().startsWith("de"))
             {
                 uiLanguage = "de";
             }
+        }
+
+        // Attach headers set in config to the PI request
+        if (!config.attachHeaders().isEmpty())
+        {
+            config.attachHeaders().forEach(header ->
+                                      {
+                                          String[] parts = header.split("=");
+                                          String part1 = parts[0];
+                                          String part2 = parts[1];
+
+                                          attachHeaders.put(part1, part2);
+                                      });
         }
 
         // Prepare for possibly triggering challenges
@@ -196,13 +208,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
         {
-            triggerResponse = privacyIDEA.triggerChallenges(currentUser, languageHeader);
+            triggerResponse = privacyIDEA.triggerChallenges(currentUser, attachHeaders);
         }
         else if (config.sendPassword())
         {
             if (currentPassword != null)
             {
-                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, languageHeader);
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, attachHeaders);
             }
             else
             {
@@ -234,10 +246,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 // Check for WebAuthn and U2F
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
                 {
-                    List<WebAuthn> signRequests = triggerResponse.mergedSignRequest();
-                    if (!signRequests.isEmpty())
+                    if (!triggerResponse.mergedSignRequest().isEmpty())
                     {
-                        webAuthnSignRequest = signRequests.get(0).signRequest();
+                        webAuthnSignRequest = triggerResponse.mergedSignRequest();
                     }
                 }
 
