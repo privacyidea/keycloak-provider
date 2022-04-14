@@ -95,8 +95,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         Configuration config = new Configuration(configMap);
         PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), PLUGIN_USER_AGENT)
-                                             .sslVerify(config.sslVerify()).logger(this)
-                                             .pollingIntervals(config.pollingInterval()).realm(config.realm())
+                                             .sslVerify(config.sslVerify()).logger(this).realm(config.realm())
                                              .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
                                              .serviceRealm(config.serviceAccountRealm()).build();
         Pair pair = new Pair(privacyIDEA, config);
@@ -183,12 +182,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (!config.headersListFromConfig().isEmpty())
         {
             config.headersListFromConfig().forEach(header ->
-                                      {
-                                          String temp = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
-                                                               .get(header).get(0);
+                                                   {
+                                                       String temp = context.getSession().getContext()
+                                                                            .getRequestHeaders().getRequestHeaders()
+                                                                            .get(header).get(0);
 
-                                          forwardHeaders.put(header, temp);
-                                      });
+                                                       forwardHeaders.put(header, temp);
+                                                   });
         }
 
         // Prepare for possibly triggering challenges
