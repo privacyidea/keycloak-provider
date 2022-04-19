@@ -172,14 +172,14 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
 
-        ProviderConfigProperty piForwardHeaders = new ProviderConfigProperty();
-        piForwardHeaders.setType(ProviderConfigProperty.STRING_TYPE);
-        piForwardHeaders.setName(Const.CONFIG_FORWARD_HEADERS);
-        piForwardHeaders.setLabel("Forward headers");
-        piForwardHeaders.setHelpText(
-                "Set the headers which should be forwarded to the privacyIDEA with every API request if available. " +
+        ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();
+        piForwardedHeaders.setType(ProviderConfigProperty.STRING_TYPE);
+        piForwardedHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
+        piForwardedHeaders.setLabel("Forward headers");
+        piForwardedHeaders.setHelpText(
+                "Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. " +
                 "The headers should be separated with ',' (E.g. accept-language,Authorization).");
-        configProperties.add(piForwardHeaders);
+        configProperties.add(piForwardedHeaders);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
-import static org.privacyidea.authenticator.Const.CONFIG_FORWARD_HEADERS;
+import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
@@ -54,7 +54,7 @@ class Configuration
     private final String serviceAccountRealm;
     private final List<String> excludedGroups = new ArrayList<>();
     private final List<String> includedGroups = new ArrayList<>();
-    private final List<String> forwardHeaders = new ArrayList<>();
+    private final List<String> forwardedHeaders = new ArrayList<>();
     private final boolean doEnrollToken;
     private final boolean doLog;
     private final String enrollingTokenType;
@@ -100,10 +100,10 @@ class Configuration
             this.includedGroups.addAll(Arrays.asList(includedGroupsStr.split(",")));
         }
 
-        String forwardHeadersStr = configMap.get(CONFIG_FORWARD_HEADERS);
-        if (forwardHeadersStr != null)
+        String forwardedHeadersStr = configMap.get(CONFIG_FORWARDED_HEADERS);
+        if (forwardedHeadersStr != null)
         {
-            this.forwardHeaders.addAll(Arrays.asList(forwardHeadersStr.split(",")));
+            this.forwardedHeaders.addAll(Arrays.asList(forwardedHeadersStr.split(",")));
         }
 
         // Set intervals to either default or configured values
@@ -183,9 +183,9 @@ class Configuration
         return includedGroups;
     }
 
-    List<String> headersListFromConfig()
+    List<String> forwardedHeaders()
     {
-        return forwardHeaders;
+        return forwardedHeaders;
     }
 
     boolean enrollToken()

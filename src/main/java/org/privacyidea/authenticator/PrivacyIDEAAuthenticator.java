@@ -22,11 +22,13 @@
  */
 package org.privacyidea.authenticator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -179,15 +181,30 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Forward headers set in config to the PI request
-        if (!config.headersListFromConfig().isEmpty())
+        if (!config.forwardedHeaders().isEmpty())
         {
-            config.headersListFromConfig().forEach(header ->
+            config.forwardedHeaders().forEach(header ->
                                                    {
-                                                       String temp = context.getSession().getContext()
-                                                                            .getRequestHeaders().getRequestHeaders()
-                                                                            .get(header).get(0);
+                                                       List<String> headerValues = new ArrayList<>();
 
-                                                       forwardHeaders.put(header, temp);
+                                                       if (context.getSession().getContext()
+                                                                  .getRequestHeaders().getRequestHeaders()
+                                                                  .get(header) != null)
+                                                       {
+                                                           headerValues = context.getSession().getContext()
+                                                                                              .getRequestHeaders().getRequestHeaders()
+                                                                                              .get(header);
+                                                       }
+
+                                                       if (!headerValues.isEmpty())
+                                                       {
+                                                           String temp = String.join(",", headerValues);
+                                                           forwardHeaders.put(header, temp);
+                                                       }
+                                                       else
+                                                       {
+                                                            log("No values for header " + header + " found.");
+                                                       }
                                                    });
         }
 
