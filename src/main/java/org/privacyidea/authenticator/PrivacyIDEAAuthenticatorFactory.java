@@ -160,7 +160,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piIncludeGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
         piIncludeGroups.setLabel("Included groups");
         piIncludeGroups.setHelpText(
-                "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ','. (E.g. group1,group2)");
+                "Set groups for which the privacyIDEA workflow will be activated. The names should be separated with ',' (E.g. group1,group2)");
         configProperties.add(piIncludeGroups);
 
         ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
@@ -168,9 +168,18 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piExcludeGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
         piExcludeGroups.setLabel("Excluded groups");
         piExcludeGroups.setHelpText(
-                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ','. (E.g. group1,group2). " +
+                "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ',' (E.g. group1,group2). " +
                 "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
+
+        ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();
+        piForwardedHeaders.setType(ProviderConfigProperty.STRING_TYPE);
+        piForwardedHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
+        piForwardedHeaders.setLabel("Forward headers");
+        piForwardedHeaders.setHelpText(
+                "Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. " +
+                "The headers should be separated with ',' (E.g. accept-language,Authorization).");
+        configProperties.add(piForwardedHeaders);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
         piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);

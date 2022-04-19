@@ -22,11 +22,13 @@
  */
 package org.privacyidea.authenticator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -44,7 +46,6 @@ import org.privacyidea.PrivacyIDEA;
 import org.privacyidea.RolloutInfo;
 import org.privacyidea.TokenInfo;
 import org.privacyidea.U2F;
-import org.privacyidea.WebAuthn;
 
 import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
@@ -96,8 +97,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         Configuration config = new Configuration(configMap);
         PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), PLUGIN_USER_AGENT)
-                                             .sslVerify(config.sslVerify()).logger(this)
-                                             .pollingIntervals(config.pollingInterval()).realm(config.realm())
+                                             .sslVerify(config.sslVerify()).logger(this).realm(config.realm())
                                              .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
                                              .serviceRealm(config.serviceAccountRealm()).build();
         Pair pair = new Pair(privacyIDEA, config);
@@ -170,13 +170,34 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String acceptLanguage = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
                                        .get(HEADER_ACCEPT_LANGUAGE).get(0);
         String uiLanguage = "en";
-        Map<String, String> languageHeader = new LinkedHashMap<>();
+        Map<String, String> forwardHeaders = new LinkedHashMap<>();
         if (acceptLanguage != null)
         {
-            languageHeader.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
+            forwardHeaders.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
             if (acceptLanguage.toLowerCase().startsWith("de"))
             {
                 uiLanguage = "de";
+            }
+        }
+
+        // Forward headers set in config to the PI request
+        if (!config.forwardedHeaders().isEmpty())
+        {
+            for (String header : config.forwardedHeaders())
+            {
+                List<String> headerValues = context.getSession().getContext()
+                                                   .getRequestHeaders()
+                                                   .getRequestHeaders().get(header);
+
+                if (headerValues != null && !headerValues.isEmpty())
+                {
+                    String temp = String.join(",", headerValues);
+                    forwardHeaders.put(header, temp);
+                }
+                else
+                {
+                    log("No values for header " + header + " found.");
+                }
             }
         }
 
@@ -196,13 +217,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
         {
-            triggerResponse = privacyIDEA.triggerChallenges(currentUser, languageHeader);
+            triggerResponse = privacyIDEA.triggerChallenges(currentUser, forwardHeaders);
         }
         else if (config.sendPassword())
         {
             if (currentPassword != null)
             {
-                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, languageHeader);
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, forwardHeaders);
             }
             else
             {
@@ -234,10 +255,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 // Check for WebAuthn and U2F
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
                 {
-                    List<WebAuthn> signRequests = triggerResponse.mergedSignRequest();
-                    if (!signRequests.isEmpty())
+                    if (!triggerResponse.mergedSignRequest().isEmpty())
                     {
-                        webAuthnSignRequest = signRequests.get(0).signRequest();
+                        webAuthnSignRequest = triggerResponse.mergedSignRequest();
                     }
                 }
 
