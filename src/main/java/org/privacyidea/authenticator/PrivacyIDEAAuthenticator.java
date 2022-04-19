@@ -183,29 +183,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Forward headers set in config to the PI request
         if (!config.forwardedHeaders().isEmpty())
         {
-            config.forwardedHeaders().forEach(header ->
-                                                   {
-                                                       List<String> headerValues = new ArrayList<>();
+            for (String header : config.forwardedHeaders())
+            {
+                List<String> headerValues = context.getSession().getContext()
+                                                   .getRequestHeaders()
+                                                   .getRequestHeaders().get(header);
 
-                                                       if (context.getSession().getContext()
-                                                                  .getRequestHeaders().getRequestHeaders()
-                                                                  .get(header) != null)
-                                                       {
-                                                           headerValues = context.getSession().getContext()
-                                                                                              .getRequestHeaders().getRequestHeaders()
-                                                                                              .get(header);
-                                                       }
-
-                                                       if (!headerValues.isEmpty())
-                                                       {
-                                                           String temp = String.join(",", headerValues);
-                                                           forwardHeaders.put(header, temp);
-                                                       }
-                                                       else
-                                                       {
-                                                            log("No values for header " + header + " found.");
-                                                       }
-                                                   });
+                if (headerValues != null && !headerValues.isEmpty())
+                {
+                    String temp = String.join(",", headerValues);
+                    forwardHeaders.put(header, temp);
+                }
+                else
+                {
+                    log("No values for header " + header + " found.");
+                }
+            }
         }
 
         // Prepare for possibly triggering challenges
