@@ -22,13 +22,10 @@
  */
 package org.privacyidea.authenticator;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -51,7 +48,6 @@ import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_U2F;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
-import static org.privacyidea.authenticator.Const.AUTH_NOTE_ACCEPT_LANGUAGE;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_AUTH_COUNTER;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_DE;
@@ -166,40 +162,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
 
-        // Get the language from the request headers to pass it to the ui and the privacyIDEA requests
-        String acceptLanguage = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
-                                       .get(HEADER_ACCEPT_LANGUAGE).get(0);
-        String uiLanguage = "en";
-        Map<String, String> forwardHeaders = new LinkedHashMap<>();
-        if (acceptLanguage != null)
-        {
-            forwardHeaders.put(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
-            if (acceptLanguage.toLowerCase().startsWith("de"))
-            {
-                uiLanguage = "de";
-            }
-        }
-
-        // Forward headers set in config to the PI request
-        if (!config.forwardedHeaders().isEmpty())
-        {
-            for (String header : config.forwardedHeaders())
-            {
-                List<String> headerValues = context.getSession().getContext()
-                                                   .getRequestHeaders()
-                                                   .getRequestHeaders().get(header);
-
-                if (headerValues != null && !headerValues.isEmpty())
-                {
-                    String temp = String.join(",", headerValues);
-                    forwardHeaders.put(header, temp);
-                }
-                else
-                {
-                    log("No values for header " + header + " found.");
-                }
-            }
-        }
+        Map<String, String> forwardHeaders = getHeadersToForward(context, config);
+        String uiLanguage = forwardHeaders.get(HEADER_ACCEPT_LANGUAGE);
 
         // Prepare for possibly triggering challenges
         PIResponse triggerResponse = null;
@@ -255,9 +219,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 // Check for WebAuthn and U2F
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
                 {
-                    if (!triggerResponse.mergedSignRequest().isEmpty())
+                    String signRequests = triggerResponse.mergedSignRequest();
+                    if (!signRequests.isEmpty())
                     {
-                        webAuthnSignRequest = triggerResponse.mergedSignRequest();
+                        webAuthnSignRequest = signRequests;
                     }
                 }
 
@@ -309,7 +274,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
-        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE, acceptLanguage);
 
         if (transactionID != null && !transactionID.isEmpty())
         {
@@ -374,11 +338,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
         String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
         String currentUserName = context.getUser().getUsername();
-
-        // Reuse the accept-language for any requests made in this step
-        String acceptLanguage = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_ACCEPT_LANGUAGE);
-        Map<String, String> languageHeader = Collections.singletonMap(HEADER_ACCEPT_LANGUAGE, acceptLanguage);
-
+        Map<String, String> forwardHeaders = getHeadersToForward(context, config);
         String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
         String webAuthnSignResponse = formData.getFirst(FORM_WEBAUTHN_SIGN_RESPONSE);
         // The origin is set by the form every time, no need to put it in the form again
@@ -406,7 +366,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (privacyIDEA.pollTransaction(transactionID))
             {
                 // If the challenge has been answered, finalize with a call to validate check
-                response = privacyIDEA.validateCheck(currentUserName, "", transactionID, languageHeader);
+                response = privacyIDEA.validateCheck(currentUserName, "", transactionID, forwardHeaders);
             }
         }
         else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty())
@@ -418,18 +378,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else
             {
                 response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse,
-                                                             origin, languageHeader);
+                                                             origin, forwardHeaders);
             }
         }
         else if (u2fSignResponse != null && !u2fSignResponse.isEmpty())
         {
-            response = privacyIDEA.validateCheckU2F(currentUserName, transactionID, u2fSignResponse, languageHeader);
+            response = privacyIDEA.validateCheckU2F(currentUserName, transactionID, u2fSignResponse, forwardHeaders);
         }
         else if (!TRUE.equals(tokenTypeChanged))
         {
             String otp = formData.getFirst(FORM_OTP);
             // If the transaction id is not present, it will be not be added in validateCheck, so no need to check here
-            response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, languageHeader);
+            response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, forwardHeaders);
         }
 
         // Evaluate the response
@@ -487,6 +447,30 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         Response responseForm = form.createForm(FORM_FILE_NAME);
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
+    }
+
+    private Map<String, String> getHeadersToForward(AuthenticationFlowContext context, Configuration config)
+    {
+        Map<String, String> headersToForward = new LinkedHashMap<>();
+        // Take all headers from config plus Accept-Language
+        config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
+
+        for (String header : config.forwardedHeaders())
+        {
+            List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
+                                               .get(header);
+
+            if (headerValues != null && !headerValues.isEmpty())
+            {
+                String temp = String.join(",", headerValues);
+                headersToForward.put(header, temp);
+            }
+            else
+            {
+                log("No values for header " + header + " found.");
+            }
+        }
+        return headersToForward;
     }
 
     @Override
