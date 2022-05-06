@@ -175,10 +175,10 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();
         piForwardedHeaders.setType(ProviderConfigProperty.STRING_TYPE);
         piForwardedHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
-        piForwardedHeaders.setLabel("Forward headers");
+        piForwardedHeaders.setLabel("Headers to forward");
         piForwardedHeaders.setHelpText(
                 "Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. " +
-                "The headers should be separated with ',' (E.g. accept-language,Authorization).");
+                "The headers should be separated with ','.");
         configProperties.add(piForwardedHeaders);
 
         ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();

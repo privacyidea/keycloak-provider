@@ -162,8 +162,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
 
-        Map<String, String> forwardHeaders = getHeadersToForward(context, config);
-        String uiLanguage = forwardHeaders.get(HEADER_ACCEPT_LANGUAGE);
+        Map<String, String> headers = getHeadersToForward(context, config);
+        String uiLanguage = headers.get(HEADER_ACCEPT_LANGUAGE).startsWith("de") ? "de" : "en";
 
         // Prepare for possibly triggering challenges
         PIResponse triggerResponse = null;
@@ -181,13 +181,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
         {
-            triggerResponse = privacyIDEA.triggerChallenges(currentUser, forwardHeaders);
+            triggerResponse = privacyIDEA.triggerChallenges(currentUser, headers);
         }
         else if (config.sendPassword())
         {
             if (currentPassword != null)
             {
-                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, forwardHeaders);
+                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, headers);
             }
             else
             {
@@ -219,11 +219,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 // Check for WebAuthn and U2F
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
                 {
-                    String signRequests = triggerResponse.mergedSignRequest();
-                    if (!signRequests.isEmpty())
-                    {
-                        webAuthnSignRequest = signRequests;
-                    }
+                    webAuthnSignRequest = triggerResponse.mergedSignRequest();
                 }
 
                 if (triggerResponse.triggeredTokenTypes().contains(TOKEN_TYPE_U2F))
@@ -280,7 +276,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
         }
 
-        Response responseForm = context.form().setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0))
+        Response responseForm = context.form()
+                                       .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0))
                                        .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
                                        .setAttribute(FORM_MODE, startingMode)
                                        .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
@@ -289,7 +286,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                        .setAttribute(FORM_OTP_MESSAGE, otpMessage)
                                        .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                                        .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
-                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage).createForm(FORM_FILE_NAME);
+                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+                                       .createForm(FORM_FILE_NAME);
         context.challenge(responseForm);
     }
 
@@ -338,7 +336,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
         String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
         String currentUserName = context.getUser().getUsername();
-        Map<String, String> forwardHeaders = getHeadersToForward(context, config);
         String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
         String webAuthnSignResponse = formData.getFirst(FORM_WEBAUTHN_SIGN_RESPONSE);
         // The origin is set by the form every time, no need to put it in the form again
@@ -351,12 +348,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String authenticationFailureMessage = "Authentication failed.";
 
         // Set the "old" values again
-        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR).setAttribute(FORM_MODE, currentMode)
-            .setAttribute(FORM_PUSH_AVAILABLE, pushToken).setAttribute(FORM_OTP_AVAILABLE, otpToken)
+        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+            .setAttribute(FORM_MODE, currentMode)
+            .setAttribute(FORM_PUSH_AVAILABLE, pushToken)
+            .setAttribute(FORM_OTP_AVAILABLE, otpToken)
             .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-            .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest).setAttribute(FORM_UI_LANGUAGE, uiLanguage);
+            .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
+            .setAttribute(FORM_UI_LANGUAGE, uiLanguage);
 
-        boolean didTrigger = false; // To not show the error message if something was triggered
+        Map<String, String> headers = getHeadersToForward(context, config);
+        // Do not show the error message if something was triggered
+        boolean didTrigger = false;
         PIResponse response = null;
 
         // Send a request to privacyIDEA depending on the mode
@@ -366,7 +368,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (privacyIDEA.pollTransaction(transactionID))
             {
                 // If the challenge has been answered, finalize with a call to validate check
-                response = privacyIDEA.validateCheck(currentUserName, "", transactionID, forwardHeaders);
+                response = privacyIDEA.validateCheck(currentUserName, "", transactionID, headers);
             }
         }
         else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty())
@@ -378,18 +380,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else
             {
                 response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse,
-                                                             origin, forwardHeaders);
+                                                             origin, headers);
             }
         }
         else if (u2fSignResponse != null && !u2fSignResponse.isEmpty())
         {
-            response = privacyIDEA.validateCheckU2F(currentUserName, transactionID, u2fSignResponse, forwardHeaders);
+            response = privacyIDEA.validateCheckU2F(currentUserName, transactionID, u2fSignResponse, headers);
         }
         else if (!TRUE.equals(tokenTypeChanged))
         {
             String otp = formData.getFirst(FORM_OTP);
             // If the transaction id is not present, it will be not be added in validateCheck, so no need to check here
-            response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, forwardHeaders);
+            response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, headers);
         }
 
         // Evaluate the response
@@ -449,10 +451,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
+    /**
+     * Extract the headers that should be forwarded to privacyIDEA from the original request to keycloak. The header names
+     * can be defined in the configuration of this provider. The accept-language header is included by default.
+     * @param context AuthenticationFlowContext
+     * @param config Configuration
+     * @return Map of headers
+     */
     private Map<String, String> getHeadersToForward(AuthenticationFlowContext context, Configuration config)
     {
         Map<String, String> headersToForward = new LinkedHashMap<>();
-        // Take all headers from config plus Accept-Language
+        // Take all headers from config plus accept-language
         config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
 
         for (String header : config.forwardedHeaders())

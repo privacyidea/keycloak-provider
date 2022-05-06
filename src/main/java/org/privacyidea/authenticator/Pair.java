@@ -4,8 +4,8 @@ import org.privacyidea.PrivacyIDEA;
 
 public class Pair
 {
-    private PrivacyIDEA privacyIDEA;
-    private Configuration configuration;
+    private final PrivacyIDEA privacyIDEA;
+    private final Configuration configuration;
 
     public Pair(PrivacyIDEA privacyIDEA, Configuration configuration)
     {
