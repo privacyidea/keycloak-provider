@@ -36,6 +36,7 @@ The different configuration parameters that are available on the configuration p
 | Service account password | The password of your service account |
 | Service account realm | Specify a separate realm for the service account if needed. If the service account is in the same realm as the users, it is sufficient to specify the realm in the config parameter above. |
 | Exclude groups | Keycloak groups that should be excluded from 2FA. Multiple groups can be specified, separated with ','. |
+| Headers to forward | Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. The headers names should be separated with ','.|
 | Enable token enrollment | If the current user does not have a token yet, it can be enrolled. The service account has to be set up. |
 | Token type | Select the token type for the token enrollment |
 | Refresh interval for push tokens | Choose your custom interval in seconds to check if the push token is confirmed. This can be a comma separated list, if you want to change the interval |
