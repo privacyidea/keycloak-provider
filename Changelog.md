@@ -1,5 +1,11 @@
 # Changelog
 
+### v1.1.0 - 2022-06-10
+
+* Excluded/Included groups for which privacyIDEA workflow will be activated.
+* Forward headers to privacyIDEA
+* Trigger multiple WebAuthn
+
 ### v1.0.0 - 2021-11-06
 
 * Support for different configurations in different keycloak realms
