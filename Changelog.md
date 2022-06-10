@@ -2,9 +2,9 @@
 
 ### v1.1.0 - 2022-06-10
 
-* Excluded/Included groups for which privacyIDEA workflow will be activated.
-* Forward headers to privacyIDEA
-* Trigger multiple WebAuthn
+* Included groups for which privacyIDEA workflow will be activated.
+* Possibility to forward headers to the privacyIDEA. (#94)
+* Possibility to use multiple WebAuthn tokens. (#84)
 
 ### v1.0.0 - 2021-11-06
 
