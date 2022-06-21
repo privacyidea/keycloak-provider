@@ -198,6 +198,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Evaluate for possibly triggered token
         if (triggerResponse != null)
         {
+            if (triggerResponse.value)
+            {
+                context.success();
+                return;
+            }
+
             if (triggerResponse.error != null)
             {
                 context.form().setError(triggerResponse.error.message);
@@ -250,11 +256,16 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             // Check if any triggered token matches the preferred token type
             if (triggerResponse.triggeredTokenTypes().contains(config.prefTokenType()))
             {
-                startingMode = config.prefTokenType();
+                startingMode = config.prefTokenType(); //todo this function only in authenticate not in action
             }
         }
         // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
+
+        if (transactionID != null && !transactionID.isEmpty())
+        {
+            context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, transactionID);
+        }
 
         Response responseForm = context.form().setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
                                        .setAttribute(FORM_MODE, startingMode)
