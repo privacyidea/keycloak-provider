@@ -172,11 +172,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
 
         // Set the default values
-        String startingMode = "otp";
         boolean otpAvailable = true; // Always assume an OTP token
         boolean pushAvailable = false;
         String tokenEnrollmentQR = "";
-        context.form().setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "").setAttribute(FORM_U2F_SIGN_REQUEST, "");
+        context.form().setAttribute(FORM_MODE, "otp").setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
+               .setAttribute(FORM_U2F_SIGN_REQUEST, "");
 
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
@@ -252,12 +252,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     }
                 }
             }
-
-            // Check if any triggered token matches the preferred token type
-            if (triggerResponse.triggeredTokenTypes().contains(config.prefTokenType()))
-            {
-                startingMode = config.prefTokenType(); //todo this function only in authenticate not in action
-            }
         }
         // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
@@ -268,7 +262,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         Response responseForm = context.form().setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
-                                       .setAttribute(FORM_MODE, startingMode)
                                        .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
                                        .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
                                        .setAttribute(FORM_OTP_MESSAGE, otpMessage)
@@ -452,6 +445,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Variables to configure the UI
         String webAuthnSignRequest = "";
         String u2fSignRequest = "";
+        String startingMode = "otp";
 
         // Check for WebAuthn and U2F
         if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
@@ -468,8 +462,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
+        // Check if any triggered token matches the preferred token type
+        if (response.triggeredTokenTypes().contains(config.prefTokenType()))
+        {
+            startingMode = config.prefTokenType();
+        }
+
         context.form().setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0))
-               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+               .setAttribute(FORM_MODE, startingMode).setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest);
     }
 
