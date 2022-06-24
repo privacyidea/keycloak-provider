@@ -78,7 +78,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
     static
     {
         ProviderConfigProperty piServerUrl = new ProviderConfigProperty();
-        piServerUrl.setType(ProviderConfigProperty.TEXT_TYPE);
+        piServerUrl.setType(ProviderConfigProperty.STRING_TYPE);
         piServerUrl.setName(Const.CONFIG_SERVER);
         piServerUrl.setLabel("privacyIDEA URL");
         piServerUrl.setHelpText(
