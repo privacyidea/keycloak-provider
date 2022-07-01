@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
@@ -474,7 +475,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Take all headers from config plus accept-language
         config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
 
-        for (String header : config.forwardedHeaders())
+        for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList()))
         {
             List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
                                                .get(header);
