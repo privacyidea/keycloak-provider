@@ -1,10 +1,12 @@
 # Changelog
 
-### v1.1.0 - 2022-06-10
+### v1.1.0 - 2022-07-01
 
-* Included groups for which privacyIDEA workflow will be activated.
-* Possibility to forward headers to the privacyIDEA. (#94)
-* Possibility to use multiple WebAuthn tokens. (#84)
+* Included groups setting to specify groups of keycloak users for which 2FA should be activated (#54). Check the [configuration documenation](https://github.com/privacyidea/keycloak-provider#configuration).
+* It is now possible to configure the names of header that should be forwarded to privacyIDEA (#94)
+* If a user has multiple WebAuthn token, all of them can be used to log in (#84)
+
+* Fixed a bug where the provider would crash if privacyIDEA sent a response with missing fields (#105)
 
 ### v1.0.0 - 2021-11-06
 
