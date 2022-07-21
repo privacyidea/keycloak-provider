@@ -12,7 +12,13 @@ There you can find an example with Keycloak, privacyIDEA and Drupal.
 * Download PrivacyIDEA-Provider.jar
 
 ## Installation
+#### Keycloak >= 17
+* Keycloak has to be shut down
+* Move the jar file into the `providers` directory
+* Go to `bin` and run `kc.sh build` (or the batch file on windows)
+* Start keycloak again
 
+#### Keycloak <= 16
 * Move the packed jar file into your deployment directory `standalone/deployment`.  
 * Optional: Move the template privacyIDEA.ftl to `themes/base/login`. 
 NOTE: For releases from version 0.6 onward, the template will be deployed automatically, so this step can be skipped.
