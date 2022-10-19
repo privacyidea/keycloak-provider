@@ -164,7 +164,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         Map<String, String> headers = getHeadersToForward(context, config);
-        String uiLanguage = headers.get(HEADER_ACCEPT_LANGUAGE).startsWith("de") ? "de" : "en";
+
+        // Set UI language
+        String uiLanguage = "en";
+        if (headers.get(HEADER_ACCEPT_LANGUAGE) != null && headers.get(HEADER_ACCEPT_LANGUAGE).startsWith("de"))
+        {
+            uiLanguage = "de";
+        }
 
         // Prepare for possibly triggering challenges
         PIResponse triggerResponse = null;
