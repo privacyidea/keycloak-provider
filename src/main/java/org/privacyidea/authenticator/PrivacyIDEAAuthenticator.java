@@ -457,7 +457,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
-        // Check if server response contains preferred client mode
+        // Check if response from server contains preferred client mode
         if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
         {
             mode = response.preferredClientMode;
