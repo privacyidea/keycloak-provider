@@ -158,7 +158,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         String currentPassword = null;
-        if (context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        if (config.sendPassword() && context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
         {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
