@@ -457,10 +457,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
-        // Check if any triggered token matches the preferred token type
-        if (response.triggeredTokenTypes().contains(config.prefTokenType()))
+        // Check if response from server contains preferred client mode
+        if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
         {
-            mode = config.prefTokenType();
+            mode = response.preferredClientMode;
+        }
+        else
+        {
+            // Check if any triggered token matches the preferred token type
+            if (response.triggeredTokenTypes().contains(config.prefTokenType()))
+            {
+                mode = config.prefTokenType();
+            }
         }
 
         context.form().setAttribute(FORM_MODE, mode).setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
