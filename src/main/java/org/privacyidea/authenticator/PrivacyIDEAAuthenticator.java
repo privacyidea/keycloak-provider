@@ -57,6 +57,7 @@ import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.FORM_ERROR;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
+import static org.privacyidea.authenticator.Const.FORM_IMAGE;
 import static org.privacyidea.authenticator.Const.FORM_MODE;
 import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
@@ -434,6 +435,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         context.form().setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
+
+        if (response.image != null && !response.image.isEmpty())
+        {
+            context.form().setAttribute(FORM_IMAGE, response.image);
+        }
 
         // Check for Push
         if (response.pushAvailable())

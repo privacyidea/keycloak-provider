@@ -15,10 +15,17 @@
                             <h4 style="font-weight: bold">${otpMessage}</h4>
                         </#if>
                     </#if>
+                    <#-- Show the image from challenge if found -->
+                    <#if (image!"") != "">
+                        <div style="text-align: center;">
+                            <img alt="chal_img" width="256" height="256" src="${image}">
+                        </div>
+                        Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
+                    </#if>
                     <#-- Show QR code for new token, if one has been enrolled -->
                     <#if (tokenEnrollmentQR!"") != "">
                         <div style="text-align: center;">
-                            <img width="256" height="256" src="${tokenEnrollmentQR}">
+                            <img alt="qr_code" width="256" height="256" src="${tokenEnrollmentQR}">
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>

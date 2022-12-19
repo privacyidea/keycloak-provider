@@ -48,6 +48,7 @@ final class Const
     static final String FORM_OTP_AVAILABLE = "otp_available";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
     static final String FORM_OTP_MESSAGE = "otpMessage";
+    static final String FORM_IMAGE = "image";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
