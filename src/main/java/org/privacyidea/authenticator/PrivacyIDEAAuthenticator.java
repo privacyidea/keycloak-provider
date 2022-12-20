@@ -158,11 +158,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         String currentPassword = null;
-        if (config.sendPassword() && context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        try
         {
-            currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
+            if (config.sendPassword() && context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+            {
+                currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
+            }
         }
-
+        catch(NullPointerException e)
+        {
+            logger.error("Password is missing from request context during authentication!");
+        }
         Map<String, String> headers = getHeadersToForward(context, config);
 
         // Set UI language
