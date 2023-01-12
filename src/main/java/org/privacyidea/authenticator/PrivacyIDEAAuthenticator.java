@@ -50,6 +50,7 @@ import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_U2F;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_AUTH_COUNTER;
+import static org.privacyidea.authenticator.Const.AUTH_NOTE_IMAGE;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
@@ -436,9 +437,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         context.form().setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
 
-        if (response.image != null && !response.image.isEmpty())
+        String presavedImage = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_IMAGE); //todo test it!
+        if (presavedImage != null && !presavedImage.isEmpty())
+        {
+            context.form().setAttribute(FORM_IMAGE, presavedImage);
+        }
+        else if (response.image != null && !response.image.isEmpty())
         {
             context.form().setAttribute(FORM_IMAGE, response.image);
+            context.getAuthenticationSession().setAuthNote(AUTH_NOTE_IMAGE, response.image);
         }
 
         // Check for Push
@@ -463,10 +470,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
+        error("test test test"); //todo rm
+
         // Check if response from server contains preferred client mode
         if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
         {
             mode = response.preferredClientMode;
+            error("preferred client mode translated and set: " + mode); //todo rm
         }
         else
         {

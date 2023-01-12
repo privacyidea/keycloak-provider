@@ -65,6 +65,7 @@ final class Const
     static final String FORM_U2F_SIGN_RESPONSE = "u2fsignresponse";
 
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
+    static final String AUTH_NOTE_IMAGE = "image";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
     static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
 
