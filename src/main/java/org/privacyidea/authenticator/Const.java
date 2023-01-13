@@ -41,10 +41,12 @@ final class Const
     // Will be used if no intervals are specified
     static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
 
-    static final String FORM_RESPONSE = "response";
     static final String FORM_POLL_INTERVAL = "pollingInterval";
     static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
     static final String FORM_MODE = "mode";
+    static final String FORM_IMAGE_PUSH = "pushImage";
+    static final String FORM_IMAGE_OTP = "otpImage";
+    static final String FORM_IMAGE_WEBAUTHN = "webauthnImage";
     static final String FORM_PUSH_AVAILABLE = "push_available";
     static final String FORM_OTP_AVAILABLE = "otp_available";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
