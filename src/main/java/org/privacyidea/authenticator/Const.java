@@ -41,6 +41,7 @@ final class Const
     // Will be used if no intervals are specified
     static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
 
+    static final String FORM_RESPONSE = "response";
     static final String FORM_POLL_INTERVAL = "pollingInterval";
     static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
     static final String FORM_MODE = "mode";
@@ -48,7 +49,6 @@ final class Const
     static final String FORM_OTP_AVAILABLE = "otp_available";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
     static final String FORM_OTP_MESSAGE = "otpMessage";
-    static final String FORM_IMAGE = "image";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
@@ -65,7 +65,6 @@ final class Const
     static final String FORM_U2F_SIGN_RESPONSE = "u2fsignresponse";
 
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
-    static final String AUTH_NOTE_IMAGE = "image";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
     static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
 
