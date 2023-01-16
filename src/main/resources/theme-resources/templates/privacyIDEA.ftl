@@ -52,6 +52,9 @@
                     <input id="otp_available" name="otp_available" value="${otp_available?c}" type="hidden">
                     <input id="pushMessage" name="pushMessage" value="${pushMessage!""}" type="hidden">
                     <input id="otpMessage" name="otpMessage" value="${otpMessage!""}" type="hidden">
+                    <input id="pushImage" name="pushImage" value="${pushImage!""}" type="hidden">
+                    <input id="otpImage" name="otpImage" value="${otpImage!""}" type="hidden">
+                    <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
 
                     <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"
