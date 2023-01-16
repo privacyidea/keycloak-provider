@@ -10,17 +10,28 @@
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if (!hasError)!true>
                         <#if mode = "push">
+                            <#if (pushImage!"") != "">
+                                <div style="text-align: center;">
+                                    <img alt="chal_img" src="${pushImage}">
+                                </div>
+                            </#if>
                           <h4 style="font-weight: bold">${pushMessage}</h4>
+                        <#elseif mode = "webauthn">
+                            <#if (webauthnImage!"") != "">
+                                <div style="text-align: center;">
+                                    <img alt="chal_img" src="${webauthnImage}">
+                                </div>
+                            </#if>
+                        <#elseif mode = "otp">
+                            <#if (otpImage!"") != "">
+                                <div style="text-align: center;">
+                                    <img alt="chal_img" src="${otpImage}">
+                                </div>
+                            </#if>
+                            <h4 style="font-weight: bold">${otpMessage}</h4>
                         <#else>
                             <h4 style="font-weight: bold">${otpMessage}</h4>
                         </#if>
-                    </#if>
-                    <#-- Show the image from challenge if found -->
-                    <#if (image!"") != "">
-                        <div style="text-align: center;">
-                            <img alt="chal_img" width="256" height="256" src="${image}">
-                        </div>
-                        Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
                     <#-- Show QR code for new token, if one has been enrolled -->
                     <#if (tokenEnrollmentQR!"") != "">
