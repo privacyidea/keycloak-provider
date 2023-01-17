@@ -1,5 +1,7 @@
 /*
  * Copyright 2023 NetKnights GmbH - nils.behlen@netknights.it
+ * lukas.matusiewicz@netknights.it
+ * - Modified
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
