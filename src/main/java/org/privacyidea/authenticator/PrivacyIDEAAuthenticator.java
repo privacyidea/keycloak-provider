@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
+/*
+ * Copyright 2023 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
  * - Modified
  * <p>
@@ -187,7 +187,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_U2F_SIGN_REQUEST, "").setAttribute(FORM_PUSH_MESSAGE, pushMessage)
                .setAttribute(FORM_OTP_AVAILABLE, true).setAttribute(FORM_OTP_MESSAGE, otpMessage)
                .setAttribute(FORM_PUSH_AVAILABLE, false).setAttribute(FORM_IMAGE_PUSH, "")
-                .setAttribute(FORM_IMAGE_OTP, "").setAttribute(FORM_IMAGE_WEBAUTHN, "")
+               .setAttribute(FORM_IMAGE_OTP, "").setAttribute(FORM_IMAGE_WEBAUTHN, "")
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -497,8 +497,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
-        context.form().setAttribute(FORM_MODE, mode)
-               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+        context.form().setAttribute(FORM_MODE, mode).setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
                .setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
     }
