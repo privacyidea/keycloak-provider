@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
+/*
+ * Copyright 2023 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
  * - Modified
  * <p>

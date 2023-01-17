@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
+/*
+ * Copyright 2023 NetKnights GmbH - nils.behlen@netknights.it
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
-import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;

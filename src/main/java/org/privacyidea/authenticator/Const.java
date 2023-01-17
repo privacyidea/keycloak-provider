@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 NetKnights GmbH - nils.behlen@netknights.it
+/*
+ * Copyright 2023 NetKnights GmbH - nils.behlen@netknights.it
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ final class Const
     static final String FORM_POLL_INTERVAL = "pollingInterval";
     static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
     static final String FORM_MODE = "mode";
+    static final String FORM_IMAGE_PUSH = "pushImage";
+    static final String FORM_IMAGE_OTP = "otpImage";
+    static final String FORM_IMAGE_WEBAUTHN = "webauthnImage";
     static final String FORM_PUSH_AVAILABLE = "push_available";
     static final String FORM_OTP_AVAILABLE = "otp_available";
     static final String FORM_PUSH_MESSAGE = "pushMessage";

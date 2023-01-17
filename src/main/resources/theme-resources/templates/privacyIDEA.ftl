@@ -10,7 +10,25 @@
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if (!hasError)!true>
                         <#if mode = "push">
+                            <#if (pushImage!"") != "">
+                                <div style="text-align: center;">
+                                    <img alt="chal_img" src="${pushImage}">
+                                </div>
+                            </#if>
                           <h4 style="font-weight: bold">${pushMessage}</h4>
+                        <#elseif mode = "webauthn">
+                            <#if (webauthnImage!"") != "">
+                                <div style="text-align: center;">
+                                    <img alt="chal_img" src="${webauthnImage}">
+                                </div>
+                            </#if>
+                        <#elseif mode = "otp">
+                            <#if (otpImage!"") != "">
+                                <div style="text-align: center;">
+                                    <img alt="chal_img" src="${otpImage}">
+                                </div>
+                            </#if>
+                            <h4 style="font-weight: bold">${otpMessage}</h4>
                         <#else>
                             <h4 style="font-weight: bold">${otpMessage}</h4>
                         </#if>
@@ -18,7 +36,7 @@
                     <#-- Show QR code for new token, if one has been enrolled -->
                     <#if (tokenEnrollmentQR!"") != "">
                         <div style="text-align: center;">
-                            <img width="256" height="256" src="${tokenEnrollmentQR}">
+                            <img alt="qr_code" width="256" height="256" src="${tokenEnrollmentQR}">
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
@@ -34,6 +52,9 @@
                     <input id="otp_available" name="otp_available" value="${otp_available?c}" type="hidden">
                     <input id="pushMessage" name="pushMessage" value="${pushMessage!""}" type="hidden">
                     <input id="otpMessage" name="otpMessage" value="${otpMessage!""}" type="hidden">
+                    <input id="pushImage" name="pushImage" value="${pushImage!""}" type="hidden">
+                    <input id="otpImage" name="otpImage" value="${otpImage!""}" type="hidden">
+                    <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
 
                     <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"

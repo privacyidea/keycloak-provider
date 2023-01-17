@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 NetKnights GmbH - micha.preusser@netknights.it
+/*
+ * Copyright 2023 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
  * - Modified
  * <p>
@@ -38,6 +38,7 @@ import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
@@ -57,6 +58,9 @@ import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.FORM_ERROR;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
+import static org.privacyidea.authenticator.Const.FORM_IMAGE_OTP;
+import static org.privacyidea.authenticator.Const.FORM_IMAGE_PUSH;
+import static org.privacyidea.authenticator.Const.FORM_IMAGE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.FORM_MODE;
 import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
@@ -182,7 +186,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.form().setAttribute(FORM_MODE, "otp").setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
                .setAttribute(FORM_U2F_SIGN_REQUEST, "").setAttribute(FORM_PUSH_MESSAGE, pushMessage)
                .setAttribute(FORM_OTP_AVAILABLE, true).setAttribute(FORM_OTP_MESSAGE, otpMessage)
-               .setAttribute(FORM_PUSH_AVAILABLE, false)
+               .setAttribute(FORM_PUSH_AVAILABLE, false).setAttribute(FORM_IMAGE_PUSH, "")
+               .setAttribute(FORM_IMAGE_OTP, "").setAttribute(FORM_IMAGE_WEBAUTHN, "")
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -217,7 +222,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.form().setAttribute(FORM_ERROR, true);
             }
 
-            if (!triggerResponse.multiChallenge().isEmpty())
+            if (!triggerResponse.multichallenge.isEmpty())
             {
                 extractChallengeDataToForm(triggerResponse, context, config);
             }
@@ -301,6 +306,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         boolean otpAvailable = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
         String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
+        String imagePush = formData.getFirst(FORM_IMAGE_PUSH);
+        String imageOTP = formData.getFirst(FORM_IMAGE_OTP);
+        String imageWebauthn = formData.getFirst(FORM_IMAGE_WEBAUTHN);
         String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
         String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
         String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
@@ -319,7 +327,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Set the "old" values again
         form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR).setAttribute(FORM_MODE, currentMode)
             .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable).setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
-            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest).setAttribute(FORM_IMAGE_PUSH, imagePush)
+            .setAttribute(FORM_IMAGE_OTP, imageOTP).setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
             .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest).setAttribute(FORM_UI_LANGUAGE, uiLanguage)
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
@@ -382,7 +391,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
             // If the authentication was not successful (yet), either the provided data was wrong
             // or another challenge was triggered
-            if (!response.multiChallenge().isEmpty())
+            if (!response.multichallenge.isEmpty())
             {
                 extractChallengeDataToForm(response, context, config);
                 didTrigger = true;
@@ -423,6 +432,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             error("extractChallengeDataToForm missing parameter!");
             return;
         }
+
         // Variables to configure the UI
         String webAuthnSignRequest = "";
         String u2fSignRequest = "";
@@ -433,7 +443,23 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.transactionID);
         }
 
-        context.form().setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
+        // Check for the images
+        List<Challenge> multiChallenge = response.multichallenge;
+        for (Challenge c : multiChallenge)
+        {
+            if ("poll".equals(c.getClientMode()))
+            {
+                context.form().setAttribute(FORM_IMAGE_PUSH, c.getImage());
+            }
+            else if ("interactive".equals(c.getClientMode()))
+            {
+                context.form().setAttribute(FORM_IMAGE_OTP, c.getImage());
+            }
+            if ("webauthn".equals(c.getClientMode()))
+            {
+                context.form().setAttribute(FORM_IMAGE_WEBAUTHN, c.getImage());
+            }
+        }
 
         // Check for Push
         if (response.pushAvailable())
@@ -472,7 +498,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         context.form().setAttribute(FORM_MODE, mode).setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-               .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest);
+               .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
+               .setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
     }
 
     /**
