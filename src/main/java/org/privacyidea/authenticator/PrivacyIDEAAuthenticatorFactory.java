@@ -49,8 +49,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         return SINGLETON;
     }
 
-    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
-            AuthenticationExecutionModel.Requirement.REQUIRED, AuthenticationExecutionModel.Requirement.DISABLED};
+    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {AuthenticationExecutionModel.Requirement.REQUIRED,
+                                                                                           AuthenticationExecutionModel.Requirement.DISABLED};
 
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices()
@@ -82,8 +82,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServerUrl.setType(ProviderConfigProperty.STRING_TYPE);
         piServerUrl.setName(Const.CONFIG_SERVER);
         piServerUrl.setLabel("privacyIDEA URL");
-        piServerUrl.setHelpText(
-                "The URL of the privacyIDEA server (complete with scheme, host and port like \"https://<piserver>:port\")");
+        piServerUrl.setHelpText("The URL of the privacyIDEA server (complete with scheme, host and port like \"https://<piserver>:port\")");
         configProperties.add(piServerUrl);
 
         ProviderConfigProperty piRealm = new ProviderConfigProperty();
@@ -136,8 +135,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
         piServiceAccount.setName(Const.CONFIG_SERVICE_ACCOUNT);
         piServiceAccount.setLabel("Service account");
-        piServiceAccount.setHelpText(
-                "Username of the service account. Needed for trigger challenge and token enrollment.");
+        piServiceAccount.setHelpText("Username of the service account. Needed for trigger challenge and token enrollment.");
         configProperties.add(piServiceAccount);
 
         ProviderConfigProperty piServicePass = new ProviderConfigProperty();
@@ -151,9 +149,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServiceRealm.setType(ProviderConfigProperty.STRING_TYPE);
         piServiceRealm.setName(Const.CONFIG_SERVICE_REALM);
         piServiceRealm.setLabel("Service account realm");
-        piServiceRealm.setHelpText(
-                "Realm of the service account, if it is in a separate realm from the other accounts. " +
-                "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
+        piServiceRealm.setHelpText("Realm of the service account, if it is in a separate realm from the other accounts. " +
+                                   "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
         configProperties.add(piServiceRealm);
 
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
@@ -196,8 +193,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
         piTokenType.setName(Const.CONFIG_ENROLL_TOKEN_TYPE);
         piTokenType.setLabel("Enrollment token type");
-        piTokenType.setHelpText(
-                "Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
+        piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
         piTokenType.setOptions(tokenTypes);
         piTokenType.setDefaultValue(tokenTypes.get(0));
         configProperties.add(piTokenType);
