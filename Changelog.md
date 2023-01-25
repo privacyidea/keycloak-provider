@@ -1,6 +1,6 @@
 # Changelog
 
-### v1.2.0 - 2023-01-17
+### v1.2.0 - 2023-01-25
 
 * Added implementation of the preferred client mode (#121)
 * Added implementation of a new feature: Token enrollment via challenge (#125)
