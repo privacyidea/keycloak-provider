@@ -1,6 +1,6 @@
 /*
- * Copyright 2023 NetKnights GmbH
- * nils.behlen@netknights.it
+ * Copyright 2023 NetKnights GmbH - nils.behlen@netknights.it
+ * lukas.matusiewicz@netknights.it
  * <p>
  * Based on original code:
  * <p>

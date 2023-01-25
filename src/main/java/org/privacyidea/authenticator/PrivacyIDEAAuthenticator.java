@@ -1,6 +1,7 @@
 /*
  * Copyright 2023 NetKnights GmbH - micha.preusser@netknights.it
  * nils.behlen@netknights.it
+ * lukas.matusiewicz@netknights.it
  * - Modified
  * <p>
  * Based on original code:
@@ -98,9 +99,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         Configuration config = new Configuration(configMap);
         PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), PLUGIN_USER_AGENT)
-                                             .sslVerify(config.sslVerify()).logger(this).realm(config.realm())
+                                             .sslVerify(config.sslVerify())
+                                             .logger(this)
+                                             .realm(config.realm())
                                              .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
-                                             .serviceRealm(config.serviceAccountRealm()).build();
+                                             .serviceRealm(config.serviceAccountRealm())
+                                             .build();
         Pair pair = new Pair(privacyIDEA, config);
         piInstanceMap.put(realm, pair);
         return pair;
@@ -162,9 +166,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         String currentPassword = null;
+
         // In some cases, there will be no FormParameters so check if it is possible to even get the password
-        if (config.sendPassword() && context.getHttpRequest() != null &&
-            context.getHttpRequest().getDecodedFormParameters() != null &&
+        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
             context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
         {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
@@ -186,11 +190,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Set the default values, always assume OTP is available
         String tokenEnrollmentQR = "";
-        context.form().setAttribute(FORM_MODE, "otp").setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
-               .setAttribute(FORM_U2F_SIGN_REQUEST, "").setAttribute(FORM_PUSH_MESSAGE, pushMessage)
-               .setAttribute(FORM_OTP_AVAILABLE, true).setAttribute(FORM_OTP_MESSAGE, otpMessage)
-               .setAttribute(FORM_PUSH_AVAILABLE, false).setAttribute(FORM_IMAGE_PUSH, "")
-               .setAttribute(FORM_IMAGE_OTP, "").setAttribute(FORM_IMAGE_WEBAUTHN, "")
+        context.form()
+               .setAttribute(FORM_MODE, "otp")
+               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
+               .setAttribute(FORM_U2F_SIGN_REQUEST, "")
+               .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
+               .setAttribute(FORM_OTP_AVAILABLE, true)
+               .setAttribute(FORM_OTP_MESSAGE, otpMessage)
+               .setAttribute(FORM_PUSH_AVAILABLE, false)
+               .setAttribute(FORM_IMAGE_PUSH, "")
+               .setAttribute(FORM_IMAGE_OTP, "")
+               .setAttribute(FORM_IMAGE_WEBAUTHN, "")
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -231,8 +241,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
 
             // Enroll token if enabled and user does not have one. If something was triggered before, don't even try.
-            if (config.enrollToken() &&
-                (triggerResponse.transactionID == null || triggerResponse.transactionID.isEmpty()))
+            if (config.enrollToken() && (triggerResponse.transactionID == null || triggerResponse.transactionID.isEmpty()))
             {
                 List<TokenInfo> tokenInfos = privacyIDEA.getTokenInfo(currentUser);
 
@@ -262,8 +271,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
 
-        Response responseForm = context.form().setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
-                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage).createForm(FORM_FILE_NAME);
+        Response responseForm = context.form()
+                                       .setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+                                       .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+                                       .createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
     }
@@ -328,11 +339,16 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String authenticationFailureMessage = "Authentication failed.";
 
         // Set the "old" values again
-        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR).setAttribute(FORM_MODE, currentMode)
-            .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable).setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
-            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest).setAttribute(FORM_IMAGE_PUSH, imagePush)
-            .setAttribute(FORM_IMAGE_OTP, imageOTP).setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
-            .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest).setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+        form.setAttribute(FORM_TOKEN_ENROLLMENT_QR, tokenEnrollmentQR)
+            .setAttribute(FORM_MODE, currentMode)
+            .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
+            .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
+            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+            .setAttribute(FORM_IMAGE_PUSH, imagePush)
+            .setAttribute(FORM_IMAGE_OTP, imageOTP)
+            .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
+            .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
+            .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 
@@ -359,8 +375,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             else
             {
-                response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse,
-                                                             origin, headers);
+                response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin, headers);
             }
         }
         else if (u2fSignResponse != null && !u2fSignResponse.isEmpty())
@@ -409,8 +424,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // The authCounter is also used to determine the polling interval for push
         // If the authCounter is bigger than the size of the polling interval list, repeat the last value in the list
         int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
-        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 :
-                       authCounter);
+        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 : authCounter);
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
 
         // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
@@ -419,16 +433,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Do not display the error if the token type was switched or if another challenge was triggered
         if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger)
         {
-            form.setError(TOKEN_TYPE_PUSH.equals(currentMode) ? "Authentication not verified yet." :
-                          authenticationFailureMessage);
+            form.setError(TOKEN_TYPE_PUSH.equals(currentMode) ? "Authentication not verified yet." : authenticationFailureMessage);
         }
 
         Response responseForm = form.createForm(FORM_FILE_NAME);
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
-    private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context,
-                                            Configuration config)
+    private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context, Configuration config)
     {
         if (context == null || config == null)
         {
@@ -500,7 +512,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
-        context.form().setAttribute(FORM_MODE, mode).setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+        context.form()
+               .setAttribute(FORM_MODE, mode)
+               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
                .setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
     }
@@ -521,8 +535,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList()))
         {
-            List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders()
-                                               .get(header);
+            List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(header);
 
             if (headerValues != null && !headerValues.isEmpty())
             {

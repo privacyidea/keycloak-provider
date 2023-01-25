@@ -1,5 +1,10 @@
 # Changelog
 
+### v1.2.0 - 2023-01-17
+
+* Added implementation of the preferred client mode (#121)
+* Added implementation of a new feature: Token enrollment via challenge (#125)
+
 ### v1.1.0 - 2022-07-01
 
 * Included groups setting to specify groups of keycloak users for which 2FA should be activated (#54). Check the [configuration documenation](https://github.com/privacyidea/keycloak-provider#configuration).
