@@ -122,7 +122,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
-            <version>20.0.3</version>
+            <version>21.0.1</version>
         </dependency>
 
         <dependency>
