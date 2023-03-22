@@ -193,10 +193,20 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
         piTokenType.setName(Const.CONFIG_ENROLL_TOKEN_TYPE);
         piTokenType.setLabel("Enrollment token type");
-        piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
+        piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed.");
         piTokenType.setOptions(tokenTypes);
         piTokenType.setDefaultValue(tokenTypes.get(0));
         configProperties.add(piTokenType);
+
+        ProviderConfigProperty piPollInBrowser = new ProviderConfigProperty();
+        piPollInBrowser.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piPollInBrowser.setName(Const.CONFIG_POLL_IN_BROWSER);
+        piPollInBrowser.setLabel("Polling in the background");
+        piPollInBrowser.setDefaultValue(false);
+        piPollInBrowser.setHelpText(
+                "Enable it, if you want to avoid refreshing the login page by polling for a push token confirmation. " +
+                "NOTE: privacyIDEA have to be arrival from the user's browser");
+        configProperties.add(piPollInBrowser);
 
         ProviderConfigProperty piPushTokenInterval = new ProviderConfigProperty();
         piPushTokenInterval.setType(ProviderConfigProperty.STRING_TYPE);

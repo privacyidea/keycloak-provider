@@ -15,7 +15,7 @@
                                     <img alt="chal_img" src="${pushImage}">
                                 </div>
                             </#if>
-                          <h4 style="font-weight: bold">${pushMessage}</h4>
+                            <h4 style="font-weight: bold">${pushMessage}</h4>
                         <#elseif mode = "webauthn">
                             <#if (webauthnImage!"") != "">
                                 <div style="text-align: center;">
@@ -94,13 +94,25 @@
                             <#if mode = "push">
                             <#--The form will be reloaded if push token is enabled to check if it is confirmed.
                             The interval can be set in the configuration-->
-                                <script>
-                                    document.getElementById("kc-login").style.display = "none";
-                                    window.onload = () => {
-                                        window.setTimeout(() => {
-                                            document.forms["kc-otp-login-form"].submit();
-                                        }, parseInt(${pollingInterval}) * 1000);
-                                    };
+                                <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
+                                <script>document.getElementById("kc-login").style.display = "none";
+                                    if (${pollInBrowser} && ${transactionID} != null && ${transactionID}.length !== 0 && ${piServerUrl}.length !== 0)
+                                    {
+                                        window.onload = () => {
+                                            if (piPollTransaction(${piServerUrl}, ${transactionID}))
+                                            {
+                                                document.forms["kc-otp-login-form"].submit();
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        window.onload = () => {
+                                            window.setTimeout(() => {
+                                                document.forms["kc-otp-login-form"].submit();
+                                            }, parseInt(${pollingInterval}) * 1000);
+                                        };
+                                    }
                                 </script>
                             <#if otp_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"

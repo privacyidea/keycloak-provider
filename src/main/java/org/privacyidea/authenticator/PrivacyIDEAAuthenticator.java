@@ -67,10 +67,13 @@ import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
 import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
+import static org.privacyidea.authenticator.Const.FORM_PI_SERVER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
+import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_TOKEN_ENROLLMENT_QR;
+import static org.privacyidea.authenticator.Const.FORM_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_REQUEST;
 import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_RESPONSE;
 import static org.privacyidea.authenticator.Const.FORM_UI_LANGUAGE;
@@ -201,6 +204,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_PUSH, "")
                .setAttribute(FORM_IMAGE_OTP, "")
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
+               .setAttribute(FORM_POLL_IN_BROWSER, false)
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -358,7 +362,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         PIResponse response = null;
 
         // Send a request to privacyIDEA depending on the mode
-        if (TOKEN_TYPE_PUSH.equals(currentMode))
+        if (TOKEN_TYPE_PUSH.equals(currentMode) && !config.pollInBrowser())
         {
             // In push mode, poll for the transaction id to see if the challenge has been answered
             if (privacyIDEA.pollTransaction(transactionID))
@@ -481,6 +485,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             context.form().setAttribute(FORM_PUSH_AVAILABLE, true);
             context.form().setAttribute(FORM_PUSH_MESSAGE, response.pushMessage());
+            if (config.pollInBrowser())
+            {
+                context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
+                context.form().setAttribute(FORM_PI_SERVER_URL, config.serverURL());
+            }
         }
 
         // Check for WebAuthn and U2F
