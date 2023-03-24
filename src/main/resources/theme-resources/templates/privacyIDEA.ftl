@@ -95,13 +95,21 @@
                             <#--The form will be reloaded if push token is enabled to check if it is confirmed.
                             The interval can be set in the configuration-->
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
-                                <script>document.getElementById("kc-login").style.display = "none";
-                                    if (${pollInBrowser} && ${transactionID} != null && ${transactionID}.length !== 0 && ${piServerUrl}.length !== 0)
+                                <script>
+                                    document.getElementById("kc-login").style.display = "none";
+                                    const txid = ${transactionID!""};
+                                    console.log("test log pi");
+                                    console.log("txid: " + txid);
+                                    if (txid !== "" && ${piServerUrl!""} !== "")
                                     {
                                         window.onload = () => {
                                             if (piPollTransaction(${piServerUrl}, ${transactionID}))
                                             {
                                                 document.forms["kc-otp-login-form"].submit();
+                                            }
+                                            else
+                                            {
+                                                // todo log error push poll in browser isn't working
                                             }
                                         }
                                     }
