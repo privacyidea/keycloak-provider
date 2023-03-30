@@ -362,7 +362,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         PIResponse response = null;
 
         // Send a request to privacyIDEA depending on the mode
-        if (TOKEN_TYPE_PUSH.equals(currentMode) && !config.pollInBrowser())
+        if (TOKEN_TYPE_PUSH.equals(currentMode))
         {
             // In push mode, poll for the transaction id to see if the challenge has been answered
             if (privacyIDEA.pollTransaction(transactionID))
