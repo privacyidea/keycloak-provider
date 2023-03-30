@@ -79,12 +79,14 @@
                             <script>
                                 'use strict';
 
-                                if (document.getElementById("uilanguage").value === "de") {
+                                if (document.getElementById("uilanguage").value === "de")
+                                {
                                     document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
                                     document.getElementById("kc-login").value = "Anmelden";
                                 }
 
-                                function changeMode(newMode) {
+                                function changeMode(newMode)
+                                {
                                     // Submit the form to pass the change to the authenticator
                                     document.getElementById("mode").value = newMode;
                                     document.getElementById("modeChanged").value = "true";
@@ -95,32 +97,43 @@
                             <#if mode = "push">
                             <#--The form will be reloaded if push token is enabled to check if it is confirmed.
                             The interval can be set in the configuration-->
-                                <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
                                 <script>document.getElementById("kc-login").style.display = "none";</script>
                             <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
+                                <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
                                 <script>
-                                    try
+                                    window.onload = () =>
                                     {
-                                        window.onload = () => {
-                                        if (piPollTransaction("${piServerUrl}", "${transactionID}")) {
-                                            
+                                        let pollInBrowserResult = null;
+                                        do
+                                        {
+                                            pollInBrowserResult = piPollTransaction("${piServerUrl}", "${transactionID}");
+                                            if (pollInBrowserResult === false)
+                                            {
+                                                console.error("privacyIDEA: Poll transaction failed. Please contact the administrator.");
+                                                // Fallback to standard poll transaction
+                                                window.setTimeout(() =>
+                                                {
+                                                    document.forms["kc-otp-login-form"].submit();
+                                                }, parseInt(${pollingInterval}) * 1000);
+                                            }
+                                        }
+                                        while (pollInBrowserResult !== true);
+                                        if (pollInBrowserResult)
+                                        {
+                                            console.log("privacyIDEA: Poll transaction result succeeded!");
                                             document.forms["kc-otp-login-form"].submit();
-                                        } else {
-                                            alert("Poll transaction in browser doesn't work. " +
-                                                "Please contact the administrator and try again with another token.");
                                         }
-                                        }
-                                    }
-                                    catch (e) {
-                                        console.log("Poll in browser exception: " + e);
                                     }
                                 </script>
                             <#else>
                                 <script>
-                                    window.onload = () => {
-                                        window.setTimeout(() => {
-                                            document.forms["kc-otp-login-form"].submit();
-                                        }, parseInt(${pollingInterval}) * 1000);
+                                    window.onload = () =>
+                                    {
+                                        window.setTimeout(() =>
+                                            {
+                                                document.forms["kc-otp-login-form"].submit()
+                                            }
+                                            , parseInt(${pollingInterval}) * 1000);
                                     };
                                 </script>
                             </#if>
@@ -155,37 +168,47 @@
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
                                 <script>
                                     'use strict';
-                                    if (document.getElementById("webauthnsignrequest").value === "") {
+                                    if (document.getElementById("webauthnsignrequest").value === "")
+                                    {
                                         document.getElementById("useWebAuthnButton").style.display = "none";
                                     }
 
-                                    if (document.getElementById("mode").value === "webauthn") {
-                                        window.onload = () => {
+                                    if (document.getElementById("mode").value === "webauthn")
+                                    {
+                                        window.onload = () =>
+                                        {
                                             doWebAuthn();
                                         }
                                     }
 
-                                    if (!window.location.origin) {
+                                    if (!window.location.origin)
+                                    {
                                         window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
                                     }
                                     document.getElementById("origin").value = window.origin;
 
-                                    function doWebAuthn() {
+                                    function doWebAuthn()
+                                    {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt webauthn
                                         // Afterward, webauthn is started directly
-                                        if (document.getElementById("mode").value === "push") {
+                                        if (document.getElementById("mode").value === "push")
+                                        {
                                             changeMode("webauthn");
                                         }
-                                        try {
+                                        try
+                                        {
                                             const requestStr = document.getElementById("webauthnsignrequest").value;
                                             const requestjson = JSON.parse(requestStr);
 
                                             const webAuthnSignResponse = window.pi_webauthn.sign(requestjson);
-                                            webAuthnSignResponse.then((webauthnresponse) => {
+                                            webAuthnSignResponse.then((webauthnresponse) =>
+                                            {
                                                 document.getElementById("webauthnsignresponse").value = JSON.stringify(webauthnresponse);
                                                 document.forms["kc-otp-login-form"].submit();
                                             });
-                                        } catch (err) {
+                                        }
+                                        catch (err)
+                                        {
                                             console.log("Error while trying WebAuthn: " + err);
                                             alert("Error while trying WebAuthn: " + err);
                                         }
@@ -204,24 +227,30 @@
 
                                 <script>
                                     'use strict';
-                                    if (document.getElementById("u2fsignrequest").value === "") {
+                                    if (document.getElementById("u2fsignrequest").value === "")
+                                    {
                                         document.getElementById("useU2FButton").style.display = "none";
                                     }
 
-                                    if (document.getElementById("mode").value === "u2f") {
-                                        window.onload = () => {
+                                    if (document.getElementById("mode").value === "u2f")
+                                    {
+                                        window.onload = () =>
+                                        {
                                             doU2F();
                                         }
                                     }
 
-                                    function doU2F() {
+                                    function doU2F()
+                                    {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt U2F
                                         // Afterward, U2F is started directly
-                                        if (document.getElementById("mode").value === "push") {
+                                        if (document.getElementById("mode").value === "push")
+                                        {
                                             changeMode("u2f");
                                         }
 
-                                        if (!window.isSecureContext) {
+                                        if (!window.isSecureContext)
+                                        {
                                             alert("Unable to proceed with U2F because the context is insecure!");
                                             console.log("Insecure context detected: Aborting U2F authentication!")
                                             changeMode("otp");
@@ -230,22 +259,27 @@
 
                                         const requestStr = document.getElementById("u2fsignrequest").value;
 
-                                        if (requestStr === null) {
+                                        if (requestStr === null)
+                                        {
                                             alert("Could not load U2F library. Please try again or use other token.");
                                             changeMode("otp");
                                             return;
                                         }
 
-                                        try {
+                                        try
+                                        {
                                             const requestjson = JSON.parse(requestStr);
                                             sign_u2f_request(requestjson);
-                                        } catch (err) {
+                                        }
+                                        catch (err)
+                                        {
                                             console.log("Error while signing U2FSignRequest: " + err);
                                             alert("Error while signing U2FSignRequest: " + err);
                                         }
                                     }
 
-                                    function sign_u2f_request(signRequest) {
+                                    function sign_u2f_request(signRequest)
+                                    {
                                         let appId = signRequest["appId"];
                                         let challenge = signRequest["challenge"];
                                         let registeredKeys = [];
@@ -255,13 +289,17 @@
                                             keyHandle: signRequest["keyHandle"]
                                         });
 
-                                        u2f.sign(appId, challenge, registeredKeys, function (result) {
+                                        u2f.sign(appId, challenge, registeredKeys, function (result)
+                                        {
                                             const stringResult = JSON.stringify(result);
-                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData")) {
+                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData"))
+                                            {
                                                 document.getElementById("u2fsignresponse").value = stringResult;
                                                 changeMode("u2f");
                                                 document.forms["kc-otp-login-form"].submit();
-                                            } else {
+                                            }
+                                            else
+                                            {
                                                 console.log("Malformed U2F signing result: " + stringResult);
                                             }
                                         })
