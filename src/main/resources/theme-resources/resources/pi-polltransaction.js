@@ -12,7 +12,7 @@ function piPollTransaction(serverURL, transactionID)
     do
     {
         const request = new XMLHttpRequest();
-        request.open("GET", url + "?" + params, true);
+        request.open("GET", url + "?" + params, false);
         request.onload = (e) =>
         {
             if (request.readyState === 4)
@@ -20,9 +20,10 @@ function piPollTransaction(serverURL, transactionID)
                 if (request.status === 200)
                 {
                     const response = JSON.parse(request.response);
+                    console.log("response: " + response['result']['value']);
                     if (response['result']['value'])
                     {
-                        console.log("privacyIDEA: polltransaction - success!");
+                        console.log("privacyIDEA: polltransaction confirmed!");
                         success = true;
                     }
                 }
@@ -40,6 +41,6 @@ function piPollTransaction(serverURL, transactionID)
         };
         request.send();
     }
-    while (success === true)
+    while (success !== true)
     return true;
 }

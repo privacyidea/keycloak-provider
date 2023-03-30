@@ -103,6 +103,7 @@
                                     {
                                         window.onload = () => {
                                         if (piPollTransaction("${piServerUrl}", "${transactionID}")) {
+                                            
                                             document.forms["kc-otp-login-form"].submit();
                                         } else {
                                             alert("Poll transaction in browser doesn't work. " +
@@ -116,7 +117,6 @@
                                 </script>
                             <#else>
                                 <script>
-                                    wait(5000);
                                     window.onload = () => {
                                         window.setTimeout(() => {
                                             document.forms["kc-otp-login-form"].submit();
