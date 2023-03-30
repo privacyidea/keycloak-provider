@@ -4,38 +4,42 @@
  * @param {string} transactionID Transaction ID needed to perform the poll transaction.
  * @returns {boolean} True by accepted request.
  */
-function piPollTransaction(serverURL, transactionID) {
+function piPollTransaction(serverURL, transactionID)
+{
     const url = serverURL + "/validate/polltransaction";
     const params = "transaction_id=" + transactionID;
-    const request = new XMLHttpRequest(); // todo "C:\Program Files\Google\Chrome\Application\chrome.exe" --ignore-certificate-errors --user-data-dir="c:/chrome_dev_session"
-    request.
-    request.open("GET", url + "?" + params, true);
     let success = false;
-    do {
-        // todo try catch (SSL exception)
-        request.send();
-        if (request.status === 200) {
-            const response = JSON.parse(request.response);
-            if (response['result']['value']) {
-                success = true;
-            } else {
-                console.log('Push not confirmed yet...');
-                wait(2000);
+    do
+    {
+        const request = new XMLHttpRequest();
+        request.open("GET", url + "?" + params, true);
+        request.onload = (e) =>
+        {
+            if (request.readyState === 4)
+            {
+                if (request.status === 200)
+                {
+                    const response = JSON.parse(request.response);
+                    if (response['result']['value'])
+                    {
+                        console.log("privacyIDEA: polltransaction - success!");
+                        success = true;
+                    }
+                }
+                else
+                {
+                    console.error(request.statusText);
+                    return false;
+                }
             }
-        } else {
-            console.log(`error ${request.status}`)
+        };
+        request.onerror = (e) =>
+        {
+            console.error(request.statusText);
             return false;
-        }
+        };
+        request.send();
     }
     while (success === true)
-    return success;
-}
-
-/** @param ms */
-function wait(ms) {
-    const start = Date.now();
-    let now = start;
-    while (now - start < ms) {
-        now = Date.now();
-    }
+    return true;
 }

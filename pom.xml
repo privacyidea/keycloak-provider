@@ -104,7 +104,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
-            <version>20.0.3</version>
+            <version>20.0.4</version>
         </dependency>
 
         <dependency>
@@ -116,13 +116,13 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>
-            <version>20.0.3</version>
+            <version>20.0.4</version>
         </dependency>
 
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
-            <version>20.0.3</version>
+            <version>20.0.4</version>
         </dependency>
 
         <dependency>

@@ -5,7 +5,8 @@
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
     <#elseif section = "form">
-        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}" action="${url.loginAction}"
+              method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if (!hasError)!true>
@@ -95,33 +96,34 @@
                             <#--The form will be reloaded if push token is enabled to check if it is confirmed.
                             The interval can be set in the configuration-->
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
+                                <script>document.getElementById("kc-login").style.display = "none";</script>
+                            <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
                                 <script>
-                                    document.getElementById("kc-login").style.display = "none";
-                                    const txid = ${transactionID!""};
-                                    console.log("test log pi");
-                                    console.log("txid: " + txid);
-                                    if (txid !== "" && ${piServerUrl!""} !== "")
+                                    try
                                     {
                                         window.onload = () => {
-                                            if (piPollTransaction(${piServerUrl}, ${transactionID}))
-                                            {
-                                                document.forms["kc-otp-login-form"].submit();
-                                            }
-                                            else
-                                            {
-                                                // todo log error push poll in browser isn't working
-                                            }
+                                        if (piPollTransaction("${piServerUrl}", "${transactionID}")) {
+                                            document.forms["kc-otp-login-form"].submit();
+                                        } else {
+                                            alert("Poll transaction in browser doesn't work. " +
+                                                "Please contact the administrator and try again with another token.");
+                                        }
                                         }
                                     }
-                                    else
-                                    {
-                                        window.onload = () => {
-                                            window.setTimeout(() => {
-                                                document.forms["kc-otp-login-form"].submit();
-                                            }, parseInt(${pollingInterval}) * 1000);
-                                        };
+                                    catch (e) {
+                                        console.log("Poll in browser exception: " + e);
                                     }
                                 </script>
+                            <#else>
+                                <script>
+                                    wait(5000);
+                                    window.onload = () => {
+                                        window.setTimeout(() => {
+                                            document.forms["kc-otp-login-form"].submit();
+                                        }, parseInt(${pollingInterval}) * 1000);
+                                    };
+                                </script>
+                            </#if>
                             <#if otp_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                    name="changeModeButton" id="changeModeButton"
