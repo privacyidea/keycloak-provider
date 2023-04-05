@@ -88,6 +88,13 @@
                                 function changeMode(newMode)
                                 {
                                     // Submit the form to pass the change to the authenticator
+                                    if (newMode !== "push" && sessionStorage.getItem("piTransactionID") !== null)
+                                    {
+                                        if (typeof stopPollWorker === "function")
+                                        {
+                                            stopPollWorker();
+                                        }
+                                    }
                                     document.getElementById("mode").value = newMode;
                                     document.getElementById("modeChanged").value = "true";
                                     document.forms["kc-otp-login-form"].submit();
@@ -99,29 +106,26 @@
                             The interval can be set in the configuration-->
                                 <script>document.getElementById("kc-login").style.display = "none";</script>
                             <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
+                                <script type="text/javascript" src="${url.resourcesPath}/pi-webWorkerUtils.js"></script>
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
                                 <script>
-                                    window.onload = () =>
+                                    if (sessionStorage.getItem("pollInBrowserFailed") === true)
                                     {
-                                        let pollInBrowserResult = null;
-                                        do
+                                        window.onload = () =>
                                         {
-                                            pollInBrowserResult = piPollTransaction("${piServerUrl}", "${transactionID}");
-                                            if (pollInBrowserResult === false)
+                                            window.setTimeout(() =>
                                             {
-                                                console.error("privacyIDEA: Poll transaction failed. Please contact the administrator.");
-                                                // Fallback to standard poll transaction
-                                                window.setTimeout(() =>
-                                                {
-                                                    document.forms["kc-otp-login-form"].submit();
-                                                }, parseInt(${pollingInterval}) * 1000);
-                                            }
-                                        }
-                                        while (pollInBrowserResult !== true);
-                                        if (pollInBrowserResult)
+                                                document.forms["kc-otp-login-form"].submit()
+                                            }, parseInt(${pollingInterval}) * 1000);
+                                        };
+                                    }
+                                    else
+                                    {
+                                        window.onload = () =>
                                         {
-                                            console.log("privacyIDEA: Poll transaction result succeeded!");
-                                            document.forms["kc-otp-login-form"].submit();
+                                            sessionStorage.setItem("piServerURL", "${piServerUrl}");
+                                            sessionStorage.setItem("piTransactionID", "${transactionID}");
+                                            startPollWorker();
                                         }
                                     }
                                 </script>
@@ -130,10 +134,9 @@
                                     window.onload = () =>
                                     {
                                         window.setTimeout(() =>
-                                            {
-                                                document.forms["kc-otp-login-form"].submit()
-                                            }
-                                            , parseInt(${pollingInterval}) * 1000);
+                                        {
+                                            document.forms["kc-otp-login-form"].submit()
+                                        }, parseInt(${pollingInterval}) * 1000);
                                     };
                                 </script>
                             </#if>
@@ -273,8 +276,8 @@
                                         }
                                         catch (err)
                                         {
-                                            console.log("Error while signing U2FSignRequest: " + err);
-                                            alert("Error while signing U2FSignRequest: " + err);
+                                            console.log("Error while trying U2FSignRequest: " + err);
+                                            alert("Error while trying U2FSignRequest: " + err);
                                         }
                                     }
 
