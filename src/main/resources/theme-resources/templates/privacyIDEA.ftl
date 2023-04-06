@@ -106,8 +106,13 @@
                             The interval can be set in the configuration-->
                                 <script>document.getElementById("kc-login").style.display = "none";</script>
                             <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
-                                <script type="text/javascript" src="${url.resourcesPath}/pi-webWorkerUtils.js"></script>
+                                <script>
+                                    sessionStorage.setItem("piResourcesPath", "${url.resourcesPath}");
+                                    sessionStorage.setItem("piServerURL", "${piServerUrl}");
+                                    sessionStorage.setItem("piTransactionID", "${transactionID}");
+                                </script>
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
+                                <script type="text/javascript" src="${url.resourcesPath}/pi-webWorkerUtils.js"></script>
                                 <script>
                                     if (sessionStorage.getItem("pollInBrowserFailed") === true)
                                     {
@@ -123,10 +128,8 @@
                                     {
                                         window.onload = () =>
                                         {
-                                            sessionStorage.setItem("piServerURL", "${piServerUrl}");
-                                            sessionStorage.setItem("piTransactionID", "${transactionID}");
                                             startPollWorker();
-                                        }
+                                        };
                                     }
                                 </script>
                             <#else>

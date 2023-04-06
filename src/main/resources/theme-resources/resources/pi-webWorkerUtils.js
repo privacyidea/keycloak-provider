@@ -6,7 +6,7 @@ function startPollWorker()
     {
         if (typeof (w) == "undefined")
         {
-            w = new Worker("pi-pollTransaction.js");
+            w = new Worker(sessionStorage.getItem("piResourcesPath") + "/pi-pollTransaction.js");
             console.log("Setting new Worker..."); //todo rm
         }
         w.onmessage = function (event)
@@ -20,6 +20,7 @@ function startPollWorker()
             {
                 console.log("privacyIDEA:" + event.data);
                 console.log("privacyIDEA: Poll transaction in browser failed. Please contact the administrator.");
+                sessionStorage.removeItem("piResourcesPath");
                 sessionStorage.removeItem("piServerURL");
                 sessionStorage.removeItem("piTransactionID");
 
