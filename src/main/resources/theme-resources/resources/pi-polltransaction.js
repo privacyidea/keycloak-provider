@@ -1,4 +1,3 @@
-let success = false;
 const url = sessionStorage.getItem("piServerURL") + "/validate/polltransaction";
 const params = "transaction_id=" + sessionStorage.getItem("piTransactionID");
 
@@ -15,34 +14,31 @@ function browserPollTransaction()
                 if (request.status === 200)
                 {
                     const response = JSON.parse(request.response);
-                    console.log("response json result->value: " + response['result']['value']); //todo rm
                     if (response['result']['value'])
                     {
-                        success = true;
-                        postMessage(true);
+                        console.log("response json result->value: " + response['result']['value']); //todo rm
+                        self.postMessage(true); //todo sending postMessage doesn't work! Fixing it will repair the whole flow. Maybe eventListener??
                         stopPollWorker();
                     }
                 }
                 else
                 {
-                    postMessage(request.statusText);
+                    self.postMessage(request.statusText);
                     stopPollWorker();
                 }
             }
         }
         catch (e)
         {
-            postMessage(e);
+            self.postMessage(e);
             stopPollWorker();
         }
     };
     request.onerror = (e) =>
     {
-        postMessage(request.statusText);
+        self.postMessage(request.statusText);
         stopPollWorker();
     };
     request.send();
 }
-
-console.log("doing poll transaction..."); //todo rm
 setInterval("browserPollTransaction()", 2000);

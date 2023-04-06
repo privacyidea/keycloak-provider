@@ -7,19 +7,19 @@ function startPollWorker()
         if (typeof (w) == "undefined")
         {
             w = new Worker(sessionStorage.getItem("piResourcesPath") + "/pi-pollTransaction.js");
-            console.log("Setting new Worker..."); //todo rm
+            console.log("Poll in browser: Setting new Worker...");
         }
         w.onmessage = function (event)
         {
             if (event.data === true)
             {
-                console.log("privacyIDEA: Poll transaction result succeeded!");
+                console.log("Poll in browser: Poll transaction result succeeded!");
                 document.forms["kc-otp-login-form"].submit();
             }
             else
             {
-                console.log("privacyIDEA: Poll in browser error: " + event.data);
-                console.log("privacyIDEA: Poll transaction in browser failed. Please contact the administrator.");
+                console.log("Poll in browser error: " + event.data);
+                console.log("Poll in browser failed. Please contact the administrator.");
                 sessionStorage.removeItem("piResourcesPath");
                 sessionStorage.removeItem("piServerURL");
                 sessionStorage.removeItem("piTransactionID");
