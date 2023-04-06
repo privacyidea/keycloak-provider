@@ -1,6 +1,7 @@
+let success = false;
 const url = sessionStorage.getItem("piServerURL") + "/validate/polltransaction";
 const params = "transaction_id=" + sessionStorage.getItem("piTransactionID");
-let success = false;
+
 function browserPollTransaction()
 {
     const request = new XMLHttpRequest();
@@ -42,5 +43,6 @@ function browserPollTransaction()
     };
     request.send();
 }
+
 console.log("doing poll transaction..."); //todo rm
 setInterval("browserPollTransaction()", 2000);

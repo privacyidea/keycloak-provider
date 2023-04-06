@@ -106,11 +106,6 @@
                             The interval can be set in the configuration-->
                                 <script>document.getElementById("kc-login").style.display = "none";</script>
                             <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
-                                <script>
-                                    sessionStorage.setItem("piResourcesPath", "${url.resourcesPath}");
-                                    sessionStorage.setItem("piServerURL", "${piServerUrl}");
-                                    sessionStorage.setItem("piTransactionID", "${transactionID}");
-                                </script>
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-webWorkerUtils.js"></script>
                                 <script>
@@ -120,7 +115,7 @@
                                         {
                                             window.setTimeout(() =>
                                             {
-                                                document.forms["kc-otp-login-form"].submit()
+                                                document.forms["kc-otp-login-form"].submit();
                                             }, parseInt(${pollingInterval}) * 1000);
                                         };
                                     }
@@ -128,6 +123,9 @@
                                     {
                                         window.onload = () =>
                                         {
+                                            sessionStorage.setItem("piResourcesPath", "${url.resourcesPath}");
+                                            sessionStorage.setItem("piServerURL", "${piServerUrl}");
+                                            sessionStorage.setItem("piTransactionID", "${transactionID}");
                                             startPollWorker();
                                         };
                                     }

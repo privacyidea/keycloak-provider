@@ -18,7 +18,7 @@ function startPollWorker()
             }
             else
             {
-                console.log("privacyIDEA:" + event.data);
+                console.log("privacyIDEA: Poll in browser error: " + event.data);
                 console.log("privacyIDEA: Poll transaction in browser failed. Please contact the administrator.");
                 sessionStorage.removeItem("piResourcesPath");
                 sessionStorage.removeItem("piServerURL");
