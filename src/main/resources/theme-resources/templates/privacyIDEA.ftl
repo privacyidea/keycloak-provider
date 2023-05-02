@@ -88,13 +88,6 @@
                                 function changeMode(newMode)
                                 {
                                     // Submit the form to pass the change to the authenticator
-                                    if (newMode !== "push" && sessionStorage.getItem("piTransactionID") !== null)
-                                    {
-                                        if (typeof stopPollWorker === "function")
-                                        {
-                                            stopPollWorker();
-                                        }
-                                    }
                                     document.getElementById("mode").value = newMode;
                                     document.getElementById("modeChanged").value = "true";
                                     document.forms["kc-otp-login-form"].submit();
@@ -106,8 +99,6 @@
                             The interval can be set in the configuration-->
                                 <script>document.getElementById("kc-login").style.display = "none";</script>
                             <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
-                                <script type="text/javascript" src="${url.resourcesPath}/pi-pollTransaction.js"></script>
-                                <script type="text/javascript" src="${url.resourcesPath}/pi-webWorkerUtils.js"></script>
                                 <script>
                                     if (sessionStorage.getItem("pollInBrowserFailed") === true)
                                     {
@@ -123,10 +114,51 @@
                                     {
                                         window.onload = () =>
                                         {
-                                            sessionStorage.setItem("piResourcesPath", "${url.resourcesPath}");
-                                            sessionStorage.setItem("piServerURL", "${piServerUrl}");
-                                            sessionStorage.setItem("piTransactionID", "${transactionID}");
-                                            startPollWorker();
+                                            let worker;
+                                            if (typeof (Worker) !== "undefined")
+                                            {
+                                                if (typeof (worker) == "undefined")
+                                                {
+                                                    worker = new Worker("${url.resourcesPath}/pi-pollTransaction.worker.js");
+                                                    document.getElementById("kc-otp-login-form").addEventListener('submit', function (e)
+                                                    {
+                                                        worker.terminate();
+                                                        worker = undefined;
+                                                    })
+                                                    worker.postMessage({'cmd': 'url', 'msg': '${piServerUrl}'});
+                                                    worker.postMessage({'cmd': 'transactionID', 'msg': '${transactionID}'});
+                                                    worker.postMessage({'cmd': 'start'});
+                                                    worker.addEventListener('message', function (e)
+                                                    {
+                                                        let data = e.data;
+                                                        switch (data.status)
+                                                        {
+                                                            case 'success':
+                                                                console.log(data.message);
+                                                                document.forms["kc-otp-login-form"].submit();
+                                                                break;
+                                                            case 'progress':
+                                                                console.log(data.message);
+                                                                break;
+                                                            case 'error':
+                                                                console.log("Poll in browser error: " + data.message);
+                                                                console.log("Poll in browser failed. Please contact the administrator.");
+                                                                sessionStorage.setItem("pollInBrowserFailed", "true");
+                                                                worker = undefined;
+
+                                                                // Fallback to standard poll transaction
+                                                                document.forms["kc-otp-login-form"].submit();
+                                                        }
+                                                    })
+                                                }
+                                            }
+                                            else
+                                            {
+                                                console.log("Sorry! No Web Worker support.");
+                                                worker.terminate();
+                                                sessionStorage.setItem("pollInBrowserFailed", "true");
+                                                document.forms["kc-otp-login-form"].submit();
+                                            }
                                         };
                                     }
                                 </script>
