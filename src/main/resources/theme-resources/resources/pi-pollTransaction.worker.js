@@ -34,15 +34,10 @@ function pollTransactionInBrowser()
                 if (request.status === 200)
                 {
                     const response = JSON.parse(request.response);
-                    self.postMessage({'message': 'Polling in browser: Bound with the privacyIDEA server.', 'status': 'progress'});
                     if (response['result']['value'] === true)
                     {
                         self.postMessage({'message': 'Polling in browser: Push message confirmed!', 'status': 'success'});
                         self.close();
-                    }
-                    else if (response['result']['value'] === false)
-                    {
-                        self.postMessage({'message': 'Polling in browser: Push not accepted yet...', 'status': 'progress'});
                     }
                 }
                 else

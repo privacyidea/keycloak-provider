@@ -70,6 +70,7 @@ import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_PI_SERVER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER;
+import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_FAILED;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_TOKEN_ENROLLMENT_QR;
@@ -205,6 +206,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_OTP, "")
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
                .setAttribute(FORM_POLL_IN_BROWSER, false)
+               .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -322,6 +324,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentMode = formData.getFirst(FORM_MODE);
         boolean pushAvailable = TRUE.equals(formData.getFirst(FORM_PUSH_AVAILABLE));
         boolean otpAvailable = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
+        boolean pollInBrowserFailed = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_FAILED));
         String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
         String imagePush = formData.getFirst(FORM_IMAGE_PUSH);
@@ -353,6 +356,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
             .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
             .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+            .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 
@@ -480,16 +484,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
+        // Check for poll in browser
+        if (config.pollInBrowser())
+        {
+            context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
+            context.form().setAttribute(FORM_PI_SERVER_URL, config.serverURL());
+        }
+
         // Check for Push
         if (response.pushAvailable())
         {
             context.form().setAttribute(FORM_PUSH_AVAILABLE, true);
             context.form().setAttribute(FORM_PUSH_MESSAGE, response.pushMessage());
-            if (config.pollInBrowser())
-            {
-                context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
-                context.form().setAttribute(FORM_PI_SERVER_URL, config.serverURL());
-            }
         }
 
         // Check for WebAuthn and U2F
