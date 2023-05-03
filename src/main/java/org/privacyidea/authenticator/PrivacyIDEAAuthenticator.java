@@ -26,6 +26,7 @@ package org.privacyidea.authenticator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MultivaluedMap;
@@ -58,6 +59,7 @@ import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.FORM_ERROR;
+import static org.privacyidea.authenticator.Const.FORM_ERROR_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
 import static org.privacyidea.authenticator.Const.FORM_IMAGE_OTP;
 import static org.privacyidea.authenticator.Const.FORM_IMAGE_PUSH;
@@ -360,6 +362,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 
+        // Log the error encountered in the browser
+        logger.error(formData.getFirst(FORM_ERROR_MESSAGE));
+
         Map<String, String> headers = getHeadersToForward(context, config);
         // Do not show the error message if something was triggered
         boolean didTrigger = false;
@@ -516,14 +521,28 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if response from server contains preferred client mode
         if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
         {
-            mode = response.preferredClientMode;
+            if (response.preferredClientMode.equals("push") && config.pollInBrowser())
+            {
+                mode = "otp";
+            }
+            else
+            {
+                mode = response.preferredClientMode;
+            }
         }
         else
         {
             // Check if any triggered token matches the preferred token type
             if (response.triggeredTokenTypes().contains(config.prefTokenType()))
             {
-                mode = config.prefTokenType();
+                if (config.prefTokenType().equals("push") && config.pollInBrowser())
+                {
+                    mode = "otp";
+                }
+                else
+                {
+                    mode = config.prefTokenType();
+                }
             }
         }
 

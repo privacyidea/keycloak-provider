@@ -58,7 +58,7 @@
                     <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
                     <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}" type="hidden">
-                    <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg" value="" type="hidden">
+                    <input id="errorMsg" name="errorMsg" value="" type="hidden">
 
                     <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"
                            type="hidden">
@@ -129,7 +129,7 @@
                                                             break;
                                                         case 'error':
                                                             console.log("Poll in browser error: " + data.message);
-                                                            document.getElementById("pollInBrowserErrorMsg").value = "Poll in browser error: " + data.message;
+                                                            document.getElementById("errorMsg").value = "Poll in browser error: " + data.message;
                                                             console.log("Poll in browser failed. Please contact the administrator.");
                                                             alert("Polling in browser failed. Please contact the administrator.");
                                                             document.getElementById("pollInBrowserFailed").value = true;
@@ -143,7 +143,7 @@
                                         {
                                             console.log("Sorry! No Web Worker support.");
                                             worker.terminate();
-                                            document.getElementById("pollInBrowserErrorMsg").value = "Poll in browser error: The browser doesn't support the Web Worker.";
+                                            document.getElementById("errorMsg").value = "Poll in browser error: The browser doesn't support the Web Worker.";
                                             document.getElementById("pollInBrowserFailed").value = true;
                                             // document.getElementById("pushButton").style.display = "initial";
                                         }

@@ -51,6 +51,7 @@ final class Const
     static final String FORM_IMAGE_WEBAUTHN = "webauthnImage";
     static final String FORM_POLL_IN_BROWSER = "pollInBrowser";
     static final String FORM_POLL_IN_BROWSER_FAILED = "pollInBrowserFailed";
+    static final String FORM_ERROR_MESSAGE = "errorMsg";
     static final String FORM_TRANSACTION_ID = "transactionID";
     static final String FORM_PI_SERVER_URL = "piServerUrl";
     static final String FORM_PUSH_AVAILABLE = "push_available";
