@@ -14,7 +14,6 @@ self.addEventListener('message', function (e)
         case 'start':
             if (url.length > 0 && params.length > 0)
             {
-                self.postMessage({'message': 'Trying to poll in the browser...', 'status': 'progress'})
                 setInterval("pollTransactionInBrowser()", 2000);
             }
             break;

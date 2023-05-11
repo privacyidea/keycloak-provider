@@ -97,13 +97,12 @@
                             </script>
 
                             <!-- Poll in browser section -->
-<#--                            <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "") && (pollInBrowserFailed = false)>-->
-                            <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "")>
+                            <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "") && (pollInBrowserFailed = false)>
                                 <script>
                                     window.onload = () =>
                                     {
-                                        console.log("doing poll in browser..."); //todo rm
-                                        // document.getElementById("pushButton").style.display = "none";
+                                        console.log("Trying to to poll in the browser...");
+                                        document.getElementById("pushButton").style.display = "none";
                                         let worker;
                                         if (typeof (Worker) !== "undefined")
                                         {
@@ -130,10 +129,8 @@
                                                         case 'error':
                                                             console.log("Poll in browser error: " + data.message);
                                                             document.getElementById("errorMsg").value = "Poll in browser error: " + data.message;
-                                                            console.log("Poll in browser failed. Please contact the administrator.");
-                                                            alert("Polling in browser failed. Please contact the administrator.");
                                                             document.getElementById("pollInBrowserFailed").value = true;
-                                                            // document.getElementById("pushButton").style.display = "initial";
+                                                            document.getElementById("pushButton").style.display = "initial";
                                                             worker = undefined;
                                                     }
                                                 })
@@ -145,7 +142,7 @@
                                             worker.terminate();
                                             document.getElementById("errorMsg").value = "Poll in browser error: The browser doesn't support the Web Worker.";
                                             document.getElementById("pollInBrowserFailed").value = true;
-                                            // document.getElementById("pushButton").style.display = "initial";
+                                            document.getElementById("pushButton").style.display = "initial";
                                         }
                                     };
                                 </script>
