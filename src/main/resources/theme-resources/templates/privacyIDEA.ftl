@@ -123,7 +123,6 @@
                                                     switch (data.status)
                                                     {
                                                         case 'success':
-                                                            console.log(data.message);
                                                             document.forms["kc-otp-login-form"].submit();
                                                             break;
                                                         case 'error':
