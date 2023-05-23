@@ -14,7 +14,7 @@ self.addEventListener('message', function (e)
         case 'start':
             if (url.length > 0 && params.length > 0)
             {
-                setInterval("pollTransactionInBrowser()", 2000);
+                setInterval("pollTransactionInBrowser()", 300);
             }
             break;
     }
