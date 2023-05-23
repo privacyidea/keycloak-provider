@@ -204,16 +204,16 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPollInBrowser.setLabel("Poll in browser");
         piPollInBrowser.setDefaultValue(false);
         piPollInBrowser.setHelpText(
-                "Enable it, if you want to avoid refreshing the login page by polling for a push token confirmation. " +
-                "NOTE: privacyIDEA has to be reachable from the user's browser." +
-                "NOTE: This is working only with a valid SSL certificate.");
+                "Enable this to do the polling for accepted push requests in the user's browser."+
+                "When enabled, the login page does not refresh when checking for successful push authentication." +
+                "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
         configProperties.add(piPollInBrowser);
 
         ProviderConfigProperty piPollInBrowserUrl = new ProviderConfigProperty();
         piPollInBrowserUrl.setType(ProviderConfigProperty.STRING_TYPE);
         piPollInBrowserUrl.setName(Const.CONFIG_POLL_IN_BROWSER_URL);
         piPollInBrowserUrl.setLabel("Url for poll in browser");
-        piPollInBrowserUrl.setHelpText("Optional. This server url will be used by the \"poll in browser\" instead of the main one.");
+        piPollInBrowserUrl.setHelpText("Optional. If poll in browser should use a deviating URL, set it here. Otherwise, the general URL will be used.");
         configProperties.add(piPollInBrowserUrl);
 
         ProviderConfigProperty piPushTokenInterval = new ProviderConfigProperty();
