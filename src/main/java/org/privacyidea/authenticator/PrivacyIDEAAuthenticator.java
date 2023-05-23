@@ -69,6 +69,7 @@ import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
 import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
+import static org.privacyidea.authenticator.Const.FORM_PI_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.FORM_PI_SERVER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER;
@@ -493,7 +494,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (config.pollInBrowser())
         {
             context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
-            context.form().setAttribute(FORM_PI_SERVER_URL, config.serverURL());
+            if (config.pollInBrowserUrl().isEmpty())
+            {
+                context.form().setAttribute(FORM_PI_POLL_IN_BROWSER_URL, config.serverURL());
+            }
+            else
+            {
+                context.form().setAttribute(FORM_PI_POLL_IN_BROWSER_URL, config.pollInBrowserUrl());
+            }
         }
 
         // Check for Push
