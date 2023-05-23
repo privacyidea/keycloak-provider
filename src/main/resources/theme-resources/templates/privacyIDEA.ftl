@@ -96,12 +96,12 @@
                                 }
                             </script>
 
-                            <!-- Poll in browser section -->
+                            <!-- Poll in browser section. If poll in browser is enabled in config,
+                                 the following script will process it in the background. -->
                             <#if transactionID?? && !(transactionID = "") && !(piPollInBrowserUrl = "") && (pollInBrowserFailed = false)>
                                 <script>
                                     window.onload = () =>
                                     {
-                                        console.log("Trying to to poll in the browser...");
                                         document.getElementById("pushButton").style.display = "none";
                                         let worker;
                                         if (typeof (Worker) !== "undefined")
