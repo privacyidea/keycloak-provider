@@ -97,7 +97,7 @@
                             </script>
 
                             <!-- Poll in browser section -->
-                            <#if transactionID?? && !(transactionID = "") && !(piServerUrl = "") && (pollInBrowserFailed = false)>
+                            <#if transactionID?? && !(transactionID = "") && !(piPollInBrowserUrl = "") && (pollInBrowserFailed = false)>
                                 <script>
                                     window.onload = () =>
                                     {
@@ -114,7 +114,7 @@
                                                     worker.terminate();
                                                     worker = undefined;
                                                 })
-                                                worker.postMessage({'cmd': 'url', 'msg': '${piServerUrl}'});
+                                                worker.postMessage({'cmd': 'url', 'msg': '${piPollInBrowserUrl}'});
                                                 worker.postMessage({'cmd': 'transactionID', 'msg': '${transactionID}'});
                                                 worker.postMessage({'cmd': 'start'});
                                                 worker.addEventListener('message', function (e)
