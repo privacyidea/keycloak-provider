@@ -96,7 +96,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      */
     private Pair loadConfiguration(final AuthenticationFlowContext context)
     {
-
         // Get the configuration and privacyIDEA instance for the current realm
         // If none is found then create a new one
 
@@ -106,7 +105,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         if (currentPair == null || incomingHash != currentPair.configuration().configHash())
         {
-
             final Map<String,String> configMap = context.getAuthenticatorConfig().getConfig();
             Configuration config = new Configuration(configMap);
             PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), PLUGIN_USER_AGENT)
@@ -118,11 +116,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                  .build();
             Pair pair = new Pair(privacyIDEA, config);
             piInstanceMap.putIfAbsent(kcRealm, pair);
-
         }
 
         return piInstanceMap.get(kcRealm);
-
     }
 
     /**
@@ -284,7 +280,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void action(AuthenticationFlowContext context)
     {
-
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
 
