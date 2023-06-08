@@ -115,7 +115,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                  .serviceRealm(config.serviceAccountRealm())
                                                  .build();
             Pair pair = new Pair(privacyIDEA, config);
-            piInstanceMap.putIfAbsent(kcRealm, pair);
+            piInstanceMap.put(kcRealm, pair);
         }
 
         return piInstanceMap.get(kcRealm);
