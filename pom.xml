@@ -116,7 +116,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>
-            <version>20.0.3</version>
+            <version>21.1.2</version>
         </dependency>
 
         <dependency>
