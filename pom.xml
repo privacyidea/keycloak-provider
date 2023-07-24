@@ -104,7 +104,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
-            <version>20.0.3</version>
+            <version>22.0.1</version>
         </dependency>
 
         <dependency>
