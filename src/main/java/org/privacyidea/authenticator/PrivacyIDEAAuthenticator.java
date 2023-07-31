@@ -39,6 +39,7 @@ import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.common.Version;
 import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
@@ -98,16 +99,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         // Get the configuration and privacyIDEA instance for the current realm
         // If none is found then create a new one
-
         final int incomingHash = context.getAuthenticatorConfig().getConfig().hashCode();
         final String kcRealm = context.getRealm().getName();
         final Pair currentPair = piInstanceMap.get(kcRealm);
 
         if (currentPair == null || incomingHash != currentPair.configuration().configHash())
         {
-            final Map<String,String> configMap = context.getAuthenticatorConfig().getConfig();
+            final Map<String, String> configMap = context.getAuthenticatorConfig().getConfig();
             Configuration config = new Configuration(configMap);
-            PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), PLUGIN_USER_AGENT)
+            String kcVersion = Version.VERSION;
+            String providerVersion = PrivacyIDEAAuthenticator.class.getPackage().getImplementationVersion();
+            String fullUserAgent = PLUGIN_USER_AGENT + "/" + providerVersion + " Keycloak/" + kcVersion;
+            PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
                                                  .sslVerify(config.sslVerify())
                                                  .logger(this)
                                                  .realm(config.realm())
@@ -130,7 +133,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void authenticate(AuthenticationFlowContext context)
     {
-
         final Pair currentPair = loadConfiguration(context);
 
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
