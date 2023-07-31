@@ -49,6 +49,12 @@ final class Const
     static final String FORM_IMAGE_PUSH = "pushImage";
     static final String FORM_IMAGE_OTP = "otpImage";
     static final String FORM_IMAGE_WEBAUTHN = "webauthnImage";
+    static final String FORM_POLL_IN_BROWSER = "pollInBrowser";
+    static final String FORM_POLL_IN_BROWSER_FAILED = "pollInBrowserFailed";
+    static final String FORM_ERROR_MESSAGE = "errorMsg";
+    static final String FORM_TRANSACTION_ID = "transactionID";
+    static final String FORM_PI_SERVER_URL = "piServerUrl";
+    static final String FORM_PI_POLL_IN_BROWSER_URL = "piPollInBrowserUrl";
     static final String FORM_PUSH_AVAILABLE = "push_available";
     static final String FORM_OTP_AVAILABLE = "otp_available";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
@@ -80,6 +86,8 @@ final class Const
     static final String CONFIG_ENROLL_TOKEN_TYPE = "pienrolltokentype";
     static final String CONFIG_ENROLL_TOKEN = "pienrolltoken";
     static final String CONFIG_SEND_PASSWORD = "pisendpassword";
+    static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
+    static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
     static final String CONFIG_SERVICE_PASS = "piservicepass";
     static final String CONFIG_SERVICE_ACCOUNT = "piserviceaccount";
     static final String CONFIG_SERVICE_REALM = "piservicerealm";

@@ -193,10 +193,28 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
         piTokenType.setName(Const.CONFIG_ENROLL_TOKEN_TYPE);
         piTokenType.setLabel("Enrollment token type");
-        piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed");
+        piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed.");
         piTokenType.setOptions(tokenTypes);
         piTokenType.setDefaultValue(tokenTypes.get(0));
         configProperties.add(piTokenType);
+
+        ProviderConfigProperty piPollInBrowser = new ProviderConfigProperty();
+        piPollInBrowser.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piPollInBrowser.setName(Const.CONFIG_POLL_IN_BROWSER);
+        piPollInBrowser.setLabel("Poll in browser");
+        piPollInBrowser.setDefaultValue(false);
+        piPollInBrowser.setHelpText(
+                "Enable this to do the polling for accepted push requests in the user's browser."+
+                "When enabled, the login page does not refresh when checking for successful push authentication." +
+                "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
+        configProperties.add(piPollInBrowser);
+
+        ProviderConfigProperty piPollInBrowserUrl = new ProviderConfigProperty();
+        piPollInBrowserUrl.setType(ProviderConfigProperty.STRING_TYPE);
+        piPollInBrowserUrl.setName(Const.CONFIG_POLL_IN_BROWSER_URL);
+        piPollInBrowserUrl.setLabel("Url for poll in browser");
+        piPollInBrowserUrl.setHelpText("Optional. If poll in browser should use a deviating URL, set it here. Otherwise, the general URL will be used.");
+        configProperties.add(piPollInBrowserUrl);
 
         ProviderConfigProperty piPushTokenInterval = new ProviderConfigProperty();
         piPushTokenInterval.setType(ProviderConfigProperty.STRING_TYPE);

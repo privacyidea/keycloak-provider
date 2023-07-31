@@ -5,7 +5,8 @@
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
     <#elseif section = "form">
-        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}" action="${url.loginAction}"
+              method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
                     <#if (!hasError)!true>
@@ -15,7 +16,7 @@
                                     <img alt="chal_img" src="${pushImage}">
                                 </div>
                             </#if>
-                          <h4 style="font-weight: bold">${pushMessage}</h4>
+                            <h4 style="font-weight: bold">${pushMessage}</h4>
                         <#elseif mode = "webauthn">
                             <#if (webauthnImage!"") != "">
                                 <div style="text-align: center;">
@@ -56,6 +57,8 @@
                     <input id="otpImage" name="otpImage" value="${otpImage!""}" type="hidden">
                     <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
+                    <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}" type="hidden">
+                    <input id="errorMsg" name="errorMsg" value="" type="hidden">
 
                     <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"
                            type="hidden">
@@ -78,12 +81,14 @@
                             <script>
                                 'use strict';
 
-                                if (document.getElementById("uilanguage").value === "de") {
+                                if (document.getElementById("uilanguage").value === "de")
+                                {
                                     document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
                                     document.getElementById("kc-login").value = "Anmelden";
                                 }
 
-                                function changeMode(newMode) {
+                                function changeMode(newMode)
+                                {
                                     // Submit the form to pass the change to the authenticator
                                     document.getElementById("mode").value = newMode;
                                     document.getElementById("modeChanged").value = "true";
@@ -91,20 +96,73 @@
                                 }
                             </script>
 
+                            <!-- Poll in browser section. If poll in browser is enabled in config,
+                                 the following script will process it in the background. -->
+                            <#if transactionID?? && !(transactionID = "") && !(piPollInBrowserUrl = "") && (pollInBrowserFailed = false)>
+                                <script>
+                                    window.onload = () =>
+                                    {
+                                        document.getElementById("pushButton").style.display = "none";
+                                        let worker;
+                                        if (typeof (Worker) !== "undefined")
+                                        {
+                                            if (typeof (worker) == "undefined")
+                                            {
+                                                worker = new Worker("${url.resourcesPath}/pi-pollTransaction.worker.js");
+                                                document.getElementById("kc-otp-login-form").addEventListener('submit', function (e)
+                                                {
+                                                    worker.terminate();
+                                                    worker = undefined;
+                                                })
+                                                worker.postMessage({'cmd': 'url', 'msg': '${piPollInBrowserUrl}'});
+                                                worker.postMessage({'cmd': 'transactionID', 'msg': '${transactionID}'});
+                                                worker.postMessage({'cmd': 'start'});
+                                                worker.addEventListener('message', function (e)
+                                                {
+                                                    let data = e.data;
+                                                    switch (data.status)
+                                                    {
+                                                        case 'success':
+                                                            document.forms["kc-otp-login-form"].submit();
+                                                            break;
+                                                        case 'error':
+                                                            console.log("Poll in browser error: " + data.message);
+                                                            document.getElementById("errorMsg").value = "Poll in browser error: " + data.message;
+                                                            document.getElementById("pollInBrowserFailed").value = true;
+                                                            document.getElementById("pushButton").style.display = "initial";
+                                                            worker = undefined;
+                                                    }
+                                                })
+                                            }
+                                        }
+                                        else
+                                        {
+                                            console.log("Sorry! No Web Worker support.");
+                                            worker.terminate();
+                                            document.getElementById("errorMsg").value = "Poll in browser error: The browser doesn't support the Web Worker.";
+                                            document.getElementById("pollInBrowserFailed").value = true;
+                                            document.getElementById("pushButton").style.display = "initial";
+                                        }
+                                    };
+                                </script>
+                            </#if>
+
                             <#if mode = "push">
                             <#--The form will be reloaded if push token is enabled to check if it is confirmed.
                             The interval can be set in the configuration-->
+                                <script>document.getElementById("kc-login").style.display = "none";</script>
                                 <script>
-                                    document.getElementById("kc-login").style.display = "none";
-                                    window.onload = () => {
-                                        window.setTimeout(() => {
-                                            document.forms["kc-otp-login-form"].submit();
+                                    window.onload = () =>
+                                    {
+                                        window.setTimeout(() =>
+                                        {
+                                            document.forms["kc-otp-login-form"].submit()
                                         }, parseInt(${pollingInterval}) * 1000);
                                     };
                                 </script>
                             <#if otp_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                   name="changeModeButton" id="changeModeButton"
+                                   name="otpButton" id="otpButton"
                                    onClick="changeMode('otp')"
                                    type="button" value="One-Time-Password"/>
                             </#if>
@@ -117,7 +175,7 @@
                                 </script>
                             <#if push_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                   name="changeModeButton" id="changeModeButton"
+                                   name="pushButton" id="pushButton"
                                    onClick="changeMode('push')"
                                    type="button" value="Push"/>
                             </#if>
@@ -133,37 +191,47 @@
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
                                 <script>
                                     'use strict';
-                                    if (document.getElementById("webauthnsignrequest").value === "") {
+                                    if (document.getElementById("webauthnsignrequest").value === "")
+                                    {
                                         document.getElementById("useWebAuthnButton").style.display = "none";
                                     }
 
-                                    if (document.getElementById("mode").value === "webauthn") {
-                                        window.onload = () => {
+                                    if (document.getElementById("mode").value === "webauthn")
+                                    {
+                                        window.onload = () =>
+                                        {
                                             doWebAuthn();
                                         }
                                     }
 
-                                    if (!window.location.origin) {
+                                    if (!window.location.origin)
+                                    {
                                         window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
                                     }
                                     document.getElementById("origin").value = window.origin;
 
-                                    function doWebAuthn() {
+                                    function doWebAuthn()
+                                    {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt webauthn
                                         // Afterward, webauthn is started directly
-                                        if (document.getElementById("mode").value === "push") {
+                                        if (document.getElementById("mode").value === "push")
+                                        {
                                             changeMode("webauthn");
                                         }
-                                        try {
+                                        try
+                                        {
                                             const requestStr = document.getElementById("webauthnsignrequest").value;
                                             const requestjson = JSON.parse(requestStr);
 
                                             const webAuthnSignResponse = window.pi_webauthn.sign(requestjson);
-                                            webAuthnSignResponse.then((webauthnresponse) => {
+                                            webAuthnSignResponse.then((webauthnresponse) =>
+                                            {
                                                 document.getElementById("webauthnsignresponse").value = JSON.stringify(webauthnresponse);
                                                 document.forms["kc-otp-login-form"].submit();
                                             });
-                                        } catch (err) {
+                                        }
+                                        catch (err)
+                                        {
                                             console.log("Error while trying WebAuthn: " + err);
                                             alert("Error while trying WebAuthn: " + err);
                                         }
@@ -182,24 +250,30 @@
 
                                 <script>
                                     'use strict';
-                                    if (document.getElementById("u2fsignrequest").value === "") {
+                                    if (document.getElementById("u2fsignrequest").value === "")
+                                    {
                                         document.getElementById("useU2FButton").style.display = "none";
                                     }
 
-                                    if (document.getElementById("mode").value === "u2f") {
-                                        window.onload = () => {
+                                    if (document.getElementById("mode").value === "u2f")
+                                    {
+                                        window.onload = () =>
+                                        {
                                             doU2F();
                                         }
                                     }
 
-                                    function doU2F() {
+                                    function doU2F()
+                                    {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt U2F
                                         // Afterward, U2F is started directly
-                                        if (document.getElementById("mode").value === "push") {
+                                        if (document.getElementById("mode").value === "push")
+                                        {
                                             changeMode("u2f");
                                         }
 
-                                        if (!window.isSecureContext) {
+                                        if (!window.isSecureContext)
+                                        {
                                             alert("Unable to proceed with U2F because the context is insecure!");
                                             console.log("Insecure context detected: Aborting U2F authentication!")
                                             changeMode("otp");
@@ -208,22 +282,27 @@
 
                                         const requestStr = document.getElementById("u2fsignrequest").value;
 
-                                        if (requestStr === null) {
+                                        if (requestStr === null)
+                                        {
                                             alert("Could not load U2F library. Please try again or use other token.");
                                             changeMode("otp");
                                             return;
                                         }
 
-                                        try {
+                                        try
+                                        {
                                             const requestjson = JSON.parse(requestStr);
                                             sign_u2f_request(requestjson);
-                                        } catch (err) {
-                                            console.log("Error while signing U2FSignRequest: " + err);
-                                            alert("Error while signing U2FSignRequest: " + err);
+                                        }
+                                        catch (err)
+                                        {
+                                            console.log("Error while trying U2FSignRequest: " + err);
+                                            alert("Error while trying U2FSignRequest: " + err);
                                         }
                                     }
 
-                                    function sign_u2f_request(signRequest) {
+                                    function sign_u2f_request(signRequest)
+                                    {
                                         let appId = signRequest["appId"];
                                         let challenge = signRequest["challenge"];
                                         let registeredKeys = [];
@@ -233,13 +312,17 @@
                                             keyHandle: signRequest["keyHandle"]
                                         });
 
-                                        u2f.sign(appId, challenge, registeredKeys, function (result) {
+                                        u2f.sign(appId, challenge, registeredKeys, function (result)
+                                        {
                                             const stringResult = JSON.stringify(result);
-                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData")) {
+                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData"))
+                                            {
                                                 document.getElementById("u2fsignresponse").value = stringResult;
                                                 changeMode("u2f");
                                                 document.forms["kc-otp-login-form"].submit();
-                                            } else {
+                                            }
+                                            else
+                                            {
                                                 console.log("Malformed U2F signing result: " + stringResult);
                                             }
                                         })

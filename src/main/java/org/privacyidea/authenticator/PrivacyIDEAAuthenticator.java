@@ -28,6 +28,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
@@ -59,6 +60,7 @@ import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
 import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
 import static org.privacyidea.authenticator.Const.FORM_ERROR;
+import static org.privacyidea.authenticator.Const.FORM_ERROR_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
 import static org.privacyidea.authenticator.Const.FORM_IMAGE_OTP;
 import static org.privacyidea.authenticator.Const.FORM_IMAGE_PUSH;
@@ -68,10 +70,15 @@ import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
 import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
+import static org.privacyidea.authenticator.Const.FORM_PI_POLL_IN_BROWSER_URL;
+import static org.privacyidea.authenticator.Const.FORM_PI_SERVER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
+import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER;
+import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_FAILED;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_TOKEN_ENROLLMENT_QR;
+import static org.privacyidea.authenticator.Const.FORM_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_REQUEST;
 import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_RESPONSE;
 import static org.privacyidea.authenticator.Const.FORM_UI_LANGUAGE;
@@ -196,6 +203,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_PUSH, "")
                .setAttribute(FORM_IMAGE_OTP, "")
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
+               .setAttribute(FORM_POLL_IN_BROWSER, false)
+               .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -314,6 +323,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentMode = formData.getFirst(FORM_MODE);
         boolean pushAvailable = TRUE.equals(formData.getFirst(FORM_PUSH_AVAILABLE));
         boolean otpAvailable = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
+        boolean pollInBrowserFailed = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_FAILED));
         String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
         String imagePush = formData.getFirst(FORM_IMAGE_PUSH);
@@ -345,8 +355,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
             .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
             .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+            .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
+
+        // Log the error encountered in the browser
+        logger.error(formData.getFirst(FORM_ERROR_MESSAGE));
 
         Map<String, String> headers = getHeadersToForward(context, config);
         // Do not show the error message if something was triggered
@@ -472,6 +486,20 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
+        // Check for poll in browser
+        if (config.pollInBrowser())
+        {
+            context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
+            if (config.pollInBrowserUrl().isEmpty())
+            {
+                context.form().setAttribute(FORM_PI_POLL_IN_BROWSER_URL, config.serverURL());
+            }
+            else
+            {
+                context.form().setAttribute(FORM_PI_POLL_IN_BROWSER_URL, config.pollInBrowserUrl());
+            }
+        }
+
         // Check for Push
         if (response.pushAvailable())
         {
@@ -497,14 +525,28 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if response from server contains preferred client mode
         if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
         {
-            mode = response.preferredClientMode;
+            if (response.preferredClientMode.equals("push") && config.pollInBrowser())
+            {
+                mode = "otp";
+            }
+            else
+            {
+                mode = response.preferredClientMode;
+            }
         }
         else
         {
             // Check if any triggered token matches the preferred token type
             if (response.triggeredTokenTypes().contains(config.prefTokenType()))
             {
-                mode = config.prefTokenType();
+                if (config.prefTokenType().equals("push") && config.pollInBrowser())
+                {
+                    mode = "otp";
+                }
+                else
+                {
+                    mode = config.prefTokenType();
+                }
             }
         }
 
