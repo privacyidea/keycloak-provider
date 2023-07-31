@@ -48,8 +48,10 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <!-- add okhttp3 to the manifest to that the classloader finds it -->
+                            <!-- add included dependencies to the manifest so that the classloader can find them -->
                             <Dependencies>com.squareup.okhttp3</Dependencies>
+                            <Dependencies>org.jetbrains.kotlin</Dependencies>
+                            <Dependencies>com.squareup.okio</Dependencies>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -80,7 +82,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <release>8</release>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -104,25 +107,31 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
-            <version>22.0.1</version>
+            <version>22.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi</artifactId>
-            <version>20.0.3</version>
+            <version>22.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-server-spi-private</artifactId>
-            <version>21.1.2</version>
+            <version>22.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
-            <version>21.1.2</version>
+            <version>22.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-common</artifactId>
+            <version>22.0.0</version>
         </dependency>
 
         <dependency>
@@ -132,15 +141,22 @@
         </dependency>
 
         <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-common</artifactId>
-            <version>19.0.3</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.9.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>8.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.1.0</version>
         </dependency>
     </dependencies>
 </project>
