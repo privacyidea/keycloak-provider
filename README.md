@@ -44,15 +44,11 @@ The different configuration parameters that are available on the configuration p
 | Forward headers            | Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. The headers names should be separated with ','.                                  |
 | Enable token enrollment    | If the current user does not have a token yet, it can be enrolled. The service account has to be set up. **Starting in privacyIDEA server version 3.8, token enrollment can be done via challenge-response and centrally managed in the server. That is the preferred way of token enrollment while logging in. This feature is therefore deprecated and will be removed in a future version.**                                                                                               |
 | Enrollment token type      | Select the token type for the token enrollment                                                                                                                                                               |
-| Poll in browser            | Enable this to do the polling for accepted push requests in the user's browser. When enabled, the login page does not refresh when checking for successful push authentication.                              |
+| Poll in browser            | Enable this to do the polling for accepted push requests in the user's browser. When enabled, the login page does not refresh when checking for successful push authentication. CORS settings for privacyidea can be adjusted in `etc/apache2/sites-available/privacyidea.conf`.                             |
 | URL for poll in browser    | Optional. If poll in browser should use a deviating URL, set it here. Otherwise, the general URL will be used.                                                                                               |
 | Push refresh interval      | Choose your custom interval in seconds to check if the push token is confirmed. This can be a comma separated list, if you want to change the interval                                                       |
 | Enable logging             | Enable this to have the privacyIDEA Keycloak provider write log messages to the keycloak log file.                                                                                                           |
 
 ## Manual build with source code
 * First, the client submodule has to be build using maven: ``mvn clean install`` in ``java-client``.
-
-* If the wildfly server is running and remote deployment is configured in the ``pom.xml``, the authenticator can directly be deployed with
-``mvn clean install wildfly:deploy``.
-
-* Otherwise build with ``mvn clean install`` and go on with **Installation**
+* Then build with ``mvn clean install`` in the provider directory and go on with **Installation**.
