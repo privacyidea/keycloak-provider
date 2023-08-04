@@ -189,7 +189,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         PIResponse triggerResponse = null;
         String pushMessage = uiLanguage.equals("en") ? DEFAULT_PUSH_MESSAGE_EN : DEFAULT_PUSH_MESSAGE_DE;
         String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
-
+        if (!config.defaultOTPMessage().isEmpty())
+        {
+            otpMessage = config.defaultOTPMessage();
+        }
         // Set the default values, always assume OTP is available
         String tokenEnrollmentQR = "";
         context.form()
