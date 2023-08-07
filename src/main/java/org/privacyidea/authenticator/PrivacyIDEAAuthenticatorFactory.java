@@ -170,6 +170,15 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
 
+
+        ProviderConfigProperty piDefaultOTPText = new ProviderConfigProperty();
+        piDefaultOTPText.setType(ProviderConfigProperty.STRING_TYPE);
+        piDefaultOTPText.setName(Const.CONFIG_DEFAULT_MESSAGE);
+        piDefaultOTPText.setLabel("Default OTP Text");
+        piDefaultOTPText.setHelpText(
+                "Set the default OTP text that will be shown if no challenge or error messages are present.");
+        configProperties.add(piDefaultOTPText);
+
         ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();
         piForwardedHeaders.setType(ProviderConfigProperty.STRING_TYPE);
         piForwardedHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
@@ -204,8 +213,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPollInBrowser.setLabel("Poll in browser");
         piPollInBrowser.setDefaultValue(false);
         piPollInBrowser.setHelpText(
-                "Enable this to do the polling for accepted push requests in the user's browser."+
-                "When enabled, the login page does not refresh when checking for successful push authentication." +
+                "Enable this to do the polling for accepted push requests in the user's browser. "+
+                "When enabled, the login page does not refresh when checking for successful push authentication. " +
                 "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
         configProperties.add(piPollInBrowser);
 

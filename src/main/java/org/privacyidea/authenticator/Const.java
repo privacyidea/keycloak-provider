@@ -86,6 +86,7 @@ final class Const
     static final String CONFIG_ENROLL_TOKEN_TYPE = "pienrolltokentype";
     static final String CONFIG_ENROLL_TOKEN = "pienrolltoken";
     static final String CONFIG_SEND_PASSWORD = "pisendpassword";
+    static final String CONFIG_DEFAULT_MESSAGE = "pidefaultmessage";
     static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
     static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
     static final String CONFIG_SERVICE_PASS = "piservicepass";

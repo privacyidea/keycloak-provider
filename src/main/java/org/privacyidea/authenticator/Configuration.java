@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
+import static org.privacyidea.authenticator.Const.CONFIG_DEFAULT_MESSAGE;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
@@ -67,6 +68,7 @@ class Configuration
     private final List<Integer> pollingInterval = new ArrayList<>();
     private final String prefTokenType;
     private final int configHash;
+    private final String defaultOTPMessage;
 
     Configuration(Map<String, String> configMap)
     {
@@ -78,7 +80,7 @@ class Configuration
         this.serviceAccountName = configMap.get(CONFIG_SERVICE_ACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICE_ACCOUNT);
         this.serviceAccountPass = configMap.get(CONFIG_SERVICE_PASS) == null ? "" : configMap.get(CONFIG_SERVICE_PASS);
         this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
-
+        this.defaultOTPMessage = configMap.get(CONFIG_DEFAULT_MESSAGE) == null ? "" : configMap.get(CONFIG_DEFAULT_MESSAGE);
         this.pollInBrowser = (configMap.get(CONFIG_POLL_IN_BROWSER) != null && configMap.get(CONFIG_POLL_IN_BROWSER).equals(TRUE));
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
         this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
@@ -220,4 +222,6 @@ class Configuration
     {
         return prefTokenType;
     }
+
+    String defaultOTPMessage() { return defaultOTPMessage; }
 }
