@@ -331,7 +331,7 @@
                             </#if>
 
                             <!-- Check if the alternate token options section should be displayed -->
-                            <#if (!push_available || !(piPollInBrowserUrl = "") && (pollInBrowserFailed = false)) && (u2fsignrequest = "") && (webauthnsignrequest = "")>
+                            <#if (!push_available || !(piPollInBrowserUrl!"" = "") && (pollInBrowserFailed = false)) && (u2fsignrequest = "") && (webauthnsignrequest = "")>
                                 <script>
                                     document.getElementById("alternateToken").style.display = "none";
                                 </script>
