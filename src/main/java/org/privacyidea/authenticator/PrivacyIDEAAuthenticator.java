@@ -28,19 +28,18 @@ import jakarta.ws.rs.core.Response;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
+import org.keycloak.common.Version;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.keycloak.common.Version;
 import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
@@ -71,9 +70,7 @@ import static org.privacyidea.authenticator.Const.FORM_OTP;
 import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_PI_POLL_IN_BROWSER_URL;
-import static org.privacyidea.authenticator.Const.FORM_PI_SERVER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
-import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_FAILED;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
@@ -206,7 +203,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_PUSH, "")
                .setAttribute(FORM_IMAGE_OTP, "")
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
-               .setAttribute(FORM_POLL_IN_BROWSER, false)
                .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
@@ -465,7 +461,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String webAuthnSignRequest = "";
         String u2fSignRequest = "";
         String mode = "otp";
-
+        String newOtpMessage = response.otpMessage();
         if (response.transactionID != null && !response.transactionID.isEmpty())
         {
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.transactionID);
@@ -493,14 +489,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (config.pollInBrowser())
         {
             context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
-            if (config.pollInBrowserUrl().isEmpty())
-            {
-                context.form().setAttribute(FORM_PI_POLL_IN_BROWSER_URL, config.serverURL());
-            }
-            else
-            {
-                context.form().setAttribute(FORM_PI_POLL_IN_BROWSER_URL, config.pollInBrowserUrl());
-            }
+            newOtpMessage = response.otpMessage() + "\n" + response.pushMessage();
+            context.form()
+                   .setAttribute(FORM_PI_POLL_IN_BROWSER_URL,
+                                 config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl());
         }
 
         // Check for Push
@@ -528,36 +520,27 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if response from server contains preferred client mode
         if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
         {
-            if (response.preferredClientMode.equals("push") && config.pollInBrowser())
-            {
-                mode = "otp";
-            }
-            else
-            {
-                mode = response.preferredClientMode;
-            }
+            mode = response.preferredClientMode;
         }
         else
         {
-            // Check if any triggered token matches the preferred token type
+            // Alternatively check if any triggered token matches the local preferred token type
             if (response.triggeredTokenTypes().contains(config.prefTokenType()))
             {
-                if (config.prefTokenType().equals("push") && config.pollInBrowser())
-                {
-                    mode = "otp";
-                }
-                else
-                {
-                    mode = config.prefTokenType();
-                }
+                mode = config.prefTokenType();
             }
+        }
+        // Using poll in browser does not require push mode
+        if (mode.equals("push") && config.pollInBrowser())
+        {
+            mode = "otp";
         }
 
         context.form()
                .setAttribute(FORM_MODE, mode)
                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
                .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
-               .setAttribute(FORM_OTP_MESSAGE, response.otpMessage());
+               .setAttribute(FORM_OTP_MESSAGE, newOtpMessage);
     }
 
     /**
