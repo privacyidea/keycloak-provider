@@ -9,6 +9,9 @@ We added a detailed how-to on our [blog](https://community.privacyidea.org/t/how
 * Download PrivacyIDEA-Provider.jar
 
 ## Installation
+#### Keycloak >= 22
+* HOTFIX: Use this version https://github.com/privacyidea/keycloak-provider/issues/143#issuecomment-1649649213
+* Then follow instructions below
 #### Keycloak >= 17
 * Keycloak has to be shut down
 * Move the jar file into the `providers` directory
