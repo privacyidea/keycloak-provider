@@ -5,7 +5,8 @@
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
     <#elseif section = "form">
-        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}" action="${url.loginAction}"
+        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}"
+              action="${url.loginAction}"
               method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
@@ -57,7 +58,8 @@
                     <input id="otpImage" name="otpImage" value="${otpImage!""}" type="hidden">
                     <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
-                    <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}" type="hidden">
+                    <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}"
+                           type="hidden">
                     <input id="errorMsg" name="errorMsg" value="" type="hidden">
 
                     <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"
@@ -80,19 +82,55 @@
                         <div class="${properties.kcFormButtonsWrapperClass!}">
                             <script>
                                 'use strict';
-
-                                if (document.getElementById("uilanguage").value === "de")
-                                {
-                                    document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
-                                    document.getElementById("kc-login").value = "Anmelden";
+                                // Helper functions
+                                function disable(id) {
+                                    const element = document.getElementById(id)
+                                    if (element != null) {
+                                        element.style.display = "none";
+                                    } else {
+                                        console.log(id + " is null!");
+                                    }
                                 }
 
-                                function changeMode(newMode)
-                                {
+                                function enable(id) {
+                                    const element = document.getElementById(id);
+                                    if (element != null) {
+                                        element.style.display = "initial";
+                                    } else {
+                                        console.log(id + " is null!");
+                                    }
+                                }
+
+                                function value(id) {
+                                    const element = document.getElementById(id);
+                                    if (element != null) {
+                                        return element.value;
+                                    } else {
+                                        console.log(id + " is null!");
+                                    }
+                                    return "";
+                                }
+
+                                function set(id, value) {
+                                    const element = document.getElementById(id);
+                                    if (element != null) {
+                                        element.value = value;
+                                    } else {
+                                        console.log(id + " is null!");
+                                    }
+                                }
+                                // End helper functions
+
+                                function changeMode(newMode) {
                                     // Submit the form to pass the change to the authenticator
-                                    document.getElementById("mode").value = newMode;
-                                    document.getElementById("modeChanged").value = "true";
+                                    set("mode", newMode);
+                                    set("modeChanged", "true");
                                     document.forms["kc-otp-login-form"].submit();
+                                }
+
+                                if (value("uilanguage") === "de") {
+                                    document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
+                                    set("kc-login", "Anmelden");
                                 }
                             </script>
 
@@ -100,62 +138,52 @@
                                  the following script will process it in the background. -->
                             <#if transactionID?? && !(transactionID = "") && !(piPollInBrowserUrl = "") && (pollInBrowserFailed = false)>
                                 <script>
-                                    window.onload = () =>
-                                    {
-                                        document.getElementById("pushButton").style.display = "none";
+                                    function workerError(message) {
+                                        console.log("Poll in browser error: " + message);
+                                        set("errorMsg", ("Poll in browser error: " + message));
+                                        set("pollInBrowserFailed", true);
+                                        enable("pushButton");
+                                    }
+
+                                    window.onload = () => {
+                                        disable("pushButton");
                                         let worker;
-                                        if (typeof (Worker) !== "undefined")
-                                        {
-                                            if (typeof (worker) == "undefined")
-                                            {
+                                        if (typeof (Worker) !== "undefined") {
+                                            if (typeof (worker) == "undefined") {
                                                 worker = new Worker("${url.resourcesPath}/pi-pollTransaction.worker.js");
-                                                document.getElementById("kc-otp-login-form").addEventListener('submit', function (e)
-                                                {
+                                                document.getElementById("kc-otp-login-form").addEventListener('submit', function (e) {
                                                     worker.terminate();
                                                     worker = undefined;
                                                 })
                                                 worker.postMessage({'cmd': 'url', 'msg': '${piPollInBrowserUrl}'});
                                                 worker.postMessage({'cmd': 'transactionID', 'msg': '${transactionID}'});
                                                 worker.postMessage({'cmd': 'start'});
-                                                worker.addEventListener('message', function (e)
-                                                {
+                                                worker.addEventListener('message', function (e) {
                                                     let data = e.data;
-                                                    switch (data.status)
-                                                    {
+                                                    switch (data.status) {
                                                         case 'success':
                                                             document.forms["kc-otp-login-form"].submit();
                                                             break;
                                                         case 'error':
-                                                            console.log("Poll in browser error: " + data.message);
-                                                            document.getElementById("errorMsg").value = "Poll in browser error: " + data.message;
-                                                            document.getElementById("pollInBrowserFailed").value = true;
-                                                            document.getElementById("pushButton").style.display = "initial";
+                                                            workerError(data.message);
                                                             worker = undefined;
                                                     }
                                                 })
                                             }
-                                        }
-                                        else
-                                        {
-                                            console.log("Sorry! No Web Worker support.");
+                                        } else {
                                             worker.terminate();
-                                            document.getElementById("errorMsg").value = "Poll in browser error: The browser doesn't support the Web Worker.";
-                                            document.getElementById("pollInBrowserFailed").value = true;
-                                            document.getElementById("pushButton").style.display = "initial";
+                                            workerError("The browser does not support Web Worker.")
                                         }
                                     };
                                 </script>
                             </#if>
 
                             <#if mode = "push">
-                            <#--The form will be reloaded if push token is enabled to check if it is confirmed.
-                            The interval can be set in the configuration-->
-                                <script>document.getElementById("kc-login").style.display = "none";</script>
+                            <#-- Polling for push by reloading every X seconds -->
                                 <script>
-                                    window.onload = () =>
-                                    {
-                                        window.setTimeout(() =>
-                                        {
+                                    disable("kc-login");
+                                    window.onload = () => {
+                                        window.setTimeout(() => {
                                             document.forms["kc-otp-login-form"].submit()
                                         }, parseInt(${pollingInterval}) * 1000);
                                     };
@@ -169,7 +197,7 @@
                             <#else>
                             <#--If token type is not push, an input field and login button is needed-->
                                 <script>
-                                    document.getElementById("kc-login").style.display = "initial";
+                                    enable("kc-login");
                                     document.getElementById("otp").type = "password";
                                     document.getElementById("otp").required = true;
                                 </script>
@@ -191,49 +219,38 @@
                                 <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
                                 <script>
                                     'use strict';
-                                    if (document.getElementById("webauthnsignrequest").value === "")
-                                    {
-                                        document.getElementById("useWebAuthnButton").style.display = "none";
+                                    if (value("webauthnsignrequest") === "") {
+                                        disable("useWebAuthnButton");
                                     }
 
-                                    if (document.getElementById("mode").value === "webauthn")
-                                    {
-                                        window.onload = () =>
-                                        {
+                                    if (value("mode") === "webauthn") {
+                                        window.onload = () => {
                                             doWebAuthn();
                                         }
                                     }
 
-                                    if (!window.location.origin)
-                                    {
+                                    if (!window.location.origin) {
                                         window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
                                     }
-                                    document.getElementById("origin").value = window.origin;
+                                    set("origin", window.origin);
 
-                                    function doWebAuthn()
-                                    {
+                                    function doWebAuthn() {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt webauthn
                                         // Afterward, webauthn is started directly
-                                        if (document.getElementById("mode").value === "push")
-                                        {
+                                        if (value("mode") === "push") {
                                             changeMode("webauthn");
                                         }
-                                        try
-                                        {
-                                            const requestStr = document.getElementById("webauthnsignrequest").value;
+                                        try {
+                                            const requestStr = value("webauthnsignrequest");
                                             const requestjson = JSON.parse(requestStr);
 
                                             const webAuthnSignResponse = window.pi_webauthn.sign(requestjson);
-                                            webAuthnSignResponse.then((webauthnresponse) =>
-                                            {
-                                                document.getElementById("webauthnsignresponse").value = JSON.stringify(webauthnresponse);
+                                            webAuthnSignResponse.then((webauthnresponse) => {
+                                                set("webauthnsignresponse", JSON.stringify(webauthnresponse));
                                                 document.forms["kc-otp-login-form"].submit();
                                             });
-                                        }
-                                        catch (err)
-                                        {
+                                        } catch (err) {
                                             console.log("Error while trying WebAuthn: " + err);
-                                            alert("Error while trying WebAuthn: " + err);
                                         }
                                     }
                                 </script>
@@ -250,59 +267,46 @@
 
                                 <script>
                                     'use strict';
-                                    if (document.getElementById("u2fsignrequest").value === "")
-                                    {
-                                        document.getElementById("useU2FButton").style.display = "none";
+                                    if (value("u2fsignrequest") === "") {
+                                        disable("useU2FButton");
                                     }
 
-                                    if (document.getElementById("mode").value === "u2f")
-                                    {
-                                        window.onload = () =>
-                                        {
+                                    if (value("mode") === "u2f") {
+                                        window.onload = () => {
                                             doU2F();
                                         }
                                     }
 
-                                    function doU2F()
-                                    {
+                                    function doU2F() {
                                         // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt U2F
                                         // Afterward, U2F is started directly
-                                        if (document.getElementById("mode").value === "push")
-                                        {
+                                        if (value("mode") === "push") {
                                             changeMode("u2f");
                                         }
 
-                                        if (!window.isSecureContext)
-                                        {
-                                            alert("Unable to proceed with U2F because the context is insecure!");
+                                        if (!window.isSecureContext) {
                                             console.log("Insecure context detected: Aborting U2F authentication!")
                                             changeMode("otp");
                                             return;
                                         }
 
-                                        const requestStr = document.getElementById("u2fsignrequest").value;
+                                        const requestStr = value("u2fsignrequest");
 
-                                        if (requestStr === null)
-                                        {
+                                        if (requestStr === null) {
                                             alert("Could not load U2F library. Please try again or use other token.");
                                             changeMode("otp");
                                             return;
                                         }
 
-                                        try
-                                        {
+                                        try {
                                             const requestjson = JSON.parse(requestStr);
                                             sign_u2f_request(requestjson);
-                                        }
-                                        catch (err)
-                                        {
+                                        } catch (err) {
                                             console.log("Error while trying U2FSignRequest: " + err);
-                                            alert("Error while trying U2FSignRequest: " + err);
                                         }
                                     }
 
-                                    function sign_u2f_request(signRequest)
-                                    {
+                                    function sign_u2f_request(signRequest) {
                                         let appId = signRequest["appId"];
                                         let challenge = signRequest["challenge"];
                                         let registeredKeys = [];
@@ -312,17 +316,13 @@
                                             keyHandle: signRequest["keyHandle"]
                                         });
 
-                                        u2f.sign(appId, challenge, registeredKeys, function (result)
-                                        {
+                                        u2f.sign(appId, challenge, registeredKeys, function (result) {
                                             const stringResult = JSON.stringify(result);
-                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData"))
-                                            {
-                                                document.getElementById("u2fsignresponse").value = stringResult;
+                                            if (stringResult.includes("clientData") && stringResult.includes("signatureData")) {
+                                                set("u2fsignresponse", stringResult);
                                                 changeMode("u2f");
                                                 document.forms["kc-otp-login-form"].submit();
-                                            }
-                                            else
-                                            {
+                                            } else {
                                                 console.log("Malformed U2F signing result: " + stringResult);
                                             }
                                         })
@@ -330,7 +330,8 @@
                                 </script>
                             </#if>
 
-                            <#if !push_available && (u2fsignrequest = "") && (webauthnsignrequest = "")>
+                            <!-- Check if the alternate token options section should be displayed -->
+                            <#if (!push_available || !(piPollInBrowserUrl! == "") && pollInBrowserFailed == false) && (u2fsignrequest == "") && (webauthnsignrequest == "")>
                                 <script>
                                     document.getElementById("alternateToken").style.display = "none";
                                 </script>
@@ -338,10 +339,10 @@
 
                             <#if hasError!false>
                                 <script>
-                                    document.getElementById("alternateToken").style.display = "none";
-                                    document.getElementById("kc-login").style.display = "none";
-                                    document.getElementById("otp").style.display = "none";
-                                    document.getElementById("otpMessage").value = "";
+                                    disable("alternateToken");
+                                    disable("kc-login");
+                                    disable("otp");
+                                    set("otpMessage", "");
                                 </script>
                             </#if>
                         </div>

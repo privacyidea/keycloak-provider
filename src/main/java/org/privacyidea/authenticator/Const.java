@@ -49,7 +49,6 @@ final class Const
     static final String FORM_IMAGE_PUSH = "pushImage";
     static final String FORM_IMAGE_OTP = "otpImage";
     static final String FORM_IMAGE_WEBAUTHN = "webauthnImage";
-    static final String FORM_POLL_IN_BROWSER = "pollInBrowser";
     static final String FORM_POLL_IN_BROWSER_FAILED = "pollInBrowserFailed";
     static final String FORM_ERROR_MESSAGE = "errorMsg";
     static final String FORM_TRANSACTION_ID = "transactionID";
