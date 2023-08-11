@@ -1,5 +1,13 @@
 # Changelog
 
+### v1.3.0 - 2023-08-11
+
+* Added poll in browser setting. This moves the polling for successful push authentication to the browser of the user so that the site does not have to reload. (#133)
+* Default OTP text is now customizable. (#137)
+
+* Added compatibility for keycloak 22
+* Removed listing as theme from keycloak settings
+
 ### v1.2.0 - 2023-01-25
 
 * Added implementation of the preferred client mode (#121)
