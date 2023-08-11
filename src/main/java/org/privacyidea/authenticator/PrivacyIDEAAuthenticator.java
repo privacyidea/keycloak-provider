@@ -23,8 +23,8 @@
  */
 package org.privacyidea.authenticator;
 
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
