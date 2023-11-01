@@ -113,19 +113,30 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPrefToken.setDefaultValue(prefToken.get(0));
         configProperties.add(piPrefToken);
 
-        List<String> authFlows = Arrays.asList("default", "send password", "trigger challenge", "send static pass");
-        ProviderConfigProperty piAuthenticationFlow = new ProviderConfigProperty();
-        piAuthenticationFlow.setType(ProviderConfigProperty.LIST_TYPE);
-        piAuthenticationFlow.setName(Const.CONFIG_AUTHENTICATION_FLOW);
-        piAuthenticationFlow.setLabel("Authentication flow");
-        piAuthenticationFlow.setHelpText("Select one of the following flows: " +
-                                "default - standard authentication flow, " +
-                                "send password - try to pre-authenticate against the privacyIDEA using the password given in the first login step, " +
-                                "trigger challenge - trigger all challenges beforehand using the provided below service account (required), " +
-                                "send static pass - perform the privacyIDEA server request automatically beforehand using the provided static password.");
-        piAuthenticationFlow.setOptions(authFlows);
-        piAuthenticationFlow.setDefaultValue(authFlows.get(0));
-        configProperties.add(piAuthenticationFlow);
+        ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
+        piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
+        piDoSendPassword.setLabel("Enable sending password");
+        piDoSendPassword.setHelpText(
+                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
+                "This setting is mutually exclusive with trigger challenge.");
+        configProperties.add(piDoSendPassword);
+
+        ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
+        piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
+        piDoTriggerChallenge.setLabel("Enable trigger challenge");
+        piDoTriggerChallenge.setHelpText(
+                "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. " +
+                "This setting is mutually exclusive with send password and will take precedence.");
+        configProperties.add(piDoTriggerChallenge);
+
+        ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
+        piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
+        piSendStaticPass.setLabel("Enable using static password");
+        piSendStaticPass.setHelpText("Choose if you want to send the static password (set below) to the privacyIDEA.");
+        configProperties.add(piSendStaticPass);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
         piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
@@ -138,7 +149,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServicePass.setType(ProviderConfigProperty.PASSWORD);
         piServicePass.setName(Const.CONFIG_SERVICE_PASS);
         piServicePass.setLabel("Service account password");
-        piServicePass.setHelpText("Password of the service account. Needed for trigger challenge and token enrollment");
+        piServicePass.setHelpText("Password of the service account. Needed for trigger challenge and token enrollment.");
         configProperties.add(piServicePass);
 
         ProviderConfigProperty piServiceRealm = new ProviderConfigProperty();
@@ -153,8 +164,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piStaticPass.setType(ProviderConfigProperty.STRING_TYPE);
         piStaticPass.setName(Const.CONFIG_STATIC_PASS);
         piStaticPass.setLabel("Static pass");
-        piStaticPass.setHelpText("Static password which should be used in the 'send static pass' authentication flow. " +
-                                 "You can leave it empty to perform the privacyIDEA server request with empty pass.");
+        piStaticPass.setHelpText("Set the static password which should be provided to the privacyIDEA" +
+                                 "Leave it empty to perform the privacyIDEA server request with an empty pass.");
         configProperties.add(piStaticPass);
 
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
