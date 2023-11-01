@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.privacyidea.PIConstants.TOKEN_TYPE_OTP;
 import static org.privacyidea.authenticator.Const.CONFIG_DEFAULT_MESSAGE;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
@@ -36,11 +35,13 @@ import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
 import static org.privacyidea.authenticator.Const.CONFIG_REALM;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
+import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
+import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
+import static org.privacyidea.authenticator.Const.CONFIG_STATIC_PASS;
 import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
@@ -53,7 +54,8 @@ class Configuration
     private final boolean doSSLVerify;
     private final boolean doTriggerChallenge;
     private final boolean doSendPassword;
-
+    private final boolean doSendStaticPass;
+    private final String staticPass;
     private final String serviceAccountName;
     private final String serviceAccountPass;
     private final String serviceAccountRealm;
@@ -80,13 +82,15 @@ class Configuration
         this.serviceAccountName = configMap.get(CONFIG_SERVICE_ACCOUNT) == null ? "" : configMap.get(CONFIG_SERVICE_ACCOUNT);
         this.serviceAccountPass = configMap.get(CONFIG_SERVICE_PASS) == null ? "" : configMap.get(CONFIG_SERVICE_PASS);
         this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
+        this.staticPass = configMap.get(CONFIG_STATIC_PASS) == null ? "" : configMap.get(CONFIG_STATIC_PASS);
         this.defaultOTPMessage = configMap.get(CONFIG_DEFAULT_MESSAGE) == null ? "" : configMap.get(CONFIG_DEFAULT_MESSAGE);
         this.pollInBrowser = (configMap.get(CONFIG_POLL_IN_BROWSER) != null && configMap.get(CONFIG_POLL_IN_BROWSER).equals(TRUE));
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
         this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
+        this.doSendStaticPass = configMap.get(CONFIG_SEND_STATIC_PASS) != null && configMap.get(CONFIG_SEND_STATIC_PASS).equals(TRUE);
         // PI uses all lowercase letters for token types so change it here to match it internally
-        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKEN_TYPE) == null ? TOKEN_TYPE_OTP : configMap.get(CONFIG_PREF_TOKEN_TYPE)).toLowerCase();
+        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKEN_TYPE) == null ? "otp" : configMap.get(CONFIG_PREF_TOKEN_TYPE)).toLowerCase();
         this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKEN_TYPE) == null ? "" : configMap.get(CONFIG_ENROLL_TOKEN_TYPE)).toLowerCase();
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
 
@@ -160,6 +164,16 @@ class Configuration
         return doTriggerChallenge;
     }
 
+    boolean sendStaticPass()
+    {
+        return doSendStaticPass;
+    }
+
+    String staticPass()
+    {
+        return staticPass;
+    }
+
     String serviceAccountName()
     {
         return serviceAccountName;
@@ -200,8 +214,15 @@ class Configuration
         return enrollingTokenType;
     }
 
-    boolean pollInBrowser() { return pollInBrowser; }
-    String pollInBrowserUrl() { return pollInBrowserUrl; }
+    boolean pollInBrowser()
+    {
+        return pollInBrowser;
+    }
+
+    String pollInBrowserUrl()
+    {
+        return pollInBrowserUrl;
+    }
 
     List<Integer> pollingInterval()
     {
@@ -223,5 +244,8 @@ class Configuration
         return prefTokenType;
     }
 
-    String defaultOTPMessage() { return defaultOTPMessage; }
+    String defaultOTPMessage()
+    {
+        return defaultOTPMessage;
+    }
 }
