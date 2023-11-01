@@ -87,11 +87,13 @@ final class Const
     static final String CONFIG_DEFAULT_MESSAGE = "pidefaultmessage";
     static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
     static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
+    static final String CONFIG_SEND_PASSWORD = "pisendpassword";
+    static final String CONFIG_TRIGGER_CHALLENGE = "pidotriggerchallenge";
+    static final String CONFIG_SEND_STATIC_PASS = "pisendstaticpass";
     static final String CONFIG_SERVICE_PASS = "piservicepass";
-    static final String CONFIG_STATIC_PASS = "pistaticpass";
-    static final String CONFIG_AUTHENTICATION_FLOW = "piauthenticationflow";
     static final String CONFIG_SERVICE_ACCOUNT = "piserviceaccount";
     static final String CONFIG_SERVICE_REALM = "piservicerealm";
+    static final String CONFIG_STATIC_PASS = "pistaticpass";
     static final String CONFIG_VERIFY_SSL = "piverifyssl";
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
