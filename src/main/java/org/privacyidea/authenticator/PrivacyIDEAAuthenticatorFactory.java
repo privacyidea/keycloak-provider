@@ -161,7 +161,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         configProperties.add(piServiceRealm);
 
         ProviderConfigProperty piStaticPass = new ProviderConfigProperty();
-        piStaticPass.setType(ProviderConfigProperty.STRING_TYPE);
+        piStaticPass.setType(ProviderConfigProperty.PASSWORD);
         piStaticPass.setName(Const.CONFIG_STATIC_PASS);
         piStaticPass.setLabel("Static pass");
         piStaticPass.setHelpText("Set the static password which should be provided to the privacyIDEA. " +
