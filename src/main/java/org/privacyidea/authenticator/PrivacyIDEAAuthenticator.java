@@ -222,6 +222,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 log("Cannot send password because it is null!");
             }
         }
+        else if (config.sendStaticPass())
+        {
+            if (config.staticPass() != null)
+            {
+                triggerResponse = privacyIDEA.validateCheck(currentUser, config.staticPass(), null, headers);
+            }
+            else
+            {
+                log("Cannot send static password because it is null!");
+            }
+        }
 
         // Evaluate for possibly triggered token
         if (triggerResponse != null)
