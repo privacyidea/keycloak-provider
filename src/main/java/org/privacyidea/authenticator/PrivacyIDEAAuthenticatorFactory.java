@@ -135,7 +135,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
         piSendStaticPass.setLabel("Enable using static password");
-        piSendStaticPass.setHelpText("Choose if you want to send the static password (set below) to the privacyIDEA.");
+        piSendStaticPass.setHelpText("Choose if you want to send the static password (see below) to the privacyIDEA.");
         configProperties.add(piSendStaticPass);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
@@ -164,7 +164,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piStaticPass.setType(ProviderConfigProperty.STRING_TYPE);
         piStaticPass.setName(Const.CONFIG_STATIC_PASS);
         piStaticPass.setLabel("Static pass");
-        piStaticPass.setHelpText("Set the static password which should be provided to the privacyIDEA" +
+        piStaticPass.setHelpText("Set the static password which should be provided to the privacyIDEA. " +
                                  "Leave it empty to perform the privacyIDEA server request with an empty pass.");
         configProperties.add(piStaticPass);
 
