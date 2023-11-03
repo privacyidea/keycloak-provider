@@ -113,15 +113,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPrefToken.setDefaultValue(prefToken.get(0));
         configProperties.add(piPrefToken);
 
-        ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
-        piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
-        piDoSendPassword.setLabel("Enable sending password");
-        piDoSendPassword.setHelpText(
-                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
-                "This setting is mutually exclusive with trigger challenge.");
-        configProperties.add(piDoSendPassword);
-
         ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
         piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
@@ -130,13 +121,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. " +
                 "This setting is mutually exclusive with send password and will take precedence.");
         configProperties.add(piDoTriggerChallenge);
-
-        ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
-        piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
-        piSendStaticPass.setLabel("Enable using static password");
-        piSendStaticPass.setHelpText("Choose if you want to send the static password (see below) to the privacyIDEA.");
-        configProperties.add(piSendStaticPass);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
         piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
@@ -160,12 +144,28 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                    "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
         configProperties.add(piServiceRealm);
 
+        ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
+        piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
+        piDoSendPassword.setLabel("Enable sending password");
+        piDoSendPassword.setHelpText(
+                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
+                "This setting is mutually exclusive with trigger challenge.");
+        configProperties.add(piDoSendPassword);
+
+        ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
+        piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
+        piSendStaticPass.setLabel("Send static password");
+        piSendStaticPass.setHelpText("Enable to send the specified static password to privacyIDEA.");
+        configProperties.add(piSendStaticPass);
+
         ProviderConfigProperty piStaticPass = new ProviderConfigProperty();
         piStaticPass.setType(ProviderConfigProperty.PASSWORD);
         piStaticPass.setName(Const.CONFIG_STATIC_PASS);
         piStaticPass.setLabel("Static pass");
-        piStaticPass.setHelpText("Set the static password which should be provided to the privacyIDEA. " +
-                                 "Leave it empty to perform the privacyIDEA server request with an empty pass.");
+        piStaticPass.setHelpText("Set the static password which should be sent to privacyIDEA if \"send static password\" is enabled. " +
+                                 "Can be empty to send an empty password.");
         configProperties.add(piStaticPass);
 
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
