@@ -53,6 +53,7 @@ final class Const
     static final String FORM_ERROR_MESSAGE = "errorMsg";
     static final String FORM_TRANSACTION_ID = "transactionID";
     static final String FORM_PI_SERVER_URL = "piServerUrl";
+    static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
     static final String FORM_PI_POLL_IN_BROWSER_URL = "piPollInBrowserUrl";
     static final String FORM_PUSH_AVAILABLE = "push_available";
     static final String FORM_OTP_AVAILABLE = "otp_available";
@@ -90,6 +91,7 @@ final class Const
     static final String CONFIG_SEND_PASSWORD = "pisendpassword";
     static final String CONFIG_TRIGGER_CHALLENGE = "pidotriggerchallenge";
     static final String CONFIG_SEND_STATIC_PASS = "pisendstaticpass";
+    static final String CONFIG_OTP_LENGTH = "piotplength";
     static final String CONFIG_SERVICE_PASS = "piservicepass";
     static final String CONFIG_SERVICE_ACCOUNT = "piserviceaccount";
     static final String CONFIG_SERVICE_REALM = "piservicerealm";

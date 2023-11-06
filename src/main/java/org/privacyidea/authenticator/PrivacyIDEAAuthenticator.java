@@ -68,6 +68,7 @@ import static org.privacyidea.authenticator.Const.FORM_MODE;
 import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
 import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
+import static org.privacyidea.authenticator.Const.FORM_AUTO_SUBMIT_OTP_LENGTH;
 import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_PI_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
@@ -203,6 +204,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_PUSH, "")
                .setAttribute(FORM_IMAGE_OTP, "")
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
+               .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
                .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
@@ -332,6 +334,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String imagePush = formData.getFirst(FORM_IMAGE_PUSH);
         String imageOTP = formData.getFirst(FORM_IMAGE_OTP);
         String imageWebauthn = formData.getFirst(FORM_IMAGE_WEBAUTHN);
+        String otpLength = formData.getFirst(FORM_AUTO_SUBMIT_OTP_LENGTH);
         String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
         String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
         String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
@@ -358,6 +361,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
             .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
             .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+            .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
             .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
             .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));

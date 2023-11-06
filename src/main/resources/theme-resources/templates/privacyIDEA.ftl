@@ -42,7 +42,18 @@
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
-                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
+                    <script>
+                        function autoSubmit(inputObject, lengthStr)
+                        {
+                            let lengthInt = parseInt(lengthStr);
+                            if (lengthInt != null && inputObject.value.length === lengthInt)
+                            {
+                                document.forms["kc-otp-login-form"].submit();
+                            }
+                        }
+                    </script>
+
+                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" onKeyUp="autoSubmit(this, ${otpLength!""})" autofocus/>
                 </div>
             </div>
 
@@ -57,6 +68,7 @@
                     <input id="pushImage" name="pushImage" value="${pushImage!""}" type="hidden">
                     <input id="otpImage" name="otpImage" value="${otpImage!""}" type="hidden">
                     <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
+                    <input id="otpLength" name="otpLength" value="${otpLength!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
                     <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}"
                            type="hidden">

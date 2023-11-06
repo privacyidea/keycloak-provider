@@ -193,6 +193,13 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Set the default OTP text that will be shown if no challenge or error messages are present.");
         configProperties.add(piDefaultOTPText);
 
+        ProviderConfigProperty piOtpLength = new ProviderConfigProperty();
+        piOtpLength.setType(ProviderConfigProperty.STRING_TYPE);
+        piOtpLength.setName(Const.CONFIG_OTP_LENGTH);
+        piOtpLength.setLabel("Auto-Submit OTP Length");
+        piOtpLength.setHelpText("Automatically submit the login form after X digits were entered. Leave empty to disable. NOTE: Only digits can be entered!");
+        configProperties.add(piOtpLength);
+
         ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();
         piForwardedHeaders.setType(ProviderConfigProperty.STRING_TYPE);
         piForwardedHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
