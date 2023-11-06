@@ -29,6 +29,7 @@ import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_OTP_LENGTH;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
@@ -62,6 +63,7 @@ class Configuration
     private final List<String> excludedGroups = new ArrayList<>();
     private final List<String> includedGroups = new ArrayList<>();
     private final List<String> forwardedHeaders = new ArrayList<>();
+    private final String otpLength;
     private final boolean doEnrollToken;
     private final boolean doLog;
     private final String enrollingTokenType;
@@ -84,6 +86,7 @@ class Configuration
         this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
         this.staticPass = configMap.get(CONFIG_STATIC_PASS) == null ? "" : configMap.get(CONFIG_STATIC_PASS);
         this.defaultOTPMessage = configMap.get(CONFIG_DEFAULT_MESSAGE) == null ? "" : configMap.get(CONFIG_DEFAULT_MESSAGE);
+        this.otpLength = configMap.get(CONFIG_OTP_LENGTH) == null ? "" : configMap.get(CONFIG_OTP_LENGTH);
         this.pollInBrowser = (configMap.get(CONFIG_POLL_IN_BROWSER) != null && configMap.get(CONFIG_POLL_IN_BROWSER).equals(TRUE));
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
         this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
@@ -202,6 +205,11 @@ class Configuration
     List<String> forwardedHeaders()
     {
         return forwardedHeaders;
+    }
+
+    String otpLength()
+    {
+        return otpLength;
     }
 
     boolean enrollToken()
