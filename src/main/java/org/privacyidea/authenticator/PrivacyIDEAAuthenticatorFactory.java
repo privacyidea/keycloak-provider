@@ -113,15 +113,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPrefToken.setDefaultValue(prefToken.get(0));
         configProperties.add(piPrefToken);
 
-        ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
-        piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
-        piDoSendPassword.setLabel("Enable sending password");
-        piDoSendPassword.setHelpText(
-                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
-                "This setting is mutually exclusive with trigger challenge.");
-        configProperties.add(piDoSendPassword);
-
         ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
         piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
@@ -142,7 +133,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServicePass.setType(ProviderConfigProperty.PASSWORD);
         piServicePass.setName(Const.CONFIG_SERVICE_PASS);
         piServicePass.setLabel("Service account password");
-        piServicePass.setHelpText("Password of the service account. Needed for trigger challenge and token enrollment");
+        piServicePass.setHelpText("Password of the service account. Needed for trigger challenge and token enrollment.");
         configProperties.add(piServicePass);
 
         ProviderConfigProperty piServiceRealm = new ProviderConfigProperty();
@@ -152,6 +143,30 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServiceRealm.setHelpText("Realm of the service account, if it is in a separate realm from the other accounts. " +
                                    "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
         configProperties.add(piServiceRealm);
+
+        ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
+        piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
+        piDoSendPassword.setLabel("Enable sending password");
+        piDoSendPassword.setHelpText(
+                "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
+                "This setting is mutually exclusive with trigger challenge.");
+        configProperties.add(piDoSendPassword);
+
+        ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
+        piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
+        piSendStaticPass.setLabel("Send static password");
+        piSendStaticPass.setHelpText("Enable to send the specified static password to privacyIDEA.");
+        configProperties.add(piSendStaticPass);
+
+        ProviderConfigProperty piStaticPass = new ProviderConfigProperty();
+        piStaticPass.setType(ProviderConfigProperty.PASSWORD);
+        piStaticPass.setName(Const.CONFIG_STATIC_PASS);
+        piStaticPass.setLabel("Static pass");
+        piStaticPass.setHelpText("Set the static password which should be sent to privacyIDEA if \"send static password\" is enabled. " +
+                                 "Can be empty to send an empty password.");
+        configProperties.add(piStaticPass);
 
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
         piIncludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
@@ -169,7 +184,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ',' (E.g. group1,group2). " +
                 "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
-
 
         ProviderConfigProperty piDefaultOTPText = new ProviderConfigProperty();
         piDefaultOTPText.setType(ProviderConfigProperty.STRING_TYPE);
