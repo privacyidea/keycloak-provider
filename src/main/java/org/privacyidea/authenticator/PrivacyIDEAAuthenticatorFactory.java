@@ -196,8 +196,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         ProviderConfigProperty piOtpLength = new ProviderConfigProperty();
         piOtpLength.setType(ProviderConfigProperty.STRING_TYPE);
         piOtpLength.setName(Const.CONFIG_OTP_LENGTH);
-        piOtpLength.setLabel("OTP Length");
-        piOtpLength.setHelpText("If you want to turn on the form-auto-submit function after x number of characters are entered into the OTP input field, set the expected OTP length here (Note: Only digits allowed!).");
+        piOtpLength.setLabel("Auto-Submit OTP Length");
+        piOtpLength.setHelpText("Automatically submit the login form after X digits were entered. Leave empty to disable. NOTE: Only digits can be entered!");
         configProperties.add(piOtpLength);
 
         ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();

@@ -53,7 +53,7 @@ final class Const
     static final String FORM_ERROR_MESSAGE = "errorMsg";
     static final String FORM_TRANSACTION_ID = "transactionID";
     static final String FORM_PI_SERVER_URL = "piServerUrl";
-    static final String FORM_OTP_LENGTH = "otpLength";
+    static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
     static final String FORM_PI_POLL_IN_BROWSER_URL = "piPollInBrowserUrl";
     static final String FORM_PUSH_AVAILABLE = "push_available";
     static final String FORM_OTP_AVAILABLE = "otp_available";
