@@ -367,7 +367,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 
         // Log the error encountered in the browser
-        logger.error(formData.getFirst(FORM_ERROR_MESSAGE));
+        String error = formData.getFirst(FORM_ERROR_MESSAGE);
+        if (error != null && !error.isEmpty()){
+            logger.error(error);
+        }
 
         Map<String, String> headers = getHeadersToForward(context, config);
         // Do not show the error message if something was triggered
