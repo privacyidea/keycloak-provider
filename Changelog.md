@@ -1,5 +1,15 @@
 # Changelog
 
+### v1.4.1 - 2024-03-05
+
+* Fixed a bug that would cause empty error messages to appear in the log
+* The threadpool allows core threads to time out, which will reduce the memory footprint of the provider 
+
+### v1.4.0 - 2023-11-07
+
+* Added `sendStaticPass` feature to send a static (or empty) password to trigger challenges
+* Added automatic submit after X entered digits option
+
 ### v1.3.0 - 2023-08-11
 
 * Added poll in browser setting. This moves the polling for successful push authentication to the browser of the user so that the site does not have to reload. (#133)
