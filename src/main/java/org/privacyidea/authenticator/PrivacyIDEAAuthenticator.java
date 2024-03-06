@@ -25,6 +25,7 @@ package org.privacyidea.authenticator;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,6 +123,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                  .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
                                                  .serviceRealm(config.serviceAccountRealm())
                                                  .build();
+
+            // Close the old privacyIDEA instance to shut down the thread pool before replacing it in the map
+            if (currentPair != null)
+            {
+                try
+                {
+                    currentPair.privacyIDEA().close();
+                }
+                catch (IOException e)
+                {
+                    error("Failed to close privacyIDEA instance!");
+                }
+            }
             Pair pair = new Pair(privacyIDEA, config);
             piInstanceMap.put(kcRealm, pair);
         }
@@ -368,7 +382,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Log the error encountered in the browser
         String error = formData.getFirst(FORM_ERROR_MESSAGE);
-        if (error != null && !error.isEmpty()){
+        if (error != null && !error.isEmpty())
+        {
             logger.error(error);
         }
 
