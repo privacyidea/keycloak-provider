@@ -119,7 +119,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoTriggerChallenge.setLabel("Enable trigger challenge");
         piDoTriggerChallenge.setHelpText(
                 "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. " +
-                "This setting is mutually exclusive with send password and will take precedence.");
+                "This setting is mutually exclusive with sending any password and will take precedence over both.");
         configProperties.add(piDoTriggerChallenge);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
@@ -147,17 +147,17 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
         piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
-        piDoSendPassword.setLabel("Enable sending password");
+        piDoSendPassword.setLabel("Send password");
         piDoSendPassword.setHelpText(
                 "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
-                "This setting is mutually exclusive with trigger challenge.");
+                "This setting is mutually exclusive with trigger challenge and sending a static pass.");
         configProperties.add(piDoSendPassword);
 
         ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
         piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
         piSendStaticPass.setLabel("Send static password");
-        piSendStaticPass.setHelpText("Enable to send the specified static password to privacyIDEA.");
+        piSendStaticPass.setHelpText("Enable to send the specified static password to privacyIDEA. Mutually exclusive with sending the password and trigger challenge.");
         configProperties.add(piSendStaticPass);
 
         ProviderConfigProperty piStaticPass = new ProviderConfigProperty();
