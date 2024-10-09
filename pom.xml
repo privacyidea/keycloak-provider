@@ -99,11 +99,6 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>org.privacyidea</groupId>
-            <artifactId>privacyidea-java-client</artifactId>
-            <version>1.2.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-core</artifactId>
             <version>23.0.4</version>
