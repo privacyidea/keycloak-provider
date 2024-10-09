@@ -1,8 +1,10 @@
 let url;
 let params;
+
 self.addEventListener('message', function (e)
 {
     let data = e.data;
+
     switch (data.cmd)
     {
         case 'url':
@@ -14,48 +16,40 @@ self.addEventListener('message', function (e)
         case 'start':
             if (url.length > 0 && params.length > 0)
             {
-                setInterval("pollTransactionInBrowser()", 300);
+                setInterval(function ()
+                {
+                    fetch(url + "?" + params, {method: 'GET'})
+                        .then(r =>
+                        {
+                            if (r.ok)
+                            {
+                                r.text().then(result =>
+                                {
+                                    const resultJson = JSON.parse(result);
+                                    if (resultJson['result']['authentication'] === "ACCEPT")
+                                    {
+                                        self.postMessage({
+                                            'message': 'Polling in browser: Push message confirmed!',
+                                            'status': 'success'
+                                        });
+                                        self.close();
+                                    }
+                                });
+                            }
+                            else
+                            {
+                                self.postMessage({'message': r.statusText, 'status': 'error'});
+                                self.close();
+                            }
+                        })
+                        .catch(e =>
+                            {
+                                self.postMessage({'message': e, 'status': 'error'});
+                                self.close();
+                            }
+                        );
+                }, 300);
             }
             break;
     }
-})
-
-function pollTransactionInBrowser()
-{
-    const request = new XMLHttpRequest();
-    request.open("GET", url + "?" + params, false);
-    request.onload = (e) =>
-    {
-        try
-        {
-            if (request.readyState === 4)
-            {
-                if (request.status === 200)
-                {
-                    const response = JSON.parse(request.response);
-                    if (response['result']['value'] === true)
-                    {
-                        self.postMessage({'message': 'Polling in browser: Push message confirmed!', 'status': 'success'});
-                        self.close();
-                    }
-                }
-                else
-                {
-                    self.postMessage({'message': request.statusText, 'status': 'error'});
-                    self.close();
-                }
-            }
-        }
-        catch (e)
-        {
-            self.postMessage({'message': e, 'status': 'error'});
-            self.close();
-        }
-    };
-    request.onerror = (e) =>
-    {
-        self.postMessage({'message': request.statusText, 'status': 'error'});
-        self.close();
-    };
-    request.send();
-}
+});
