@@ -47,11 +47,9 @@ import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 import org.privacyidea.RolloutInfo;
 import org.privacyidea.TokenInfo;
-import org.privacyidea.U2F;
 
 import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
-import static org.privacyidea.PIConstants.TOKEN_TYPE_U2F;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_AUTH_COUNTER;
 import static org.privacyidea.authenticator.Const.AUTH_NOTE_TRANSACTION_ID;
@@ -78,8 +76,6 @@ import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
 import static org.privacyidea.authenticator.Const.FORM_TOKEN_ENROLLMENT_QR;
 import static org.privacyidea.authenticator.Const.FORM_TRANSACTION_ID;
-import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_REQUEST;
-import static org.privacyidea.authenticator.Const.FORM_U2F_SIGN_RESPONSE;
 import static org.privacyidea.authenticator.Const.FORM_UI_LANGUAGE;
 import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_ORIGIN;
 import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_SIGN_REQUEST;
@@ -210,7 +206,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.form()
                .setAttribute(FORM_MODE, "otp")
                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
-               .setAttribute(FORM_U2F_SIGN_REQUEST, "")
                .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
                .setAttribute(FORM_OTP_AVAILABLE, true)
                .setAttribute(FORM_OTP_MESSAGE, otpMessage)
@@ -358,9 +353,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // The origin is set by the form every time, no need to put it in the form again
         String origin = formData.getFirst(FORM_WEBAUTHN_ORIGIN);
 
-        String u2fSignRequest = formData.getFirst(FORM_U2F_SIGN_REQUEST);
-        String u2fSignResponse = formData.getFirst(FORM_U2F_SIGN_RESPONSE);
-
         // Prepare the failure message, the message from privacyIDEA will be appended if possible
         String authenticationFailureMessage = "Authentication failed.";
 
@@ -373,7 +365,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_IMAGE_PUSH, imagePush)
             .setAttribute(FORM_IMAGE_OTP, imageOTP)
             .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
-            .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
             .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
             .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
             .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
@@ -412,10 +403,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin, headers);
             }
-        }
-        else if (u2fSignResponse != null && !u2fSignResponse.isEmpty())
-        {
-            response = privacyIDEA.validateCheckU2F(currentUserName, transactionID, u2fSignResponse, headers);
         }
         else if (!TRUE.equals(tokenTypeChanged))
         {
@@ -485,7 +472,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Variables to configure the UI
         String webAuthnSignRequest = "";
-        String u2fSignRequest = "";
         String mode = "otp";
         String newOtpMessage = response.otpMessage();
         if (response.transactionID != null && !response.transactionID.isEmpty())
@@ -528,19 +514,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.form().setAttribute(FORM_PUSH_MESSAGE, response.pushMessage());
         }
 
-        // Check for WebAuthn and U2F
+        // Check for WebAuthn
         if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
         {
             webAuthnSignRequest = response.mergedSignRequest();
-        }
-
-        if (response.triggeredTokenTypes().contains(TOKEN_TYPE_U2F))
-        {
-            List<U2F> signRequests = response.u2fSignRequests();
-            if (!signRequests.isEmpty())
-            {
-                u2fSignRequest = signRequests.get(0).signRequest();
-            }
         }
 
         // Check if response from server contains preferred client mode
@@ -565,7 +542,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.form()
                .setAttribute(FORM_MODE, mode)
                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-               .setAttribute(FORM_U2F_SIGN_REQUEST, u2fSignRequest)
                .setAttribute(FORM_OTP_MESSAGE, newOtpMessage);
     }
 

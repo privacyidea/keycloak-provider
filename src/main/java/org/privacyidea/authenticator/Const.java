@@ -70,10 +70,6 @@ final class Const
     static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnsignresponse";
     static final String FORM_WEBAUTHN_ORIGIN = "origin";
 
-    // U2F form fields
-    static final String FORM_U2F_SIGN_REQUEST = "u2fsignrequest";
-    static final String FORM_U2F_SIGN_RESPONSE = "u2fsignresponse";
-
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
     static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
