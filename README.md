@@ -1,6 +1,6 @@
 # privacyIDEA provider for Keycloak
 
-This provider allows you to use privacyIDEA's 2FA with Keycloak.  
+This provider allows you to use privacyIDEA's MFA with Keycloak.  
 We added a detailed how-to on our [blog](https://community.privacyidea.org/t/how-to-use-keycloak-with-privacyidea/1132).
 
 ## Download
