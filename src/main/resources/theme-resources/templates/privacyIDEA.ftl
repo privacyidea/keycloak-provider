@@ -4,6 +4,7 @@
         ${msg("loginTitle",realm.name)}
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
+        
     <#elseif section = "form">
         <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}"
               action="${url.loginAction}"
@@ -13,31 +14,31 @@
                     <#if (!hasError)!true>
                         <#if mode = "push">
                             <#if (pushImage!"") != "">
-                                <div style="text-align: center;">
+                                <div class="center-text">
                                     <img alt="chal_img" src="${pushImage}">
                                 </div>
                             </#if>
-                            <h4 style="font-weight: bold">${pushMessage}</h4>
+                            <h4 class="bold-text">${pushMessage}</h4>
                         <#elseif mode = "webauthn">
                             <#if (webauthnImage!"") != "">
-                                <div style="text-align: center;">
+                                <div class="center-text">
                                     <img alt="chal_img" src="${webauthnImage}">
                                 </div>
                             </#if>
                         <#elseif mode = "otp">
                             <#if (otpImage!"") != "">
-                                <div style="text-align: center;">
+                                <div class="center-text">
                                     <img alt="chal_img" src="${otpImage}">
                                 </div>
                             </#if>
-                            <h4 style="font-weight: bold">${otpMessage}</h4>
+                            <h4 class="bold-text">${otpMessage}</h4>
                         <#else>
-                            <h4 style="font-weight: bold">${otpMessage}</h4>
+                            <h4 class="bold-text">${otpMessage}</h4>
                         </#if>
                     </#if>
                     <#-- Show QR code for new token, if one has been enrolled -->
                     <#if (tokenEnrollmentQR!"") != "">
-                        <div style="text-align: center;">
+                        <div class="center-text">
                             <img alt="qr_code" width="256" height="256" src="${tokenEnrollmentQR}">
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
@@ -84,7 +85,7 @@
                     <input id="uilanguage" name="uilanguage" value="${uilanguage!"en"}" type="hidden">
 
                     <#-- ALTERNATE LOGIN OPTIONS class="${properties.kcFormButtonsClass!}" -->
-                    <div id="alternateToken" style="padding-top: 20px">
+                    <div id="alternateToken" class="padding-top-20">
                         <h3 id="alternateTokenHeader">Alternate Login Options</h3>
 
                         <div class="${properties.kcFormButtonsWrapperClass!}">
@@ -220,7 +221,7 @@
                             <#-- WEBAUTHN -->
                             <#if !(webauthnsignrequest = "")>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="useWebAuthnButton" id="useWebAuthnButton"
+                                       name="webauthnButton" id="webauthnButton"
                                        onclick="doWebAuthn()"
                                        type="button" value="WebAuthn"/>
 
