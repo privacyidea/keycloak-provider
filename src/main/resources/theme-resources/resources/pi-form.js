@@ -39,7 +39,7 @@ function piMain()
     // PUSH
     if (piGetValue("mode") === "push")
     {
-        piDisableElement("pi-form-submit-button");
+        piDisableElement("kc-login");
         piDisableElement("otp");
         window.onload = () =>
         {
