@@ -55,5 +55,10 @@ window.piChangeMode = function changeMode(newMode)
 {
     document.getElementById("mode").value = newMode;
     document.getElementById("modeChanged").value = "1";
-    document.forms["piLoginForm"].submit();
+    piSubmit();
+}
+
+window.piSubmit = function submitForm()
+{
+    document.forms["kc-otp-login-form"].submit();
 }
