@@ -3,7 +3,7 @@ function eventListeners()
     // AUTO SUBMIT
     if (piGetValue("autoSubmit"))
     {
-        document.forms["kc-otp-login-form"].submit();
+        piSubmit();
     }
 
     // AUTO SUBMIT BY OTP LENGTH
@@ -11,9 +11,9 @@ function eventListeners()
     {
         document.getElementById("otp").addEventListener("keyup", function ()
         {
-            if (piGetValue('otp').length === parseInt(piGetValue("autoSubmitOtpLength")))
+            if (piGetValue('otp').length === parseInt(piGetValue("otpLength")))
             {
-                document.forms["kc-otp-login-form"].submit();
+                piSubmit();
             }
         });
     }
@@ -33,10 +33,10 @@ function eventListeners()
     });
 
     // POLL BY RELOAD
-    if (document.getElementById("mode").value === "push")
+    if (piGetValue("mode") === "push")
     {
         const pollingIntervals = [4, 3, 2];
-        let loadCounter = document.getElementById("loadCounter").value;
+        let loadCounter = piGetValue("loadCounter");
         let refreshTime;
 
         if (loadCounter > (pollingIntervals.length - 1))
@@ -52,7 +52,7 @@ function eventListeners()
 
         window.setTimeout(function ()
         {
-            document.forms["kc-otp-login-form"].submit();
+            piSubmit();
         }, refreshTime);
     }
 
@@ -68,7 +68,7 @@ function eventListeners()
             if (typeof (worker) == "undefined")
             {
                 worker = new Worker("pi-pollTransaction.worker.js"); //todo check path
-                document.getElementById("submitButton").addEventListener('click', function (e)
+                document.getElementById("kc-login").addEventListener('click', function (e)
                 {
                     worker.terminate();
                     worker = undefined;
@@ -82,7 +82,7 @@ function eventListeners()
                     switch (data.status)
                     {
                         case 'success':
-                            document.forms["kc-otp-login-form"].submit();
+                            piSubmit();
                             break;
                         case 'error':
                             console.log("Poll in browser error: " + data.message);
@@ -102,6 +102,12 @@ function eventListeners()
             piSetValue("pollInBrowserFailed", true);
             piEnableElement("pushButton");
         }
+    }
+
+    // ALTERNATE LANGUAGE
+    if (piGetValue("uilanguage") === "de") {
+        document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
+        piSetValue("kc-login", "Anmelden");
     }
 }
 
