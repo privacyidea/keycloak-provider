@@ -1,4 +1,12 @@
 <#import "template.ftl" as layout>
+    <head>
+        <link rel="stylesheet" href="${url.resourcesPath}/pi-form.css">
+        <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
+        <script type="text/javascript" src="${url.resourcesPath}/pi-utils.js"></script>
+        <script type="text/javascript" src="${url.resourcesPath}/pi-eventListeners.js"></script>
+        <script type="text/javascript" src="${url.resourcesPath}/pi-form.js"></script>
+        <title></title>
+    </head>
 <@layout.registrationLayout; section>
     <#if section = "title">
         ${msg("loginTitle",realm.name)}
@@ -43,18 +51,8 @@
                         </div>
                         Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
                     </#if>
-                    <script>
-                        function autoSubmit(inputObject, lengthStr)
-                        {
-                            let lengthInt = parseInt(lengthStr);
-                            if (lengthInt != null && inputObject.value.length === lengthInt)
-                            {
-                                document.forms["kc-otp-login-form"].submit();
-                            }
-                        }
-                    </script>
 
-                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" onKeyUp="autoSubmit(this, ${otpLength!""})" autofocus/>
+                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
                 </div>
             </div>
 
@@ -89,196 +87,23 @@
                         <h3 id="alternateTokenHeader">Alternate Login Options</h3>
 
                         <div class="${properties.kcFormButtonsWrapperClass!}">
-                            <script>
-                                'use strict';
-                                // Helper functions
-                                function disable(id) {
-                                    const element = document.getElementById(id)
-                                    if (element != null) {
-                                        element.style.display = "none";
-                                    } else {
-                                        console.log(id + " is null!");
-                                    }
-                                }
 
-                                function enable(id) {
-                                    const element = document.getElementById(id);
-                                    if (element != null) {
-                                        element.style.display = "initial";
-                                    } else {
-                                        console.log(id + " is null!");
-                                    }
-                                }
-
-                                function value(id) {
-                                    const element = document.getElementById(id);
-                                    if (element != null) {
-                                        return element.value;
-                                    } else {
-                                        console.log(id + " is null!");
-                                    }
-                                    return "";
-                                }
-
-                                function set(id, value) {
-                                    const element = document.getElementById(id);
-                                    if (element != null) {
-                                        element.value = value;
-                                    } else {
-                                        console.log(id + " is null!");
-                                    }
-                                }
-                                // End helper functions
-
-                                function changeMode(newMode) {
-                                    // Submit the form to pass the change to the authenticator
-                                    set("mode", newMode);
-                                    set("modeChanged", "true");
-                                    document.forms["kc-otp-login-form"].submit();
-                                }
-
-                                if (value("uilanguage") === "de") {
-                                    document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
-                                    set("kc-login", "Anmelden");
-                                }
-                            </script>
-
-                            <!-- Poll in browser section. If poll in browser is enabled in config,
-                                 the following script will process it in the background. -->
-                            <#if transactionID?? && !(transactionID = "") && !(piPollInBrowserUrl = "") && (pollInBrowserFailed = false)>
-                                <script>
-                                    function workerError(message) {
-                                        console.log("Poll in browser error: " + message);
-                                        set("errorMsg", ("Poll in browser error: " + message));
-                                        set("pollInBrowserFailed", true);
-                                        enable("pushButton");
-                                    }
-
-                                    window.onload = () => {
-                                        disable("pushButton");
-                                        let worker;
-                                        if (typeof (Worker) !== "undefined") {
-                                            if (typeof (worker) == "undefined") {
-                                                worker = new Worker("${url.resourcesPath}/pi-pollTransaction.worker.js");
-                                                document.getElementById("kc-otp-login-form").addEventListener('submit', function (e) {
-                                                    worker.terminate();
-                                                    worker = undefined;
-                                                })
-                                                worker.postMessage({'cmd': 'url', 'msg': '${piPollInBrowserUrl}'});
-                                                worker.postMessage({'cmd': 'transactionID', 'msg': '${transactionID}'});
-                                                worker.postMessage({'cmd': 'start'});
-                                                worker.addEventListener('message', function (e) {
-                                                    let data = e.data;
-                                                    switch (data.status) {
-                                                        case 'success':
-                                                            document.forms["kc-otp-login-form"].submit();
-                                                            break;
-                                                        case 'error':
-                                                            workerError(data.message);
-                                                            worker = undefined;
-                                                    }
-                                                })
-                                            }
-                                        } else {
-                                            worker.terminate();
-                                            workerError("The browser does not support Web Worker.")
-                                        }
-                                    };
-                                </script>
-                            </#if>
-
-                            <#if mode = "push">
-                            <#-- Polling for push by reloading every X seconds -->
-                                <script>
-                                    disable("kc-login");
-                                    window.onload = () => {
-                                        window.setTimeout(() => {
-                                            document.forms["kc-otp-login-form"].submit()
-                                        }, parseInt(${pollingInterval}) * 1000);
-                                    };
-                                </script>
                             <#if otp_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                   name="otpButton" id="otpButton"
-                                   onClick="changeMode('otp')"
-                                   type="button" value="One-Time-Password"/>
+                                   name="otpButton" id="otpButton" type="button" value="One-Time-Password"/>
                             </#if>
-                            <#else>
-                            <#--If token type is not push, an input field and login button is needed-->
-                                <script>
-                                    enable("kc-login");
-                                    document.getElementById("otp").type = "password";
-                                    document.getElementById("otp").required = true;
-                                </script>
+
                             <#if push_available>
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                    name="pushButton" id="pushButton"
-                                   onClick="changeMode('push')"
                                    type="button" value="Push"/>
-                            </#if>
                             </#if>
 
                             <#-- WEBAUTHN -->
                             <#if !(webauthnsignrequest = "")>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="webauthnButton" id="webauthnButton"
-                                       onclick="doWebAuthn()"
+                                       name="webauthnButton" id="webAuthnButton"
                                        type="button" value="WebAuthn"/>
-
-                                <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
-                                <script>
-                                    'use strict';
-                                    if (value("webauthnsignrequest") === "") {
-                                        disable("useWebAuthnButton");
-                                    }
-
-                                    if (value("mode") === "webauthn") {
-                                        window.onload = () => {
-                                            doWebAuthn();
-                                        }
-                                    }
-
-                                    if (!window.location.origin) {
-                                        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
-                                    }
-                                    set("origin", window.origin);
-
-                                    function doWebAuthn() {
-                                        // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt webauthn
-                                        // Afterward, webauthn is started directly
-                                        if (value("mode") === "push") {
-                                            changeMode("webauthn");
-                                        }
-                                        try {
-                                            const requestStr = value("webauthnsignrequest");
-                                            const requestjson = JSON.parse(requestStr);
-
-                                            const webAuthnSignResponse = window.pi_webauthn.sign(requestjson);
-                                            webAuthnSignResponse.then((webauthnresponse) => {
-                                                set("webauthnsignresponse", JSON.stringify(webauthnresponse));
-                                                document.forms["kc-otp-login-form"].submit();
-                                            });
-                                        } catch (err) {
-                                            console.log("Error while trying WebAuthn: " + err);
-                                        }
-                                    }
-                                </script>
-                            </#if>
-
-                            <!-- Check if the alternate token options section should be displayed -->
-                            <#if (!push_available || !(piPollInBrowserUrl! == "") && pollInBrowserFailed == false) && (webauthnsignrequest == "")>
-                                <script>
-                                    document.getElementById("alternateToken").style.display = "none";
-                                </script>
-                            </#if>
-
-                            <#if hasError!false>
-                                <script>
-                                    disable("alternateToken");
-                                    disable("kc-login");
-                                    disable("otp");
-                                    set("otpMessage", "");
-                                </script>
                             </#if>
                         </div>
                     </div>
