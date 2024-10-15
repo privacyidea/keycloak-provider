@@ -36,6 +36,7 @@ function piMain()
     {
         piDisableElement("alternateToken");
     }
+
     // PUSH
     if (piGetValue("mode") === "push")
     {
@@ -49,6 +50,31 @@ function piMain()
             }, parseInt(piGetValue("pollingInterval")) * 1000);
         }
     }
+
+    // POLL BY RELOAD
+    if (piGetValue("mode") === "push")
+    {
+        const pollingIntervals = [4, 3, 2];
+        let loadCounter = piGetValue("loadCounter");
+        let refreshTime;
+
+        if (loadCounter > (pollingIntervals.length - 1))
+        {
+            refreshTime = pollingIntervals[(pollingIntervals.length - 1)];
+        }
+        else
+        {
+            refreshTime = pollingIntervals[Number(loadCounter - 1)];
+        }
+
+        refreshTime *= 1000;
+
+        window.setTimeout(function ()
+        {
+            piSubmit();
+        }, refreshTime);
+    }
+
     // WEBAUTHN
     if (piGetValue("mode") === "webauthn")
     {
@@ -62,6 +88,12 @@ function piMain()
         window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
     }
     piSetValue("origin", window.origin);
+
+    // ALTERNATE LANGUAGE
+    if (piGetValue("uilanguage") === "de") {
+        document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
+        piSetValue("kc-login", "Anmelden");
+    }
 }
 
 // Wait until the document is ready

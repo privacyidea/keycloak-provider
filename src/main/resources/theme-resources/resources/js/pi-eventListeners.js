@@ -32,30 +32,6 @@ function eventListeners()
         piChangeMode("otp");
     });
 
-    // POLL BY RELOAD
-    if (piGetValue("mode") === "push")
-    {
-        const pollingIntervals = [4, 3, 2];
-        let loadCounter = piGetValue("loadCounter");
-        let refreshTime;
-
-        if (loadCounter > (pollingIntervals.length - 1))
-        {
-            refreshTime = pollingIntervals[(pollingIntervals.length - 1)];
-        }
-        else
-        {
-            refreshTime = pollingIntervals[Number(loadCounter - 1)];
-        }
-
-        refreshTime *= 1000;
-
-        window.setTimeout(function ()
-        {
-            piSubmit();
-        }, refreshTime);
-    }
-
     // POLL IN BROWSER
     if (piGetValue("pollInBrowser") === "1"
         && piGetValue("pollInBrowserUrl").length > 0
@@ -67,7 +43,7 @@ function eventListeners()
         {
             if (typeof (worker) == "undefined")
             {
-                worker = new Worker("pi-pollTransaction.worker.js"); //todo check path
+                worker = new Worker(piGetValue("resourcesPath") + "/js/pi-pollTransaction.worker.js");
                 document.getElementById("kc-login").addEventListener('click', function (e)
                 {
                     worker.terminate();
@@ -102,12 +78,6 @@ function eventListeners()
             piSetValue("pollInBrowserFailed", true);
             piEnableElement("pushButton");
         }
-    }
-
-    // ALTERNATE LANGUAGE
-    if (piGetValue("uilanguage") === "de") {
-        document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
-        piSetValue("kc-login", "Anmelden");
     }
 }
 
