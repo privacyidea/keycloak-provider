@@ -1,18 +1,17 @@
 <#import "template.ftl" as layout>
-    <head>
-        <link rel="stylesheet" href="${url.resourcesPath}/pi-form.css">
-        <script type="text/javascript" src="${url.resourcesPath}/pi-webauthn.js"></script>
-        <script type="text/javascript" src="${url.resourcesPath}/pi-utils.js"></script>
-        <script type="text/javascript" src="${url.resourcesPath}/pi-eventListeners.js"></script>
-        <script type="text/javascript" src="${url.resourcesPath}/pi-form.js"></script>
-        <title></title>
-    </head>
+<head>
+    <link rel="stylesheet" href="${url.resourcesPath}/css/pi-form.css">
+    <script type="text/javascript" src="${url.resourcesPath}/js/pi-webauthn.js"></script>
+    <script type="text/javascript" src="${url.resourcesPath}/js/pi-utils.js"></script>
+    <script type="text/javascript" src="${url.resourcesPath}/js/pi-eventListeners.js"></script>
+    <script type="text/javascript" src="${url.resourcesPath}/js/pi-form.js"></script>
+</head>
 <@layout.registrationLayout; section>
     <#if section = "title">
         ${msg("loginTitle",realm.name)}
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
-        
+
     <#elseif section = "form">
         <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}"
               action="${url.loginAction}"
@@ -69,6 +68,7 @@
                     <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
                     <input id="otpLength" name="otpLength" value="${otpLength!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
+                    <input id="resourcesPath" name="resourcesPath" value="${url.resourcesPath}" type="hidden">
                     <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}"
                            type="hidden">
                     <input id="errorMsg" name="errorMsg" value="" type="hidden">
@@ -89,14 +89,14 @@
                         <div class="${properties.kcFormButtonsWrapperClass!}">
 
                             <#if otp_available>
-                            <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                   name="otpButton" id="otpButton" type="button" value="One-Time-Password"/>
+                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                                       name="otpButton" id="otpButton" type="button" value="One-Time-Password"/>
                             </#if>
 
                             <#if push_available>
-                            <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                   name="pushButton" id="pushButton"
-                                   type="button" value="Push"/>
+                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
+                                       name="pushButton" id="pushButton"
+                                       type="button" value="Push"/>
                             </#if>
 
                             <#-- WEBAUTHN -->
