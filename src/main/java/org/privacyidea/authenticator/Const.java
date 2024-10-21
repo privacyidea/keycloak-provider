@@ -62,12 +62,12 @@ final class Const
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
-    static final String FORM_UI_LANGUAGE = "uilanguage";
+    static final String FORM_UI_LANGUAGE = "uiLanguage";
     static final String FORM_ERROR = "hasError";
 
     // Webauthn form fields
-    static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnsignrequest";
-    static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnsignresponse";
+    static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnSignRequest";
+    static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnSignResponse";
     static final String FORM_WEBAUTHN_ORIGIN = "origin";
 
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
