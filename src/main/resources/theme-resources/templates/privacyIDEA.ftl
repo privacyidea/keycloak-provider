@@ -44,7 +44,7 @@
                         </#if>
                     </#if>
 
-                    <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
+                    <input id="otp" name="otp" type="text" class="${properties.kcInputClass!}" autofocus/>
                 </div>
             </div>
 
@@ -52,8 +52,8 @@
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
                     <#-- These inputs will be returned to privacyIDEAAuthenticator -->
                     <input id="mode" name="mode" value="${mode}" type="hidden">
-                    <input id="push_available" name="push_available" value="${push_available?c}" type="hidden">
-                    <input id="otp_available" name="otp_available" value="${otp_available?c}" type="hidden">
+                    <input id="pushAvailable" name="pushAvailable" value="${push_available?c}" type="hidden">
+                    <input id="otpAvailable" name="otpAvailable" value="${otp_available?c}" type="hidden">
                     <input id="pushMessage" name="pushMessage" value="${pushMessage!""}" type="hidden">
                     <input id="otpMessage" name="otpMessage" value="${otpMessage!""}" type="hidden">
                     <input id="pushImage" name="pushImage" value="${pushImage!""}" type="hidden">
@@ -66,21 +66,20 @@
                            type="hidden">
                     <input id="errorMsg" name="errorMsg" value="" type="hidden">
 
-                    <input id="webauthnsignrequest" name="webauthnsignrequest" value="${webauthnsignrequest!""}"
+                    <input id="webauthnSignRequest" name="webauthnSignRequest" value="${webauthnSignRequest!""}"
                            type="hidden">
-                    <input id="webauthnsignresponse" name="webauthnsignresponse" value="" type="hidden">
+                    <input id="webauthnSignResponse" name="webauthnSignResponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
+                    <input id="uiLanguage" name="uiLanguage" value="${uiLanguage!"en"}" type="hidden">
 
                     <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
                            value="Sign in"/>
-                    <input id="uilanguage" name="uilanguage" value="${uilanguage!"en"}" type="hidden">
 
                     <#-- ALTERNATE LOGIN OPTIONS class="${properties.kcFormButtonsClass!}" -->
                     <div id="alternateToken" class="padding-top-20">
                         <h3 id="alternateTokenHeader">Alternate Login Options</h3>
 
                         <div class="${properties.kcFormButtonsWrapperClass!}">
-
                             <#if otp_available>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="otpButton" id="otpButton" type="button" value="One-Time-Password"/>
@@ -92,8 +91,7 @@
                                        type="button" value="Push"/>
                             </#if>
 
-                            <#-- WEBAUTHN -->
-                            <#if !(webauthnsignrequest = "")>
+                            <#if !(webauthnSignRequest = "")>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="webauthnButton" id="webAuthnButton"
                                        type="button" value="WebAuthn"/>
