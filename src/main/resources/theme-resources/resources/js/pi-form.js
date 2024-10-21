@@ -15,9 +15,9 @@ function doWebAuthn()
             const requestJSON = JSON.parse(requestStr);
             const webAuthnSignResponse = window.pi_webauthn.sign(requestJSON);
 
-            webAuthnSignResponse.then((webauthnresponse) =>
+            webAuthnSignResponse.then((webauthnResponse) =>
             {
-                piSetValue("webauthnSignResponse", JSON.stringify(webauthnresponse));
+                piSetValue("webauthnSignResponse", JSON.stringify(webauthnResponse));
                 piSubmit();
             });
         }
@@ -90,7 +90,7 @@ function piMain()
     piSetValue("origin", window.origin);
 
     // ALTERNATE LANGUAGE
-    if (piGetValue("uilanguage") === "de") {
+    if (piGetValue("uiLanguage") === "de") {
         document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
         piSetValue("kc-login", "Anmelden");
     }
