@@ -43,13 +43,6 @@
                             <h4 class="bold-text">${otpMessage}</h4>
                         </#if>
                     </#if>
-                    <#-- Show QR code for new token, if one has been enrolled -->
-                    <#if (tokenEnrollmentQR!"") != "">
-                        <div class="center-text">
-                            <img alt="qr_code" width="256" height="256" src="${tokenEnrollmentQR}">
-                        </div>
-                        Please scan the QR-Code with an authenticator app like "privacyIDEA Authenticator" or "Google Authenticator"
-                    </#if>
 
                     <input id="otp" name="otp" type="hidden" class="${properties.kcInputClass!}" autofocus/>
                 </div>
