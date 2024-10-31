@@ -55,8 +55,8 @@ final class Const
     static final String FORM_PI_SERVER_URL = "piServerUrl";
     static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
     static final String FORM_PI_POLL_IN_BROWSER_URL = "piPollInBrowserUrl";
-    static final String FORM_PUSH_AVAILABLE = "push_available";
-    static final String FORM_OTP_AVAILABLE = "otp_available";
+    static final String FORM_PUSH_AVAILABLE = "pushAvailable";
+    static final String FORM_OTP_AVAILABLE = "otpAvailable";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
     static final String FORM_OTP_MESSAGE = "otpMessage";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
