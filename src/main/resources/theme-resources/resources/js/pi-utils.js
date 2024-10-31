@@ -53,8 +53,8 @@ window.piEnableElement = function enableElement(id)
 
 window.piChangeMode = function changeMode(newMode)
 {
-    document.getElementById("mode").value = newMode;
-    document.getElementById("modeChanged").value = "1";
+    piSetValue("mode", newMode);
+    piSetValue("modeChanged", "true");
     piSubmit();
 }
 
