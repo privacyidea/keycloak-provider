@@ -407,7 +407,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         else if (!TRUE.equals(tokenTypeChanged))
         {
             String otp = formData.getFirst(FORM_OTP);
-            // If the transaction id is not present, it will be not be added in validateCheck, so no need to check here
+            // If the transaction ID is not present, it will not be added to validateCheck, so no need to check it here
             response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, headers);
         }
 
