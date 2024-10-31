@@ -52,8 +52,8 @@
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
                     <#-- These inputs will be returned to privacyIDEAAuthenticator -->
                     <input id="mode" name="mode" value="${mode}" type="hidden">
-                    <input id="pushAvailable" name="pushAvailable" value="${push_available?c}" type="hidden">
-                    <input id="otpAvailable" name="otpAvailable" value="${otp_available?c}" type="hidden">
+                    <input id="pushAvailable" name="pushAvailable" value="${pushAvailable?c}" type="hidden">
+                    <input id="otpAvailable" name="otpAvailable" value="${otpAvailable?c}" type="hidden">
                     <input id="pushMessage" name="pushMessage" value="${pushMessage!""}" type="hidden">
                     <input id="otpMessage" name="otpMessage" value="${otpMessage!""}" type="hidden">
                     <input id="pushImage" name="pushImage" value="${pushImage!""}" type="hidden">
@@ -80,12 +80,12 @@
                         <h3 id="alternateTokenHeader">Alternate Login Options</h3>
 
                         <div class="${properties.kcFormButtonsWrapperClass!}">
-                            <#if otp_available>
+                            <#if otpAvailable>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="otpButton" id="otpButton" type="button" value="One-Time-Password"/>
                             </#if>
 
-                            <#if push_available>
+                            <#if pushAvailable>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="pushButton" id="pushButton"
                                        type="button" value="Push"/>
