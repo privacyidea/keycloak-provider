@@ -44,7 +44,6 @@ final class Const
     static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
 
     static final String FORM_POLL_INTERVAL = "pollingInterval";
-    static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
     static final String FORM_MODE = "mode";
     static final String FORM_IMAGE_PUSH = "pushImage";
     static final String FORM_IMAGE_OTP = "otpImage";
@@ -79,8 +78,6 @@ final class Const
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
     static final String CONFIG_INCLUDED_GROUPS = "piincludegroups";
     static final String CONFIG_FORWARDED_HEADERS = "piforwardedheaders";
-    static final String CONFIG_ENROLL_TOKEN_TYPE = "pienrolltokentype";
-    static final String CONFIG_ENROLL_TOKEN = "pienrolltoken";
     static final String CONFIG_DEFAULT_MESSAGE = "pidefaultmessage";
     static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
     static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
@@ -96,5 +93,4 @@ final class Const
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
     static final String CONFIG_ENABLE_LOG = "pidolog";
-    static final String CONFIG_PREF_TOKEN_TYPE = "preftokentype";
 }

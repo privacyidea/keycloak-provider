@@ -101,18 +101,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Do not set this to false in a productive environment. Disables the verification of the privacyIDEA server's certificate and hostname.");
         configProperties.add(piVerifySSL);
 
-        List<String> prefToken = Arrays.asList("OTP", "PUSH", "WebAuthn");
-        ProviderConfigProperty piPrefToken = new ProviderConfigProperty();
-        piPrefToken.setType(ProviderConfigProperty.LIST_TYPE);
-        piPrefToken.setName(Const.CONFIG_PREF_TOKEN_TYPE);
-        piPrefToken.setLabel("Preferred Login Token Type");
-        piPrefToken.setHelpText("Select the token type for which the login interface should be shown first. " +
-                                "If other token types are available for login, it will be possible to change the interface when logging in. " +
-                                "If the selected token type is not available, because no token of such type was triggered, the interface will default to OTP.");
-        piPrefToken.setOptions(prefToken);
-        piPrefToken.setDefaultValue(prefToken.get(0));
-        configProperties.add(piPrefToken);
-
         ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
         piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
@@ -208,25 +196,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                 "Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. " +
                 "The headers should be separated with ','.");
         configProperties.add(piForwardedHeaders);
-
-        ProviderConfigProperty piEnrollToken = new ProviderConfigProperty();
-        piEnrollToken.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piEnrollToken.setName(Const.CONFIG_ENROLL_TOKEN);
-        piEnrollToken.setLabel("Enable token enrollment");
-        piEnrollToken.setHelpText(
-                "If enabled, the user gets a token enrolled automatically for them, if they do not have one yet. This requires a service account.");
-        piEnrollToken.setDefaultValue("false");
-        configProperties.add(piEnrollToken);
-
-        List<String> tokenTypes = Arrays.asList("HOTP", "TOTP");
-        ProviderConfigProperty piTokenType = new ProviderConfigProperty();
-        piTokenType.setType(ProviderConfigProperty.LIST_TYPE);
-        piTokenType.setName(Const.CONFIG_ENROLL_TOKEN_TYPE);
-        piTokenType.setLabel("Enrollment token type");
-        piTokenType.setHelpText("Select the token type that users can enroll, if they do not have a token yet. Service account is needed.");
-        piTokenType.setOptions(tokenTypes);
-        piTokenType.setDefaultValue(tokenTypes.get(0));
-        configProperties.add(piTokenType);
 
         ProviderConfigProperty piPollInBrowser = new ProviderConfigProperty();
         piPollInBrowser.setType(ProviderConfigProperty.BOOLEAN_TYPE);
