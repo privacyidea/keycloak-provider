@@ -1,13 +1,7 @@
 function eventListeners()
 {
-    // AUTO SUBMIT
-    if (piGetValue("autoSubmit"))
-    {
-        piSubmit();
-    }
-
     // AUTO SUBMIT BY OTP LENGTH
-    if (piGetValue("activateAutoSubmitOtpLength") === "1")
+    if (piGetValue("otpLength").length > 0)
     {
         document.getElementById("otp").addEventListener("keyup", function ()
         {
@@ -33,8 +27,7 @@ function eventListeners()
     });
 
     // POLL IN BROWSER
-    if (piGetValue("pollInBrowser") === "1"
-        && piGetValue("pollInBrowserUrl").length > 0
+    if (piGetValue("pollInBrowserUrl").length > 0
         && piGetValue("transactionID").length > 0)
     {
         piDisableElement("pushButton");

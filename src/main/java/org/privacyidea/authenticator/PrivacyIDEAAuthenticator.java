@@ -47,8 +47,6 @@ import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
-import org.privacyidea.RolloutInfo;
-import org.privacyidea.TokenInfo;
 
 import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
@@ -71,7 +69,7 @@ import static org.privacyidea.authenticator.Const.FORM_OTP;
 import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
 import static org.privacyidea.authenticator.Const.FORM_AUTO_SUBMIT_OTP_LENGTH;
 import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
-import static org.privacyidea.authenticator.Const.FORM_PI_POLL_IN_BROWSER_URL;
+import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
 import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_FAILED;
 import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
@@ -199,6 +197,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_IMAGE_WEBAUTHN, "")
                 .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
                 .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
+                .setAttribute(FORM_TRANSACTION_ID, "")
                 .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
@@ -413,7 +412,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
             newOtpMessage = response.otpMessage() + "\n" + response.pushMessage();
             context.form()
-                    .setAttribute(FORM_PI_POLL_IN_BROWSER_URL,
+                    .setAttribute(FORM_POLL_IN_BROWSER_URL,
                             config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl());
         }
 

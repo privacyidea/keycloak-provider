@@ -62,10 +62,11 @@
                     <input id="otpLength" name="otpLength" value="${otpLength!""}" type="hidden">
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
                     <input id="resourcesPath" name="resourcesPath" value="${url.resourcesPath}" type="hidden">
+                    <input id="pollInBrowserUrl" name="pollInBrowserUrl" value="${pollInBrowserUrl}" type="hidden">
                     <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}"
                            type="hidden">
+                    <input id="transactionID" name="transactionID" value="${transactionID}" type="hidden">
                     <input id="errorMsg" name="errorMsg" value="" type="hidden">
-
                     <input id="webauthnSignRequest" name="webauthnSignRequest" value="${webauthnSignRequest!""}"
                            type="hidden">
                     <input id="webauthnSignResponse" name="webauthnSignResponse" value="" type="hidden">
