@@ -26,6 +26,7 @@ package org.privacyidea.authenticator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.keycloak.Config;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.KeycloakSession;
@@ -50,7 +51,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
     }
 
     private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {AuthenticationExecutionModel.Requirement.REQUIRED,
-                                                                                           AuthenticationExecutionModel.Requirement.DISABLED};
+            AuthenticationExecutionModel.Requirement.DISABLED};
 
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices()
@@ -107,7 +108,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoTriggerChallenge.setLabel("Enable trigger challenge");
         piDoTriggerChallenge.setHelpText(
                 "Choose if you want to trigger challenge-response token using the provided service account before the second step of authentication. " +
-                "This setting is mutually exclusive with sending any password and will take precedence over both.");
+                        "This setting is mutually exclusive with sending any password and will take precedence over both.");
         configProperties.add(piDoTriggerChallenge);
 
         ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
@@ -129,7 +130,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piServiceRealm.setName(Const.CONFIG_SERVICE_REALM);
         piServiceRealm.setLabel("Service account realm");
         piServiceRealm.setHelpText("Realm of the service account, if it is in a separate realm from the other accounts. " +
-                                   "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
+                "Leave empty to use the general realm specified or the default realm if no realm is configured at all.");
         configProperties.add(piServiceRealm);
 
         ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
@@ -138,7 +139,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piDoSendPassword.setLabel("Send password");
         piDoSendPassword.setHelpText(
                 "Choose if you want to send the password from the first login step to privacyIDEA. This can be used to trigger challenge-response token. " +
-                "This setting is mutually exclusive with trigger challenge and sending a static pass.");
+                        "This setting is mutually exclusive with trigger challenge and sending a static pass.");
         configProperties.add(piDoSendPassword);
 
         ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
@@ -153,7 +154,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piStaticPass.setName(Const.CONFIG_STATIC_PASS);
         piStaticPass.setLabel("Static pass");
         piStaticPass.setHelpText("Set the static password which should be sent to privacyIDEA if \"send static password\" is enabled. " +
-                                 "Can be empty to send an empty password.");
+                "Can be empty to send an empty password.");
         configProperties.add(piStaticPass);
 
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
@@ -170,7 +171,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piExcludeGroups.setLabel("Excluded groups");
         piExcludeGroups.setHelpText(
                 "Set groups for which the privacyIDEA workflow will be skipped. The names should be separated with ',' (E.g. group1,group2). " +
-                "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
+                        "If chosen group is already set in 'Included groups', excluding for this group will be ignored.");
         configProperties.add(piExcludeGroups);
 
         ProviderConfigProperty piDefaultOTPText = new ProviderConfigProperty();
@@ -194,7 +195,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piForwardedHeaders.setLabel("Headers to forward");
         piForwardedHeaders.setHelpText(
                 "Set the headers which should be forwarded to privacyIDEA. If the header does not exist or has no value, it will be ignored. " +
-                "The headers should be separated with ','.");
+                        "The headers should be separated with ','.");
         configProperties.add(piForwardedHeaders);
 
         ProviderConfigProperty piPollInBrowser = new ProviderConfigProperty();
@@ -203,9 +204,9 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piPollInBrowser.setLabel("Poll in browser");
         piPollInBrowser.setDefaultValue(false);
         piPollInBrowser.setHelpText(
-                "Enable this to do the polling for accepted push requests in the user's browser. "+
-                "When enabled, the login page does not refresh when checking for successful push authentication. " +
-                "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
+                "Enable this to do the polling for accepted push requests in the user's browser. " +
+                        "When enabled, the login page does not refresh when checking for successful push authentication. " +
+                        "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
         configProperties.add(piPollInBrowser);
 
         ProviderConfigProperty piPollInBrowserUrl = new ProviderConfigProperty();

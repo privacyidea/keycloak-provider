@@ -3,8 +3,7 @@ function eventListeners()
     // AUTO SUBMIT BY OTP LENGTH
     if (piGetValue("otpLength").length > 0)
     {
-        document.getElementById("otp").addEventListener("keyup", function ()
-        {
+        document.getElementById("otp").addEventListener("keyup", function () {
             if (piGetValue('otp').length === parseInt(piGetValue("otpLength")))
             {
                 piSubmit();
@@ -13,16 +12,13 @@ function eventListeners()
     }
 
     // BUTTON LISTENERS
-    document.getElementById("webAuthnButton").addEventListener("click", function ()
-    {
+    document.getElementById("webAuthnButton").addEventListener("click", function () {
         piChangeMode("webauthn");
     });
-    document.getElementById("pushButton").addEventListener("click", function ()
-    {
+    document.getElementById("pushButton").addEventListener("click", function () {
         piChangeMode("push");
     });
-    document.getElementById("otpButton").addEventListener("click", function ()
-    {
+    document.getElementById("otpButton").addEventListener("click", function () {
         piChangeMode("otp");
     });
 
@@ -37,16 +33,14 @@ function eventListeners()
             if (typeof (worker) == "undefined")
             {
                 worker = new Worker(piGetValue("resourcesPath") + "/js/pi-pollTransaction.worker.js");
-                document.getElementById("kc-login").addEventListener('click', function (e)
-                {
+                document.getElementById("kc-login").addEventListener('click', function (e) {
                     worker.terminate();
                     worker = undefined;
                 });
                 worker.postMessage({'cmd': 'url', 'msg': piGetValue("pollInBrowserUrl")});
                 worker.postMessage({'cmd': 'transactionID', 'msg': piGetValue("transactionID")});
                 worker.postMessage({'cmd': 'start'});
-                worker.addEventListener('message', function (e)
-                {
+                worker.addEventListener('message', function (e) {
                     let data = e.data;
                     switch (data.status)
                     {
@@ -75,7 +69,6 @@ function eventListeners()
 }
 
 // Wait until the document is ready
-document.addEventListener("DOMContentLoaded", function ()
-{
+document.addEventListener("DOMContentLoaded", function () {
     eventListeners();
 });

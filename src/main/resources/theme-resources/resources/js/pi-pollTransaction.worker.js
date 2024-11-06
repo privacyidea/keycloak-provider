@@ -1,8 +1,7 @@
 let url;
 let params;
 
-self.addEventListener('message', function (e)
-{
+self.addEventListener('message', function (e) {
     let data = e.data;
 
     switch (data.cmd)
@@ -16,15 +15,12 @@ self.addEventListener('message', function (e)
         case 'start':
             if (url.length > 0 && params.length > 0)
             {
-                setInterval(function ()
-                {
+                setInterval(function () {
                     fetch(url + "?" + params, {method: 'GET'})
-                        .then(r =>
-                        {
+                        .then(r => {
                             if (r.ok)
                             {
-                                r.text().then(result =>
-                                {
+                                r.text().then(result => {
                                     const resultJson = JSON.parse(result);
                                     if (resultJson['result']['authentication'] === "ACCEPT")
                                     {
@@ -42,8 +38,7 @@ self.addEventListener('message', function (e)
                                 self.close();
                             }
                         })
-                        .catch(e =>
-                            {
+                        .catch(e => {
                                 self.postMessage({'message': e, 'status': 'error'});
                                 self.close();
                             }

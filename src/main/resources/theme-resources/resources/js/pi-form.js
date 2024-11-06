@@ -1,4 +1,3 @@
-
 function doWebAuthn()
 {
     // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt WebAuthn
@@ -15,8 +14,7 @@ function doWebAuthn()
             const requestJSON = JSON.parse(requestStr);
             const webAuthnSignResponse = window.pi_webauthn.sign(requestJSON);
 
-            webAuthnSignResponse.then((webauthnResponse) =>
-            {
+            webAuthnSignResponse.then((webauthnResponse) => {
                 piSetValue("webauthnSignResponse", JSON.stringify(webauthnResponse));
                 piSubmit();
             });
@@ -42,10 +40,8 @@ function piMain()
     {
         piDisableElement("kc-login");
         piDisableElement("otp");
-        window.onload = () =>
-        {
-            window.setTimeout(() =>
-            {
+        window.onload = () => {
+            window.setTimeout(() => {
                 piSubmit();
             }, parseInt(piGetValue("pollingInterval")) * 1000);
         }
@@ -69,8 +65,7 @@ function piMain()
 
         refreshTime *= 1000;
 
-        window.setTimeout(function ()
-        {
+        window.setTimeout(function () {
             piSubmit();
         }, refreshTime);
     }
@@ -78,8 +73,7 @@ function piMain()
     // WEBAUTHN
     if (piGetValue("mode") === "webauthn")
     {
-        window.onload = () =>
-        {
+        window.onload = () => {
             doWebAuthn();
         }
     }
@@ -90,14 +84,14 @@ function piMain()
     piSetValue("origin", window.origin);
 
     // ALTERNATE LANGUAGE
-    if (piGetValue("uiLanguage") === "de") {
+    if (piGetValue("uiLanguage") === "de")
+    {
         document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
         piSetValue("kc-login", "Anmelden");
     }
 }
 
 // Wait until the document is ready
-document.addEventListener("DOMContentLoaded", function ()
-{
+document.addEventListener("DOMContentLoaded", function () {
     piMain();
 });

@@ -83,7 +83,8 @@ import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
 import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
 import static org.privacyidea.authenticator.Const.TRUE;
 
-public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger {
+public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger
+{
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
 
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
@@ -95,14 +96,16 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      *
      * @param context for authentication flow
      */
-    private Pair loadConfiguration(final AuthenticationFlowContext context) {
+    private Pair loadConfiguration(final AuthenticationFlowContext context)
+    {
         // Get the configuration and privacyIDEA instance for the current realm
         // If none is found then create a new one
         final int incomingHash = context.getAuthenticatorConfig().getConfig().hashCode();
         final String kcRealm = context.getRealm().getName();
         final Pair currentPair = piInstanceMap.get(kcRealm);
 
-        if (currentPair == null || incomingHash != currentPair.configuration().configHash()) {
+        if (currentPair == null || incomingHash != currentPair.configuration().configHash())
+        {
             final Map<String, String> configMap = context.getAuthenticatorConfig().getConfig();
             Configuration config = new Configuration(configMap);
             String kcVersion = Version.VERSION;
@@ -117,10 +120,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     .build();
 
             // Close the old privacyIDEA instance to shut down the thread pool before replacing it in the map
-            if (currentPair != null) {
-                try {
+            if (currentPair != null)
+            {
+                try
+                {
                     currentPair.privacyIDEA().close();
-                } catch (IOException e) {
+                } catch (IOException e)
+                {
                     error("Failed to close privacyIDEA instance!");
                 }
             }
@@ -138,7 +144,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      * @param context AuthenticationFlowContext
      */
     @Override
-    public void authenticate(AuthenticationFlowContext context) {
+    public void authenticate(AuthenticationFlowContext context)
+    {
         final Pair currentPair = loadConfiguration(context);
 
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
@@ -149,13 +156,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentUser = user.getUsername();
 
         // Check if the current user is member of an included or excluded group
-        if (!config.includedGroups().isEmpty()) {
-            if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains)) {
+        if (!config.includedGroups().isEmpty())
+        {
+            if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains))
+            {
                 context.success();
                 return;
             }
-        } else if (!config.excludedGroups().isEmpty()) {
-            if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains)) {
+        }
+        else if (!config.excludedGroups().isEmpty())
+        {
+            if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
+            {
                 context.success();
                 return;
             }
@@ -164,8 +176,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentPassword = null;
 
         // In some cases, there will be no FormParameters so check if it is possible to even get the password
-        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
-                context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null) {
+        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest()
+                .getDecodedFormParameters() != null &&
+                context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
 
@@ -173,7 +187,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Set UI language
         String uiLanguage = "en";
-        if (headers.get(HEADER_ACCEPT_LANGUAGE) != null && headers.get(HEADER_ACCEPT_LANGUAGE).startsWith("de")) {
+        if (headers.get(HEADER_ACCEPT_LANGUAGE) != null && headers.get(HEADER_ACCEPT_LANGUAGE).startsWith("de"))
+        {
             uiLanguage = "de";
         }
 
@@ -181,7 +196,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         PIResponse triggerResponse = null;
         String pushMessage = uiLanguage.equals("en") ? DEFAULT_PUSH_MESSAGE_EN : DEFAULT_PUSH_MESSAGE_DE;
         String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
-        if (!config.defaultOTPMessage().isEmpty()) {
+        if (!config.defaultOTPMessage().isEmpty())
+        {
             otpMessage = config.defaultOTPMessage();
         }
         // Set the default values, always assume OTP is available
@@ -201,31 +217,43 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
-        if (config.triggerChallenge()) {
+        if (config.triggerChallenge())
+        {
             triggerResponse = privacyIDEA.triggerChallenges(currentUser, headers);
-        } else if (config.sendPassword()) {
-            if (currentPassword != null) {
+        }
+        else if (config.sendPassword())
+        {
+            if (currentPassword != null)
+            {
                 triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, headers);
-            } else {
+            }
+            else
+            {
                 log("Cannot send password because it is null!");
             }
-        } else if (config.sendStaticPass()) {
+        }
+        else if (config.sendStaticPass())
+        {
             triggerResponse = privacyIDEA.validateCheck(currentUser, config.staticPass(), null, headers);
         }
 
         // Evaluate for possibly triggered token
-        if (triggerResponse != null) {
-            if (triggerResponse.value) {
+        if (triggerResponse != null)
+        {
+            if (triggerResponse.value)
+            {
                 context.success();
                 return;
             }
 
-            if (triggerResponse.error != null) {
+            if (triggerResponse.error != null)
+            {
                 context.form().setError(triggerResponse.error.message);
                 context.form().setAttribute(FORM_ERROR, true);
             }
 
-            if (!triggerResponse.multichallenge.isEmpty()) {
+            if (!triggerResponse.multichallenge.isEmpty())
+            {
                 extractChallengeDataToForm(triggerResponse, context, config);
             }
         }
@@ -245,23 +273,28 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      * @param context AuthenticationFlowContext
      */
     @Override
-    public void action(AuthenticationFlowContext context) {
+    public void action(AuthenticationFlowContext context)
+    {
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
 
         PrivacyIDEA privacyIDEA;
         Configuration config;
-        if (piInstanceMap.containsKey(kcRealm)) {
+        if (piInstanceMap.containsKey(kcRealm))
+        {
             Pair pair = piInstanceMap.get(kcRealm);
             privacyIDEA = pair.privacyIDEA();
             config = pair.configuration();
-        } else {
+        }
+        else
+        {
             throw new AuthenticationFlowException("No privacyIDEA configuration found for kc-realm " + kcRealm,
                     AuthenticationFlowError.IDENTITY_PROVIDER_NOT_FOUND);
         }
 
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        if (formData.containsKey("cancel")) {
+        if (formData.containsKey("cancel"))
+        {
             context.cancelLogin();
             return;
         }
@@ -308,7 +341,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Log the error encountered in the browser
         String error = formData.getFirst(FORM_ERROR_MESSAGE);
-        if (error != null && !error.isEmpty()) {
+        if (error != null && !error.isEmpty())
+        {
             logger.error(error);
         }
 
@@ -318,33 +352,45 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         PIResponse response = null;
 
         // Send a request to privacyIDEA depending on the mode
-        if (TOKEN_TYPE_PUSH.equals(currentMode)) {
+        if (TOKEN_TYPE_PUSH.equals(currentMode))
+        {
             // In push mode, poll for the transaction id to see if the challenge has been answered
-            if (privacyIDEA.pollTransaction(transactionID)) {
+            if (privacyIDEA.pollTransaction(transactionID))
+            {
                 // If the challenge has been answered, finalize with a call to validate check
                 response = privacyIDEA.validateCheck(currentUserName, "", transactionID, headers);
             }
-        } else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty()) {
-            if (origin == null || origin.isEmpty()) {
+        }
+        else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty())
+        {
+            if (origin == null || origin.isEmpty())
+            {
                 logger.error("Origin is missing for WebAuthn authentication!");
-            } else {
+            }
+            else
+            {
                 response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin, headers);
             }
-        } else if (!TRUE.equals(tokenTypeChanged)) {
+        }
+        else if (!TRUE.equals(tokenTypeChanged))
+        {
             String otp = formData.getFirst(FORM_OTP);
             // If the transaction ID is not present, it will not be added to validateCheck, so no need to check it here
             response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, headers);
         }
 
         // Evaluate the response
-        if (response != null) {
+        if (response != null)
+        {
             // On success, finish the execution
-            if (response.value) {
+            if (response.value)
+            {
                 context.success();
                 return;
             }
 
-            if (response.error != null) {
+            if (response.error != null)
+            {
                 form.setError(response.error.message);
                 form.setAttribute(FORM_ERROR, true);
                 context.failureChallenge(AuthenticationFlowError.INVALID_USER, form.createForm(FORM_FILE_NAME));
@@ -353,10 +399,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
             // If the authentication was not successful (yet), either the provided data was wrong
             // or another challenge was triggered
-            if (!response.multichallenge.isEmpty()) {
+            if (!response.multichallenge.isEmpty())
+            {
                 extractChallengeDataToForm(response, context, config);
                 didTrigger = true;
-            } else {
+            }
+            else
+            {
                 // The authentication failed without triggering anything so the things that have been sent before were wrong
                 authenticationFailureMessage += "\n" + response.message;
             }
@@ -365,14 +414,16 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // The authCounter is also used to determine the polling interval for push
         // If the authCounter is bigger than the size of the polling interval list, repeat the last value in the list
         int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
-        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 : authCounter);
+        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval()
+                .size() - 1 : authCounter);
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
 
         // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
         form.setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(authCounter));
 
         // Do not display the error if the token type was switched or if another challenge was triggered
-        if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger) {
+        if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger)
+        {
             form.setError(TOKEN_TYPE_PUSH.equals(currentMode) ? "Authentication not verified yet." : authenticationFailureMessage);
         }
 
@@ -380,8 +431,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
-    private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context, Configuration config) {
-        if (context == null || config == null) {
+    private void extractChallengeDataToForm(PIResponse response,
+                                            AuthenticationFlowContext context,
+                                            Configuration config)
+    {
+        if (context == null || config == null)
+        {
             error("extractChallengeDataToForm missing parameter!");
             return;
         }
@@ -390,25 +445,32 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String webAuthnSignRequest = "";
         String mode = "otp";
         String newOtpMessage = response.otpMessage();
-        if (response.transactionID != null && !response.transactionID.isEmpty()) {
+        if (response.transactionID != null && !response.transactionID.isEmpty())
+        {
             context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.transactionID);
         }
 
         // Check for the images
         List<Challenge> multiChallenge = response.multichallenge;
-        for (Challenge c : multiChallenge) {
-            if ("poll".equals(c.getClientMode())) {
+        for (Challenge c : multiChallenge)
+        {
+            if ("poll".equals(c.getClientMode()))
+            {
                 context.form().setAttribute(FORM_IMAGE_PUSH, c.getImage());
-            } else if ("interactive".equals(c.getClientMode())) {
+            }
+            else if ("interactive".equals(c.getClientMode()))
+            {
                 context.form().setAttribute(FORM_IMAGE_OTP, c.getImage());
             }
-            if ("webauthn".equals(c.getClientMode())) {
+            if ("webauthn".equals(c.getClientMode()))
+            {
                 context.form().setAttribute(FORM_IMAGE_WEBAUTHN, c.getImage());
             }
         }
 
         // Check for poll in browser
-        if (config.pollInBrowser()) {
+        if (config.pollInBrowser())
+        {
             context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
             newOtpMessage = response.otpMessage() + "\n" + response.pushMessage();
             context.form()
@@ -417,22 +479,26 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Check for Push
-        if (response.pushAvailable()) {
+        if (response.pushAvailable())
+        {
             context.form().setAttribute(FORM_PUSH_AVAILABLE, true);
             context.form().setAttribute(FORM_PUSH_MESSAGE, response.pushMessage());
         }
 
         // Check for WebAuthn
-        if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN)) {
+        if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
+        {
             webAuthnSignRequest = response.mergedSignRequest();
         }
 
         // Check if response from server contains preferred client mode
-        if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty()) {
+        if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
+        {
             mode = response.preferredClientMode;
         }
         // Using poll in browser does not require push mode
-        if (mode.equals("push") && config.pollInBrowser()) {
+        if (mode.equals("push") && config.pollInBrowser())
+        {
             mode = "otp";
         }
 
@@ -450,18 +516,27 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      * @param config  Configuration
      * @return Map of headers
      */
-    private Map<String, String> getHeadersToForward(AuthenticationFlowContext context, Configuration config) {
+    private Map<String, String> getHeadersToForward(AuthenticationFlowContext context, Configuration config)
+    {
         Map<String, String> headersToForward = new LinkedHashMap<>();
         // Take all headers from config plus accept-language
         config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
 
-        for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList())) {
-            List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(header);
+        for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList()))
+        {
+            List<String> headerValues = context.getSession()
+                    .getContext()
+                    .getRequestHeaders()
+                    .getRequestHeaders()
+                    .get(header);
 
-            if (headerValues != null && !headerValues.isEmpty()) {
+            if (headerValues != null && !headerValues.isEmpty())
+            {
                 String temp = String.join(",", headerValues);
                 headersToForward.put(header, temp);
-            } else {
+            }
+            else
+            {
                 log("No values for header " + header + " found.");
             }
         }
@@ -469,48 +544,60 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     }
 
     @Override
-    public boolean requiresUser() {
+    public boolean requiresUser()
+    {
         return true;
     }
 
     @Override
-    public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
+    public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
+    {
         return true;
     }
 
     @Override
-    public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {
+    public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user)
+    {
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
     }
 
     // IPILogger implementation
     @Override
-    public void log(String message) {
-        if (logEnabled) {
+    public void log(String message)
+    {
+        if (logEnabled)
+        {
             logger.info("PrivacyIDEA Client: " + message);
         }
     }
 
     @Override
-    public void error(String message) {
-        if (logEnabled) {
+    public void error(String message)
+    {
+        if (logEnabled)
+        {
             logger.error("PrivacyIDEA Client: " + message);
         }
     }
 
     @Override
-    public void log(Throwable t) {
-        if (logEnabled) {
+    public void log(Throwable t)
+    {
+        if (logEnabled)
+        {
             logger.info("PrivacyIDEA Client: ", t);
         }
     }
 
     @Override
-    public void error(Throwable t) {
-        if (logEnabled) {
+    public void error(Throwable t)
+    {
+        if (logEnabled)
+        {
             logger.error("PrivacyIDEA Client: ", t);
         }
     }
