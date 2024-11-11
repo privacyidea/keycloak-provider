@@ -1,0 +1,20 @@
+/* styles.css */
+.center-text
+{
+	text-align: center;
+}
+
+.bold-text
+{
+	font-weight: bold;
+}
+
+.padding-top-20
+{
+	padding-top: 20px;
+}
+
+#otp
+{
+	margin-top: 20px;
+}

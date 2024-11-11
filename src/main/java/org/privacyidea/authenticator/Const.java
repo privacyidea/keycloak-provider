@@ -44,7 +44,6 @@ final class Const
     static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
 
     static final String FORM_POLL_INTERVAL = "pollingInterval";
-    static final String FORM_TOKEN_ENROLLMENT_QR = "tokenEnrollmentQR";
     static final String FORM_MODE = "mode";
     static final String FORM_IMAGE_PUSH = "pushImage";
     static final String FORM_IMAGE_OTP = "otpImage";
@@ -54,25 +53,21 @@ final class Const
     static final String FORM_TRANSACTION_ID = "transactionID";
     static final String FORM_PI_SERVER_URL = "piServerUrl";
     static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
-    static final String FORM_PI_POLL_IN_BROWSER_URL = "piPollInBrowserUrl";
-    static final String FORM_PUSH_AVAILABLE = "push_available";
-    static final String FORM_OTP_AVAILABLE = "otp_available";
+    static final String FORM_POLL_IN_BROWSER_URL = "pollInBrowserUrl";
+    static final String FORM_PUSH_AVAILABLE = "pushAvailable";
+    static final String FORM_OTP_AVAILABLE = "otpAvailable";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
     static final String FORM_OTP_MESSAGE = "otpMessage";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
-    static final String FORM_UI_LANGUAGE = "uilanguage";
+    static final String FORM_UI_LANGUAGE = "uiLanguage";
     static final String FORM_ERROR = "hasError";
 
     // Webauthn form fields
-    static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnsignrequest";
-    static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnsignresponse";
+    static final String FORM_WEBAUTHN_SIGN_REQUEST = "webauthnSignRequest";
+    static final String FORM_WEBAUTHN_SIGN_RESPONSE = "webauthnSignResponse";
     static final String FORM_WEBAUTHN_ORIGIN = "origin";
-
-    // U2F form fields
-    static final String FORM_U2F_SIGN_REQUEST = "u2fsignrequest";
-    static final String FORM_U2F_SIGN_RESPONSE = "u2fsignresponse";
 
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
@@ -83,8 +78,6 @@ final class Const
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
     static final String CONFIG_INCLUDED_GROUPS = "piincludegroups";
     static final String CONFIG_FORWARDED_HEADERS = "piforwardedheaders";
-    static final String CONFIG_ENROLL_TOKEN_TYPE = "pienrolltokentype";
-    static final String CONFIG_ENROLL_TOKEN = "pienrolltoken";
     static final String CONFIG_DEFAULT_MESSAGE = "pidefaultmessage";
     static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
     static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
@@ -100,5 +93,4 @@ final class Const
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
     static final String CONFIG_ENABLE_LOG = "pidolog";
-    static final String CONFIG_PREF_TOKEN_TYPE = "preftokentype";
 }
