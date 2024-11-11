@@ -22,31 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.privacyidea.authenticator.Const.CONFIG_DEFAULT_MESSAGE;
-import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
-import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN;
-import static org.privacyidea.authenticator.Const.CONFIG_ENROLL_TOKEN_TYPE;
-import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
-import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_OTP_LENGTH;
-import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
-import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
-import static org.privacyidea.authenticator.Const.CONFIG_PREF_TOKEN_TYPE;
-import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
-import static org.privacyidea.authenticator.Const.CONFIG_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
-import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_STATIC_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
-import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
-import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
-import static org.privacyidea.authenticator.Const.TRUE;
+import static org.privacyidea.authenticator.Const.*;
 
 class Configuration
 {
@@ -64,13 +40,10 @@ class Configuration
     private final List<String> includedGroups = new ArrayList<>();
     private final List<String> forwardedHeaders = new ArrayList<>();
     private final String otpLength;
-    private final boolean doEnrollToken;
     private final boolean doLog;
-    private final String enrollingTokenType;
     private final boolean pollInBrowser;
     private final String pollInBrowserUrl;
     private final List<Integer> pollingInterval = new ArrayList<>();
-    private final String prefTokenType;
     private final int configHash;
     private final String defaultOTPMessage;
 
@@ -89,12 +62,9 @@ class Configuration
         this.otpLength = configMap.get(CONFIG_OTP_LENGTH) == null ? "" : configMap.get(CONFIG_OTP_LENGTH);
         this.pollInBrowser = (configMap.get(CONFIG_POLL_IN_BROWSER) != null && configMap.get(CONFIG_POLL_IN_BROWSER).equals(TRUE));
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
-        this.doEnrollToken = configMap.get(CONFIG_ENROLL_TOKEN) != null && configMap.get(CONFIG_ENROLL_TOKEN).equals(TRUE);
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         this.doSendStaticPass = configMap.get(CONFIG_SEND_STATIC_PASS) != null && configMap.get(CONFIG_SEND_STATIC_PASS).equals(TRUE);
         // PI uses all lowercase letters for token types so change it here to match it internally
-        this.prefTokenType = (configMap.get(CONFIG_PREF_TOKEN_TYPE) == null ? "otp" : configMap.get(CONFIG_PREF_TOKEN_TYPE)).toLowerCase();
-        this.enrollingTokenType = (configMap.get(CONFIG_ENROLL_TOKEN_TYPE) == null ? "" : configMap.get(CONFIG_ENROLL_TOKEN_TYPE)).toLowerCase();
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
@@ -212,16 +182,6 @@ class Configuration
         return otpLength;
     }
 
-    boolean enrollToken()
-    {
-        return doEnrollToken;
-    }
-
-    String enrollingTokenType()
-    {
-        return enrollingTokenType;
-    }
-
     boolean pollInBrowser()
     {
         return pollInBrowser;
@@ -245,11 +205,6 @@ class Configuration
     boolean sendPassword()
     {
         return doSendPassword;
-    }
-
-    String prefTokenType()
-    {
-        return prefTokenType;
     }
 
     String defaultOTPMessage()
