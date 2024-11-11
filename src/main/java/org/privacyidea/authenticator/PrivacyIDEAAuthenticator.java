@@ -452,7 +452,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else
             {
                 // The authentication failed without triggering anything so the things that have been sent before were wrong
-                authenticationFailureMessage += "\n" + response.message;
+                authenticationFailureMessage += ". " + response.message;
             }
         }
 
@@ -515,7 +515,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (config.pollInBrowser())
         {
             context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
-            newOtpMessage = response.otpMessage() + "\n" + response.pushMessage();
+            newOtpMessage = response.otpMessage() + ". " + response.pushMessage();
             context.form()
                    .setAttribute(FORM_PI_POLL_IN_BROWSER_URL,
                                  config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl());
