@@ -22,28 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.privacyidea.authenticator.Const.CONFIG_DEFAULT_MESSAGE;
-import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
-import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
-import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
-import static org.privacyidea.authenticator.Const.CONFIG_OTP_LENGTH;
-import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
-import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
-import static org.privacyidea.authenticator.Const.CONFIG_PUSH_INTERVAL;
-import static org.privacyidea.authenticator.Const.CONFIG_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
-import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
-import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_STATIC_PASS;
-import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
-import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
-import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
-import static org.privacyidea.authenticator.Const.TRUE;
+import static org.privacyidea.authenticator.Const.*;
 
 class Configuration
 {
