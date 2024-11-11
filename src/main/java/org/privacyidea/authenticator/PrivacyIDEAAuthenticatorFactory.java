@@ -49,9 +49,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         return SINGLETON;
     }
 
-    private static final AuthenticationExecutionModel.Requirement[]
-            REQUIREMENT_CHOICES =
-            {AuthenticationExecutionModel.Requirement.REQUIRED, AuthenticationExecutionModel.Requirement.DISABLED};
+    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {AuthenticationExecutionModel.Requirement.REQUIRED,
+                                                                                           AuthenticationExecutionModel.Requirement.DISABLED};
 
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices()
@@ -90,8 +89,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         piRealm.setType(ProviderConfigProperty.STRING_TYPE);
         piRealm.setName(Const.CONFIG_REALM);
         piRealm.setLabel("Realm");
-        piRealm.setHelpText("Select the realm where your users are stored. "
-                            + "Leave empty to use the default realm which is configured in the privacyIDEA server.");
+        piRealm.setHelpText("Select the realm where your users are stored. Leave empty to use the default realm "
+                            + "which is configured in the privacyIDEA server.");
         configProperties.add(piRealm);
 
         ProviderConfigProperty piVerifySSL = new ProviderConfigProperty();
