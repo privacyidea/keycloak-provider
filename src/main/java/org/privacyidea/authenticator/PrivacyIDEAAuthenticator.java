@@ -113,7 +113,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      *
      * @param context AuthenticationFlowContext
      */
-    @Override public void authenticate(AuthenticationFlowContext context)
+    @Override
+    public void authenticate(AuthenticationFlowContext context)
     {
         final Pair currentPair = loadConfiguration(context);
 
@@ -238,7 +239,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      *
      * @param context AuthenticationFlowContext
      */
-    @Override public void action(AuthenticationFlowContext context)
+    @Override
+    public void action(AuthenticationFlowContext context)
     {
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
@@ -501,22 +503,31 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         return headersToForward;
     }
 
-    @Override public boolean requiresUser()
+    @Override
+    public boolean requiresUser()
     {
         return true;
     }
 
-    @Override public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
+    @Override
+    public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
     {
         return true;
     }
 
-    @Override public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {}
+    @Override
+    public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user)
+    {
+    }
 
-    @Override public void close() {}
+    @Override
+    public void close()
+    {
+    }
 
     // IPILogger implementation
-    @Override public void log(String message)
+    @Override
+    public void log(String message)
     {
         if (logEnabled)
         {
@@ -524,7 +535,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
     }
 
-    @Override public void error(String message)
+    @Override
+    public void error(String message)
     {
         if (logEnabled)
         {
@@ -532,7 +544,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
     }
 
-    @Override public void log(Throwable t)
+    @Override
+    public void log(Throwable t)
     {
         if (logEnabled)
         {
@@ -540,7 +553,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
     }
 
-    @Override public void error(Throwable t)
+    @Override
+    public void error(Throwable t)
     {
         if (logEnabled)
         {

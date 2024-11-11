@@ -37,12 +37,14 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
     private static final PrivacyIDEAAuthenticator SINGLETON = new PrivacyIDEAAuthenticator();
     private static final List<ProviderConfigProperty> configProperties = new ArrayList<>();
 
-    @Override public String getId()
+    @Override
+    public String getId()
     {
         return Const.PROVIDER_ID;
     }
 
-    @Override public org.keycloak.authentication.Authenticator create(KeycloakSession session)
+    @Override
+    public org.keycloak.authentication.Authenticator create(KeycloakSession session)
     {
         return SINGLETON;
     }
@@ -51,22 +53,26 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
             REQUIREMENT_CHOICES =
             {AuthenticationExecutionModel.Requirement.REQUIRED, AuthenticationExecutionModel.Requirement.DISABLED};
 
-    @Override public AuthenticationExecutionModel.Requirement[] getRequirementChoices()
+    @Override
+    public AuthenticationExecutionModel.Requirement[] getRequirementChoices()
     {
         return REQUIREMENT_CHOICES;
     }
 
-    @Override public boolean isUserSetupAllowed()
+    @Override
+    public boolean isUserSetupAllowed()
     {
         return false;
     }
 
-    @Override public boolean isConfigurable()
+    @Override
+    public boolean isConfigurable()
     {
         return true;
     }
 
-    @Override public List<ProviderConfigProperty> getConfigProperties()
+    @Override
+    public List<ProviderConfigProperty> getConfigProperties()
     {
         return configProperties;
     }
@@ -231,30 +237,36 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         configProperties.add(piDoLog);
     }
 
-    @Override public String getHelpText()
+    @Override
+    public String getHelpText()
     {
         return "Authenticate the second factor against privacyIDEA.";
     }
 
-    @Override public String getDisplayType()
+    @Override
+    public String getDisplayType()
     {
         return "privacyIDEA";
     }
 
-    @Override public String getReferenceCategory()
+    @Override
+    public String getReferenceCategory()
     {
         return "privacyIDEA";
     }
 
-    @Override public void init(Config.Scope config)
+    @Override
+    public void init(Config.Scope config)
     {
     }
 
-    @Override public void postInit(KeycloakSessionFactory factory)
+    @Override
+    public void postInit(KeycloakSessionFactory factory)
     {
     }
 
-    @Override public void close()
+    @Override
+    public void close()
     {
     }
 }
