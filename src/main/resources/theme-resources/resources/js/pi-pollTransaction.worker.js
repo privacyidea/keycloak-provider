@@ -16,7 +16,7 @@ self.addEventListener('message', function (e) {
             if (url.length > 0 && params.length > 0)
             {
                 setInterval(function () {
-                    fetch(url + "?" + params, {method: 'GET'})
+                    fetch(url + "?" + params, { method: 'GET' })
                         .then(r => {
                             if (r.ok)
                             {
@@ -25,24 +25,23 @@ self.addEventListener('message', function (e) {
                                     if (resultJson['result']['authentication'] === "ACCEPT")
                                     {
                                         self.postMessage({
-                                            'message': 'Polling in browser: Push message confirmed!',
-                                            'status': 'success'
-                                        });
+                                                             'message': 'Polling in browser: Push message confirmed!',
+                                                             'status': 'success'
+                                                         });
                                         self.close();
                                     }
                                 });
                             }
                             else
                             {
-                                self.postMessage({'message': r.statusText, 'status': 'error'});
+                                self.postMessage({ 'message': r.statusText, 'status': 'error' });
                                 self.close();
                             }
                         })
                         .catch(e => {
-                                self.postMessage({'message': e, 'status': 'error'});
-                                self.close();
-                            }
-                        );
+                            self.postMessage({ 'message': e, 'status': 'error' });
+                            self.close();
+                        });
                 }, 300);
             }
             break;

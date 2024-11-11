@@ -1,4 +1,4 @@
-function doWebAuthn()
+function doWebAuthn ()
 {
     // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt WebAuthn
     // Afterward, WebAuthn is started directly
@@ -27,7 +27,7 @@ function doWebAuthn()
     }
 }
 
-function piMain()
+function piMain ()
 {
     // ALTERNATE TOKEN SECTION VISIBILITY
     if (piGetValue("webauthnSignRequest").length < 1 && piGetValue("isPushAvailable") !== true)
@@ -50,7 +50,7 @@ function piMain()
     // POLL BY RELOAD
     if (piGetValue("mode") === "push")
     {
-        const pollingIntervals = [4, 3, 2];
+        const pollingIntervals = [ 4, 3, 2 ];
         let loadCounter = piGetValue("loadCounter");
         let refreshTime;
 
@@ -79,7 +79,8 @@ function piMain()
     }
     if (!window.location.origin)
     {
-        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+        window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':'
+                                 + window.location.port : '');
     }
     piSetValue("origin", window.origin);
 

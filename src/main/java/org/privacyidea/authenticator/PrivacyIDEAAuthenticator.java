@@ -25,14 +25,6 @@ package org.privacyidea.authenticator;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -48,40 +40,15 @@ import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
-import static org.privacyidea.PIConstants.PASSWORD;
-import static org.privacyidea.PIConstants.TOKEN_TYPE_PUSH;
-import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
-import static org.privacyidea.authenticator.Const.AUTH_NOTE_AUTH_COUNTER;
-import static org.privacyidea.authenticator.Const.AUTH_NOTE_TRANSACTION_ID;
-import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_DE;
-import static org.privacyidea.authenticator.Const.DEFAULT_OTP_MESSAGE_EN;
-import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_DE;
-import static org.privacyidea.authenticator.Const.DEFAULT_PUSH_MESSAGE_EN;
-import static org.privacyidea.authenticator.Const.FORM_ERROR;
-import static org.privacyidea.authenticator.Const.FORM_ERROR_MESSAGE;
-import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
-import static org.privacyidea.authenticator.Const.FORM_IMAGE_OTP;
-import static org.privacyidea.authenticator.Const.FORM_IMAGE_PUSH;
-import static org.privacyidea.authenticator.Const.FORM_IMAGE_WEBAUTHN;
-import static org.privacyidea.authenticator.Const.FORM_MODE;
-import static org.privacyidea.authenticator.Const.FORM_MODE_CHANGED;
-import static org.privacyidea.authenticator.Const.FORM_OTP;
-import static org.privacyidea.authenticator.Const.FORM_OTP_AVAILABLE;
-import static org.privacyidea.authenticator.Const.FORM_AUTO_SUBMIT_OTP_LENGTH;
-import static org.privacyidea.authenticator.Const.FORM_OTP_MESSAGE;
-import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_URL;
-import static org.privacyidea.authenticator.Const.FORM_POLL_INTERVAL;
-import static org.privacyidea.authenticator.Const.FORM_POLL_IN_BROWSER_FAILED;
-import static org.privacyidea.authenticator.Const.FORM_PUSH_AVAILABLE;
-import static org.privacyidea.authenticator.Const.FORM_PUSH_MESSAGE;
-import static org.privacyidea.authenticator.Const.FORM_TRANSACTION_ID;
-import static org.privacyidea.authenticator.Const.FORM_UI_LANGUAGE;
-import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_ORIGIN;
-import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_SIGN_REQUEST;
-import static org.privacyidea.authenticator.Const.FORM_WEBAUTHN_SIGN_RESPONSE;
-import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
-import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
-import static org.privacyidea.authenticator.Const.TRUE;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import static org.privacyidea.PIConstants.*;
+import static org.privacyidea.authenticator.Const.*;
 
 public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger
 {
@@ -111,13 +78,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             String kcVersion = Version.VERSION;
             String providerVersion = PrivacyIDEAAuthenticator.class.getPackage().getImplementationVersion();
             String fullUserAgent = PLUGIN_USER_AGENT + "/" + providerVersion + " Keycloak/" + kcVersion;
-            PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
-                    .sslVerify(config.sslVerify())
-                    .logger(this)
-                    .realm(config.realm())
-                    .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
-                    .serviceRealm(config.serviceAccountRealm())
-                    .build();
+            PrivacyIDEA
+                    privacyIDEA =
+                    PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
+                               .sslVerify(config.sslVerify())
+                               .logger(this)
+                               .realm(config.realm())
+                               .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
+                               .serviceRealm(config.serviceAccountRealm())
+                               .build();
 
             // Close the old privacyIDEA instance to shut down the thread pool before replacing it in the map
             if (currentPair != null)
@@ -125,7 +94,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 try
                 {
                     currentPair.privacyIDEA().close();
-                } catch (IOException e)
+                }
+                catch (IOException e)
                 {
                     error("Failed to close privacyIDEA instance!");
                 }
@@ -143,8 +113,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      *
      * @param context AuthenticationFlowContext
      */
-    @Override
-    public void authenticate(AuthenticationFlowContext context)
+    @Override public void authenticate(AuthenticationFlowContext context)
     {
         final Pair currentPair = loadConfiguration(context);
 
@@ -176,9 +145,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String currentPassword = null;
 
         // In some cases, there will be no FormParameters so check if it is possible to even get the password
-        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest()
-                .getDecodedFormParameters() != null &&
-                context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null
+            && context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
         {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
@@ -202,19 +170,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
         // Set the default values, always assume OTP is available
         context.form()
-                .setAttribute(FORM_MODE, "otp")
-                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
-                .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
-                .setAttribute(FORM_OTP_AVAILABLE, true)
-                .setAttribute(FORM_OTP_MESSAGE, otpMessage)
-                .setAttribute(FORM_PUSH_AVAILABLE, false)
-                .setAttribute(FORM_IMAGE_PUSH, "")
-                .setAttribute(FORM_IMAGE_OTP, "")
-                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
-                .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
-                .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
-                .setAttribute(FORM_TRANSACTION_ID, "")
-                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
+               .setAttribute(FORM_MODE, "otp")
+               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
+               .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
+               .setAttribute(FORM_OTP_AVAILABLE, true)
+               .setAttribute(FORM_OTP_MESSAGE, otpMessage)
+               .setAttribute(FORM_PUSH_AVAILABLE, false)
+               .setAttribute(FORM_IMAGE_PUSH, "")
+               .setAttribute(FORM_IMAGE_OTP, "")
+               .setAttribute(FORM_IMAGE_WEBAUTHN, "")
+               .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
+               .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
+               .setAttribute(FORM_TRANSACTION_ID, "")
+               .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
         // Trigger challenges if configured. Service account has precedence over send password
         if (config.triggerChallenge())
@@ -260,9 +228,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
 
-        Response responseForm = context.form()
-                .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
-                .createForm(FORM_FILE_NAME);
+        Response responseForm = context.form().setAttribute(FORM_UI_LANGUAGE, uiLanguage).createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
     }
@@ -272,8 +238,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      *
      * @param context AuthenticationFlowContext
      */
-    @Override
-    public void action(AuthenticationFlowContext context)
+    @Override public void action(AuthenticationFlowContext context)
     {
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
@@ -289,7 +254,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         else
         {
             throw new AuthenticationFlowException("No privacyIDEA configuration found for kc-realm " + kcRealm,
-                    AuthenticationFlowError.IDENTITY_PROVIDER_NOT_FOUND);
+                                                  AuthenticationFlowError.IDENTITY_PROVIDER_NOT_FOUND);
         }
 
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
@@ -327,17 +292,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Set the "old" values again
         form.setAttribute(FORM_MODE, currentMode)
-                .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
-                .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
-                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-                .setAttribute(FORM_IMAGE_PUSH, imagePush)
-                .setAttribute(FORM_IMAGE_OTP, imageOTP)
-                .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
-                .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
-                .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
-                .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
-                .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
-                .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
+            .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
+            .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
+            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+            .setAttribute(FORM_IMAGE_PUSH, imagePush)
+            .setAttribute(FORM_IMAGE_OTP, imageOTP)
+            .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
+            .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
+            .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
+            .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
+            .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
+            .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
 
         // Log the error encountered in the browser
         String error = formData.getFirst(FORM_ERROR_MESSAGE);
@@ -414,8 +379,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // The authCounter is also used to determine the polling interval for push
         // If the authCounter is bigger than the size of the polling interval list, repeat the last value in the list
         int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
-        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval()
-                .size() - 1 : authCounter);
+        authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 : authCounter);
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
 
         // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
@@ -431,9 +395,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
-    private void extractChallengeDataToForm(PIResponse response,
-                                            AuthenticationFlowContext context,
-                                            Configuration config)
+    private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context, Configuration config)
     {
         if (context == null || config == null)
         {
@@ -474,8 +436,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
             newOtpMessage = response.otpMessage() + "\n" + response.pushMessage();
             context.form()
-                    .setAttribute(FORM_POLL_IN_BROWSER_URL,
-                            config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl());
+                   .setAttribute(FORM_POLL_IN_BROWSER_URL,
+                                 config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl());
         }
 
         // Check for Push
@@ -503,9 +465,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         context.form()
-                .setAttribute(FORM_MODE, mode)
-                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-                .setAttribute(FORM_OTP_MESSAGE, newOtpMessage);
+               .setAttribute(FORM_MODE, mode)
+               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
+               .setAttribute(FORM_OTP_MESSAGE, newOtpMessage);
     }
 
     /**
@@ -524,11 +486,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList()))
         {
-            List<String> headerValues = context.getSession()
-                    .getContext()
-                    .getRequestHeaders()
-                    .getRequestHeaders()
-                    .get(header);
+            List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(header);
 
             if (headerValues != null && !headerValues.isEmpty())
             {
@@ -543,31 +501,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         return headersToForward;
     }
 
-    @Override
-    public boolean requiresUser()
+    @Override public boolean requiresUser()
     {
         return true;
     }
 
-    @Override
-    public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
+    @Override public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
     {
         return true;
     }
 
-    @Override
-    public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user)
-    {
-    }
+    @Override public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {}
 
-    @Override
-    public void close()
-    {
-    }
+    @Override public void close() {}
 
     // IPILogger implementation
-    @Override
-    public void log(String message)
+    @Override public void log(String message)
     {
         if (logEnabled)
         {
@@ -575,8 +524,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
     }
 
-    @Override
-    public void error(String message)
+    @Override public void error(String message)
     {
         if (logEnabled)
         {
@@ -584,8 +532,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
     }
 
-    @Override
-    public void log(Throwable t)
+    @Override public void log(Throwable t)
     {
         if (logEnabled)
         {
@@ -593,8 +540,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
     }
 
-    @Override
-    public void error(Throwable t)
+    @Override public void error(Throwable t)
     {
         if (logEnabled)
         {

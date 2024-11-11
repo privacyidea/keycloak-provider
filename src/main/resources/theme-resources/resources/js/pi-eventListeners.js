@@ -1,4 +1,4 @@
-function eventListeners()
+function eventListeners ()
 {
     // AUTO SUBMIT BY OTP LENGTH
     if (piGetValue("otpLength").length > 0)
@@ -23,8 +23,7 @@ function eventListeners()
     });
 
     // POLL IN BROWSER
-    if (piGetValue("pollInBrowserUrl").length > 0
-        && piGetValue("transactionID").length > 0)
+    if (piGetValue("pollInBrowserUrl").length > 0 && piGetValue("transactionID").length > 0)
     {
         piDisableElement("pushButton");
         let worker;
@@ -37,9 +36,9 @@ function eventListeners()
                     worker.terminate();
                     worker = undefined;
                 });
-                worker.postMessage({'cmd': 'url', 'msg': piGetValue("pollInBrowserUrl")});
-                worker.postMessage({'cmd': 'transactionID', 'msg': piGetValue("transactionID")});
-                worker.postMessage({'cmd': 'start'});
+                worker.postMessage({ 'cmd': 'url', 'msg': piGetValue("pollInBrowserUrl") });
+                worker.postMessage({ 'cmd': 'transactionID', 'msg': piGetValue("transactionID") });
+                worker.postMessage({ 'cmd': 'start' });
                 worker.addEventListener('message', function (e) {
                     let data = e.data;
                     switch (data.status)
@@ -69,6 +68,4 @@ function eventListeners()
 }
 
 // Wait until the document is ready
-document.addEventListener("DOMContentLoaded", function () {
-    eventListeners();
-});
+document.addEventListener("DOMContentLoaded", function () { eventListeners(); });
