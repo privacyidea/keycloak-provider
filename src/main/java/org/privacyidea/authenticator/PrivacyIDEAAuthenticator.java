@@ -154,26 +154,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         Map<String, String> headers = getHeadersToForward(context, config);
 
-        // Set UI language
-        String uiLanguage = "en";
-        if (headers.get(HEADER_ACCEPT_LANGUAGE) != null && headers.get(HEADER_ACCEPT_LANGUAGE).startsWith("de"))
-        {
-            uiLanguage = "de";
-        }
-
         // Prepare for possibly triggering challenges
         PIResponse triggerResponse = null;
-        String pushMessage = uiLanguage.equals("en") ? DEFAULT_PUSH_MESSAGE_EN : DEFAULT_PUSH_MESSAGE_DE;
-        String otpMessage = uiLanguage.equals("en") ? DEFAULT_OTP_MESSAGE_EN : DEFAULT_OTP_MESSAGE_DE;
+        String otpMessage = "Please enter your OTP!";
         if (!config.defaultOTPMessage().isEmpty())
         {
             otpMessage = config.defaultOTPMessage();
         }
+
         // Set the default values, always assume OTP is available
         context.form()
                .setAttribute(FORM_MODE, "otp")
                .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
-               .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
                .setAttribute(FORM_OTP_AVAILABLE, true)
                .setAttribute(FORM_OTP_MESSAGE, otpMessage)
                .setAttribute(FORM_PUSH_AVAILABLE, false)
@@ -229,7 +221,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Prepare the form and auth notes to pass infos to the UI and the next step
         context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
 
-        Response responseForm = context.form().setAttribute(FORM_UI_LANGUAGE, uiLanguage).createForm(FORM_FILE_NAME);
+        Response responseForm = context.form().createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
     }
@@ -281,7 +273,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String imageWebauthn = formData.getFirst(FORM_IMAGE_WEBAUTHN);
         String otpLength = formData.getFirst(FORM_AUTO_SUBMIT_OTP_LENGTH);
         String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
-        String uiLanguage = formData.getFirst(FORM_UI_LANGUAGE);
         String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
         String currentUserName = context.getUser().getUsername();
         String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
@@ -300,11 +291,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_IMAGE_PUSH, imagePush)
             .setAttribute(FORM_IMAGE_OTP, imageOTP)
             .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
-            .setAttribute(FORM_UI_LANGUAGE, uiLanguage)
             .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
             .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
-            .setAttribute(FORM_PUSH_MESSAGE, (pushMessage == null ? DEFAULT_PUSH_MESSAGE_EN : pushMessage))
-            .setAttribute(FORM_OTP_MESSAGE, (otpMessage == null ? DEFAULT_OTP_MESSAGE_EN : otpMessage));
+            .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
+            .setAttribute(FORM_OTP_MESSAGE, otpMessage);
 
         // Log the error encountered in the browser
         String error = formData.getFirst(FORM_ERROR_MESSAGE);
@@ -401,7 +391,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (context == null || config == null)
         {
-            error("extractChallengeDataToForm missing parameter!");
+            error("[extractChallengeDataToForm] Missing parameter!");
             return;
         }
 
