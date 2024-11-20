@@ -39,6 +39,7 @@ class Configuration
     private final List<String> excludedGroups = new ArrayList<>();
     private final List<String> includedGroups = new ArrayList<>();
     private final List<String> forwardedHeaders = new ArrayList<>();
+    private final boolean forwardClientIP;
     private final String otpLength;
     private final boolean doLog;
     private final boolean pollInBrowser;
@@ -58,6 +59,7 @@ class Configuration
         this.serviceAccountPass = configMap.get(CONFIG_SERVICE_PASS) == null ? "" : configMap.get(CONFIG_SERVICE_PASS);
         this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
         this.staticPass = configMap.get(CONFIG_STATIC_PASS) == null ? "" : configMap.get(CONFIG_STATIC_PASS);
+        this.forwardClientIP = configMap.get(CONFIG_FORWARD_CLIENT_IP) != null && configMap.get(CONFIG_FORWARD_CLIENT_IP).equals(TRUE);
         this.defaultOTPMessage = configMap.get(CONFIG_DEFAULT_MESSAGE) == null ? "" : configMap.get(CONFIG_DEFAULT_MESSAGE);
         this.otpLength = configMap.get(CONFIG_OTP_LENGTH) == null ? "" : configMap.get(CONFIG_OTP_LENGTH);
         this.pollInBrowser = (configMap.get(CONFIG_POLL_IN_BROWSER) != null && configMap.get(CONFIG_POLL_IN_BROWSER).equals(TRUE));
@@ -175,6 +177,11 @@ class Configuration
     List<String> forwardedHeaders()
     {
         return forwardedHeaders;
+    }
+
+    boolean forwardClientIP()
+    {
+        return forwardClientIP;
     }
 
     String otpLength()
