@@ -1,13 +1,13 @@
 window.piGetValue = function getValue (id) {
     const element = document.getElementById(id);
-    if (element === null)
+    if (element !== null)
     {
-        console.log(id + " is null!");
-        return "";
+        return element.value;
     }
     else
     {
-        return element.value;
+        console.log(id + " is null!");
+        return "";
     }
 }
 
