@@ -29,12 +29,6 @@ final class Const
     static final String PROVIDER_ID = "privacyidea-authenticator";
     static final String PLUGIN_USER_AGENT = "privacyIDEA-Keycloak";
 
-    static final String DEFAULT_PUSH_MESSAGE_EN = "Please confirm the authentication on your mobile device!";
-    static final String DEFAULT_PUSH_MESSAGE_DE = "Bitte bestätigen Sie die Authentifizierung auf ihrem Smartphone!";
-
-    static final String DEFAULT_OTP_MESSAGE_EN = "Please enter your One-Time-Password!";
-    static final String DEFAULT_OTP_MESSAGE_DE = "Bitte geben Sie ihr Einmalpasswort ein!";
-
     static final String TRUE = "true";
 
     static final String HEADER_ACCEPT_LANGUAGE = "accept-language";
@@ -60,7 +54,6 @@ final class Const
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
-    static final String FORM_UI_LANGUAGE = "uiLanguage";
     static final String FORM_ERROR = "hasError";
 
     // Webauthn form fields

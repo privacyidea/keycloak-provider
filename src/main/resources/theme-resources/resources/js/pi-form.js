@@ -21,8 +21,8 @@ function doWebAuthn ()
         }
         catch (err)
         {
-            console.log("Error while trying WebAuthn: " + err);
-            piSetValue("errorMessage", "Error while trying WebAuthn: " + err);
+            console.log(piGetValue("webauthnErrorMsg") + err);
+            piSetValue("errorMessage", piGetValue("webauthnErrorMsg") + err);
         }
     }
 }
@@ -83,13 +83,6 @@ function piMain ()
                                  + window.location.port : '');
     }
     piSetValue("origin", window.origin);
-
-    // ALTERNATE LANGUAGE
-    if (piGetValue("uiLanguage") === "de")
-    {
-        document.getElementById("alternateTokenHeader").innerText = "Alternative Anmeldeoptionen";
-        piSetValue("kc-login", "Anmelden");
-    }
 }
 
 // Wait until the document is ready
