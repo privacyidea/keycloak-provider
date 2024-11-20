@@ -159,6 +159,14 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                  + "Can be empty to send an empty password.");
         configProperties.add(piStaticPass);
 
+        ProviderConfigProperty piForwardClientIP = new ProviderConfigProperty();
+        piForwardClientIP.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        piForwardClientIP.setName(Const.CONFIG_FORWARD_CLIENT_IP);
+        piForwardClientIP.setLabel("Forward client IP");
+        piForwardClientIP.setHelpText("Enable this to forward the client IP to privacyIDEA. "
+                                      + "This can be used in privacyIDEA server if configured.");
+        configProperties.add(piForwardClientIP);
+
         ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
         piIncludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
         piIncludeGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
@@ -214,7 +222,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         ProviderConfigProperty piPollInBrowserUrl = new ProviderConfigProperty();
         piPollInBrowserUrl.setType(ProviderConfigProperty.STRING_TYPE);
         piPollInBrowserUrl.setName(Const.CONFIG_POLL_IN_BROWSER_URL);
-        piPollInBrowserUrl.setLabel("Url for poll in browser");
+        piPollInBrowserUrl.setLabel("URL for poll in browser");
         piPollInBrowserUrl.setHelpText("Optional. If poll in browser should use a deviating URL, set it here. "
                                        + "Otherwise, the general URL will be used.");
         configProperties.add(piPollInBrowserUrl);
