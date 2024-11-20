@@ -29,12 +29,6 @@ final class Const
     static final String PROVIDER_ID = "privacyidea-authenticator";
     static final String PLUGIN_USER_AGENT = "privacyIDEA-Keycloak";
 
-    static final String DEFAULT_PUSH_MESSAGE_EN = "Please confirm the authentication on your mobile device!";
-    static final String DEFAULT_PUSH_MESSAGE_DE = "Bitte bestätigen Sie die Authentifizierung auf ihrem Smartphone!";
-
-    static final String DEFAULT_OTP_MESSAGE_EN = "Please enter your One-Time-Password!";
-    static final String DEFAULT_OTP_MESSAGE_DE = "Bitte geben Sie ihr Einmalpasswort ein!";
-
     static final String TRUE = "true";
 
     static final String HEADER_ACCEPT_LANGUAGE = "accept-language";
@@ -51,7 +45,6 @@ final class Const
     static final String FORM_POLL_IN_BROWSER_FAILED = "pollInBrowserFailed";
     static final String FORM_ERROR_MESSAGE = "errorMsg";
     static final String FORM_TRANSACTION_ID = "transactionID";
-    static final String FORM_PI_SERVER_URL = "piServerUrl";
     static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
     static final String FORM_POLL_IN_BROWSER_URL = "pollInBrowserUrl";
     static final String FORM_PUSH_AVAILABLE = "pushAvailable";
@@ -61,7 +54,6 @@ final class Const
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_MODE_CHANGED = "modeChanged";
     static final String FORM_OTP = "otp";
-    static final String FORM_UI_LANGUAGE = "uiLanguage";
     static final String FORM_ERROR = "hasError";
 
     // Webauthn form fields
@@ -71,7 +63,6 @@ final class Const
 
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
-    static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
 
     // Changing the config value names will reset the current config
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";

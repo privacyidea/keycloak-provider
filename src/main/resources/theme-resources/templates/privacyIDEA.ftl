@@ -71,31 +71,37 @@
                            type="hidden">
                     <input id="webauthnSignResponse" name="webauthnSignResponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
-                    <input id="uiLanguage" name="uiLanguage" value="${uiLanguage!"en"}" type="hidden">
+                    <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
+                           value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
+                    <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
+                           value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
+                    <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}"
+                           type="hidden">
 
                     <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
-                           value="Sign in"/>
+                           value="${msg('privacyidea.signIn')}"/>
 
                     <#-- ALTERNATE LOGIN OPTIONS class="${properties.kcFormButtonsClass!}" -->
                     <div id="alternateToken" class="padding-top-20">
-                        <h3 id="alternateTokenHeader">Alternate Login Options</h3>
+                        <h3 id="alternateTokenHeader">${msg('privacyidea.alternateLoginOptions')}</h3>
 
                         <div class="${properties.kcFormButtonsWrapperClass!}">
                             <#if otpAvailable>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="otpButton" id="otpButton" type="button" value="One-Time-Password"/>
+                                       name="otpButton" id="otpButton" type="button"
+                                       value="${msg('privacyidea.otpButton')}"/>
                             </#if>
 
                             <#if pushAvailable>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="pushButton" id="pushButton"
-                                       type="button" value="Push"/>
+                                       type="button" value="${msg('privacyidea.pushButton')}"/>
                             </#if>
 
                             <#if !(webauthnSignRequest = "")>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
                                        name="webauthnButton" id="webAuthnButton"
-                                       type="button" value="WebAuthn"/>
+                                       type="button" value="${msg('privacyidea.webauthnButton')}"/>
                             </#if>
                         </div>
                     </div>
