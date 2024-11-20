@@ -71,11 +71,11 @@
                            type="hidden">
                     <input id="webauthnSignResponse" name="webauthnSignResponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
-                    <input id="transPollInBrowserError" name="transPollInBrowserError"
+                    <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
                            value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
-                    <input id="transNoWebWorkerSupport" name="transNoWebWorkerSupport"
+                    <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
                            value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
-                    <input id="transWebauthnError" name="transWebauthnError" value="${msg('privacyidea.webauthnError')}"
+                    <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}"
                            type="hidden">
 
                     <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"

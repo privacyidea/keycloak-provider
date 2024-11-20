@@ -21,8 +21,8 @@ function doWebAuthn ()
         }
         catch (err)
         {
-            console.log(piGetValue("transWebauthnError") + err);
-            piSetValue("errorMessage", piGetValue("transWebauthnError") + err);
+            console.log(piGetValue("webauthnErrorMsg") + err);
+            piSetValue("errorMessage", piGetValue("webauthnErrorMsg") + err);
         }
     }
 }

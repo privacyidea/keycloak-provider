@@ -47,7 +47,7 @@ function eventListeners ()
                             piSubmit();
                             break;
                         case 'error':
-                            console.log(piGetValue("transPollInBrowserError") + data.message);
+                            console.log(piGetValue("pollInBrowserErrorMsg") + data.message);
                             piSetValue("errorMessage", "Poll in browser error: " + data.message);
                             piSetValue("pollInBrowserFailed", true);
                             piEnableElement("pushButton");
@@ -58,7 +58,7 @@ function eventListeners ()
         }
         else
         {
-            console.log(piGetValue("transNoWebWorkerSupport"));
+            console.log(piGetValue("noWebWorkerSupportMsg"));
             worker.terminate();
             piSetValue("errorMessage", "Poll in browser error: The browser doesn't support the Web Worker.");
             piSetValue("pollInBrowserFailed", true);
