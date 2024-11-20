@@ -51,7 +51,6 @@ final class Const
     static final String FORM_POLL_IN_BROWSER_FAILED = "pollInBrowserFailed";
     static final String FORM_ERROR_MESSAGE = "errorMsg";
     static final String FORM_TRANSACTION_ID = "transactionID";
-    static final String FORM_PI_SERVER_URL = "piServerUrl";
     static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
     static final String FORM_POLL_IN_BROWSER_URL = "pollInBrowserUrl";
     static final String FORM_PUSH_AVAILABLE = "pushAvailable";
@@ -71,13 +70,13 @@ final class Const
 
     static final String AUTH_NOTE_TRANSACTION_ID = "transaction_id";
     static final String AUTH_NOTE_AUTH_COUNTER = "authCounter";
-    static final String AUTH_NOTE_ACCEPT_LANGUAGE = "authLanguage";
 
     // Changing the config value names will reset the current config
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
     static final String CONFIG_INCLUDED_GROUPS = "piincludegroups";
     static final String CONFIG_FORWARDED_HEADERS = "piforwardedheaders";
+    static final String CONFIG_FORWARD_CLIENT_IP = "piforwardclientip";
     static final String CONFIG_DEFAULT_MESSAGE = "pidefaultmessage";
     static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
     static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
