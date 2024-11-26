@@ -78,15 +78,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             String kcVersion = Version.VERSION;
             String providerVersion = PrivacyIDEAAuthenticator.class.getPackage().getImplementationVersion();
             String fullUserAgent = PLUGIN_USER_AGENT + "/" + providerVersion + " Keycloak/" + kcVersion;
-            PrivacyIDEA
-                    privacyIDEA =
-                    PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
-                               .sslVerify(config.sslVerify())
-                               .logger(this)
-                               .realm(config.realm())
-                               .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
-                               .serviceRealm(config.serviceAccountRealm())
-                               .build();
+            String clientIP = config.forwardClientIP() ? context.getConnection().getRemoteAddr() : "";
+            PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
+                                                 .verifySSL(config.sslVerify())
+                                                 .logger(this)
+                                                 .realm(config.realm())
+                                                 .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
+                                                 .serviceRealm(config.serviceAccountRealm())
+                                                 .forwardClientIP(clientIP)
+                                                 .build();
 
             // Close the old privacyIDEA instance to shut down the thread pool before replacing it in the map
             if (currentPair != null)
@@ -174,6 +174,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
                .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
                .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
+               .setAttribute(FORM_POLL_IN_BROWSER_URL, "")
                .setAttribute(FORM_TRANSACTION_ID, "")
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
 
@@ -213,7 +214,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.form().setAttribute(FORM_ERROR, true);
             }
 
-            if (!triggerResponse.multichallenge.isEmpty())
+            if (!triggerResponse.multiChallenge.isEmpty())
             {
                 extractChallengeDataToForm(triggerResponse, context, config);
             }
@@ -266,6 +267,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         boolean pushAvailable = TRUE.equals(formData.getFirst(FORM_PUSH_AVAILABLE));
         boolean otpAvailable = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
         boolean pollInBrowserFailed = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_FAILED));
+        String pollInBrowserUrl = formData.getFirst(FORM_POLL_IN_BROWSER_URL);
         String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
         String imagePush = formData.getFirst(FORM_IMAGE_PUSH);
@@ -293,6 +295,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
             .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
             .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
+            .setAttribute(FORM_POLL_IN_BROWSER_URL, pollInBrowserUrl)
+            .setAttribute(FORM_TRANSACTION_ID, transactionID)
             .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
             .setAttribute(FORM_OTP_MESSAGE, otpMessage);
 
@@ -356,7 +360,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
             // If the authentication was not successful (yet), either the provided data was wrong
             // or another challenge was triggered
-            if (!response.multichallenge.isEmpty())
+            if (!response.multiChallenge.isEmpty())
             {
                 extractChallengeDataToForm(response, context, config);
                 didTrigger = true;
@@ -387,6 +391,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
     }
 
+    /**
+     * Extract the challenge data from the response and put it into the form.
+     *
+     * @param response PIResponse
+     * @param context AuthenticationFlowContext
+     * @param config Configuration
+     */
     private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context, Configuration config)
     {
         if (context == null || config == null)
@@ -405,7 +416,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Check for the images
-        List<Challenge> multiChallenge = response.multichallenge;
+        List<Challenge> multiChallenge = response.multiChallenge;
         for (Challenge c : multiChallenge)
         {
             if ("poll".equals(c.getClientMode()))

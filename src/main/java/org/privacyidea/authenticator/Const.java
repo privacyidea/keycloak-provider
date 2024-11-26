@@ -69,6 +69,7 @@ final class Const
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
     static final String CONFIG_INCLUDED_GROUPS = "piincludegroups";
     static final String CONFIG_FORWARDED_HEADERS = "piforwardedheaders";
+    static final String CONFIG_FORWARD_CLIENT_IP = "piforwardclientip";
     static final String CONFIG_DEFAULT_MESSAGE = "pidefaultmessage";
     static final String CONFIG_POLL_IN_BROWSER = "pipollinbrowser";
     static final String CONFIG_POLL_IN_BROWSER_URL = "pipollinbrowserurl";
