@@ -35,10 +35,7 @@ import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.privacyidea.Challenge;
-import org.privacyidea.IPILogger;
-import org.privacyidea.PIResponse;
-import org.privacyidea.PrivacyIDEA;
+import org.privacyidea.*;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -304,7 +301,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String error = formData.getFirst(FORM_ERROR_MESSAGE);
         if (error != null && !error.isEmpty())
         {
-            logger.error(error);
+            error(error);
         }
 
         Map<String, String> headers = getHeadersToForward(context, config);
@@ -316,17 +313,36 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (TOKEN_TYPE_PUSH.equals(currentMode))
         {
             // In push mode, poll for the transaction id to see if the challenge has been answered
-            if (privacyIDEA.pollTransaction(transactionID))
+            ChallengeStatus pollTransactionStatus = privacyIDEA.pollTransaction(transactionID);
+            if (pollTransactionStatus == ChallengeStatus.accept)
             {
-                // If the challenge has been answered, finalize with a call to validate check
+                // If challenge has been answered, finalize with a call to validate check
                 response = privacyIDEA.validateCheck(currentUserName, "", transactionID, headers);
+            }
+            else if (pollTransactionStatus == ChallengeStatus.declined)
+            {
+                // If challenge has been declined, show the error message
+                log("Poll transaction: Authentication declined by a user.");
+                context.cancelLogin();
+            }
+            else if (pollTransactionStatus == ChallengeStatus.pending)
+            {
+                // If challenge is still pending, show the error message
+                log("Push not verified yet.");
+            }
+            else
+            {
+                // If poll transaction failed, show the error message and fallback to otp mode.
+                form.setError("Push authentication failed. Please use another token. Fallback to OTP mode.");
+                error("Poll transaction failed.");
+                form.setAttribute(FORM_MODE, "otp");
             }
         }
         else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty())
         {
             if (origin == null || origin.isEmpty())
             {
-                logger.error("Origin is missing for WebAuthn authentication!");
+                error("Origin is missing for WebAuthn authentication!");
             }
             else
             {
@@ -395,8 +411,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      * Extract the challenge data from the response and put it into the form.
      *
      * @param response PIResponse
-     * @param context AuthenticationFlowContext
-     * @param config Configuration
+     * @param context  AuthenticationFlowContext
+     * @param config   Configuration
      */
     private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context, Configuration config)
     {
