@@ -34,7 +34,7 @@ self.addEventListener('message', function (e) {
                                     {
                                         self.postMessage({
                                                              'message': 'Polling in browser: Authentication declined!',
-                                                             'status': 'error' //todo how to cancel the authentication optimally at this sage?
+                                                             'status': 'cancel'
                                                          });
                                         self.close();
                                     }
