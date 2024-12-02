@@ -250,7 +250,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        if (formData.containsKey("cancel"))
+        if (formData.containsKey("cancel") || TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_DECLINED)))
         {
             context.cancelLogin();
             return;
