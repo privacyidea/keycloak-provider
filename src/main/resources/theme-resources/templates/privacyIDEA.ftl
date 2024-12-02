@@ -65,6 +65,7 @@
                     <input id="pollInBrowserUrl" name="pollInBrowserUrl" value="${pollInBrowserUrl}" type="hidden">
                     <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}"
                            type="hidden">
+                    <input id="pollInBrowserDeclined" name="pollInBrowserDeclined" value="false" type="hidden">
                     <input id="transactionID" name="transactionID" value="${transactionID}" type="hidden">
                     <input id="errorMsg" name="errorMsg" value="" type="hidden">
                     <input id="webauthnSignRequest" name="webauthnSignRequest" value="${webauthnSignRequest!""}"
@@ -73,6 +74,8 @@
                     <input id="origin" name="origin" value="" type="hidden">
                     <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
                            value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
+                    <input id="pollInBrowserDeclinedMsg" name="pollInBrowserDeclinedMsg"
+                           value="${msg('privacyidea.pollInBrowserDeclinedMsg')}" type="hidden">
                     <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
                            value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
                     <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}"
