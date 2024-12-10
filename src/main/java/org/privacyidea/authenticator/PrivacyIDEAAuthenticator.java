@@ -171,6 +171,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                .setAttribute(FORM_IMAGE_WEBAUTHN, "")
                .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
                .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
+               .setAttribute(FORM_POLL_IN_BROWSER_DECLINED, false)
                .setAttribute(FORM_POLL_IN_BROWSER_URL, "")
                .setAttribute(FORM_TRANSACTION_ID, "")
                .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
