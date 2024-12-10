@@ -75,7 +75,7 @@
                     <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
                            value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
                     <input id="pollInBrowserDeclinedMsg" name="pollInBrowserDeclinedMsg"
-                           value="${msg('privacyidea.pollInBrowserDeclinedMsg')}" type="hidden">
+                           value="${msg('privacyidea.pollInBrowserDeclined')}" type="hidden">
                     <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
                            value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
                     <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}"
