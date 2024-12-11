@@ -265,6 +265,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         boolean pushAvailable = TRUE.equals(formData.getFirst(FORM_PUSH_AVAILABLE));
         boolean otpAvailable = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
         boolean pollInBrowserFailed = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_FAILED));
+        boolean pollInBrowserDeclined = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_DECLINED));
         String pollInBrowserUrl = formData.getFirst(FORM_POLL_IN_BROWSER_URL);
         String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
         String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
@@ -294,6 +295,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
             .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
             .setAttribute(FORM_POLL_IN_BROWSER_URL, pollInBrowserUrl)
+            .setAttribute(FORM_POLL_IN_BROWSER_DECLINED, pollInBrowserDeclined)
             .setAttribute(FORM_TRANSACTION_ID, transactionID)
             .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
             .setAttribute(FORM_OTP_MESSAGE, otpMessage);
