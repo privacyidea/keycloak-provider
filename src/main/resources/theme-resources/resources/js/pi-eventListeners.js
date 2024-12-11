@@ -50,6 +50,7 @@ function eventListeners ()
                             console.log(piGetValue("pollInBrowserDeclinedMsg"));
                             piSetValue("pollInBrowserDeclined", true);
                             worker = undefined;
+                            piSubmit();
                             break;
                         case 'error':
                             console.log(piGetValue("pollInBrowserErrorMsg") + data.message);
