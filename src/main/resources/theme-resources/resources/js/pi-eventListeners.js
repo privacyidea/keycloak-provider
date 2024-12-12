@@ -46,6 +46,11 @@ function eventListeners ()
                         case 'success':
                             piSubmit();
                             break;
+                        case 'cancel':
+                            piSetValue("pollInBrowserDeclined", true);
+                            worker = undefined;
+                            piSubmit();
+                            break;
                         case 'error':
                             console.log(piGetValue("pollInBrowserErrorMsg") + data.message);
                             piSetValue("errorMessage", "Poll in browser error: " + data.message);

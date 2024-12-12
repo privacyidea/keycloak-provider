@@ -22,11 +22,19 @@ self.addEventListener('message', function (e) {
                             {
                                 r.text().then(result => {
                                     const resultJson = JSON.parse(result);
-                                    if (resultJson['result']['authentication'] === "ACCEPT")
+                                    if (resultJson['detail']['challenge_status'] === "accept")
                                     {
                                         self.postMessage({
                                                              'message': 'Polling in browser: Push message confirmed!',
                                                              'status': 'success'
+                                                         });
+                                        self.close();
+                                    }
+                                    else if (resultJson['detail']['challenge_status'] === "declined")
+                                    {
+                                        self.postMessage({
+                                                             'message': 'Polling in browser: Authentication declined!',
+                                                             'status': 'cancel'
                                                          });
                                         self.close();
                                     }

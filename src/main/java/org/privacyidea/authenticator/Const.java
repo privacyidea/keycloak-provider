@@ -47,6 +47,7 @@ final class Const
     static final String FORM_TRANSACTION_ID = "transactionID";
     static final String FORM_AUTO_SUBMIT_OTP_LENGTH = "AutoSubmitOtpLength";
     static final String FORM_POLL_IN_BROWSER_URL = "pollInBrowserUrl";
+    static final String FORM_POLL_IN_BROWSER_DECLINED = "pollInBrowserDeclined";
     static final String FORM_PUSH_AVAILABLE = "pushAvailable";
     static final String FORM_OTP_AVAILABLE = "otpAvailable";
     static final String FORM_PUSH_MESSAGE = "pushMessage";
