@@ -63,20 +63,18 @@
                     <input id="modeChanged" name="modeChanged" value="false" type="hidden">
                     <input id="resourcesPath" name="resourcesPath" value="${url.resourcesPath}" type="hidden">
                     <input id="pollInBrowserUrl" name="pollInBrowserUrl" value="${pollInBrowserUrl}" type="hidden">
-                    <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}"
-                           type="hidden">
+                    <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}" type="hidden">
+                    <input id="pollInBrowserDeclined" name="pollInBrowserDeclined" value="${pollInBrowserDeclined?c}" type="hidden">
                     <input id="transactionID" name="transactionID" value="${transactionID}" type="hidden">
                     <input id="errorMsg" name="errorMsg" value="" type="hidden">
-                    <input id="webauthnSignRequest" name="webauthnSignRequest" value="${webauthnSignRequest!""}"
-                           type="hidden">
+                    <input id="webauthnSignRequest" name="webauthnSignRequest" value="${webauthnSignRequest!""}" type="hidden">
                     <input id="webauthnSignResponse" name="webauthnSignResponse" value="" type="hidden">
                     <input id="origin" name="origin" value="" type="hidden">
                     <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
                            value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
                     <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
                            value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
-                    <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}"
-                           type="hidden">
+                    <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}" type="hidden">
 
                     <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
                            value="${msg('privacyidea.signIn')}"/>
@@ -88,20 +86,17 @@
                         <div class="${properties.kcFormButtonsWrapperClass!}">
                             <#if otpAvailable>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="otpButton" id="otpButton" type="button"
-                                       value="${msg('privacyidea.otpButton')}"/>
+                                       name="otpButton" id="otpButton" type="button" value="${msg('privacyidea.otpButton')}"/>
                             </#if>
 
                             <#if pushAvailable>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="pushButton" id="pushButton"
-                                       type="button" value="${msg('privacyidea.pushButton')}"/>
+                                       name="pushButton" id="pushButton" type="button" value="${msg('privacyidea.pushButton')}"/>
                             </#if>
 
                             <#if !(webauthnSignRequest = "")>
                                 <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="webauthnButton" id="webAuthnButton"
-                                       type="button" value="${msg('privacyidea.webauthnButton')}"/>
+                                       name="webauthnButton" id="webAuthnButton" type="button" value="${msg('privacyidea.webauthnButton')}"/>
                             </#if>
                         </div>
                     </div>
