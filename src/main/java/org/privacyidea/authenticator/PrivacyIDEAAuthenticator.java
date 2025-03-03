@@ -34,8 +34,14 @@ import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
-import org.privacyidea.*;
+import org.keycloak.utils.StringUtil;
+import org.privacyidea.Challenge;
+import org.privacyidea.ChallengeStatus;
+import org.privacyidea.IPILogger;
+import org.privacyidea.PIResponse;
+import org.privacyidea.PrivacyIDEA;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -53,6 +59,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
     private boolean logEnabled = false;
+
+    public PrivacyIDEAAuthenticator()
+    {
+        logger.info("PrivacyIDEA Authenticator initialized.");
+    }
 
     /**
      * Create new instances of PrivacyIDEA and the Configuration, if it does not exist yet.
@@ -105,137 +116,235 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     }
 
     /**
-     * This function will be called when the authentication flow triggers the privacyIDEA execution.
-     * i.e. after the username + password have been submitted.
+     * This function is called when the authentication flow triggers the privacyIDEA execution.
      *
      * @param context AuthenticationFlowContext
      */
     @Override
     public void authenticate(AuthenticationFlowContext context)
     {
+        log("authenticate() called.");
         final Pair currentPair = loadConfiguration(context);
-
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
         Configuration config = currentPair.configuration();
         logEnabled = config.doLog();
-        // Get the things that were submitted in the first username+password form
+        AuthenticationForm piForm = new AuthenticationForm();
+        // Get the things that were submitted in the first username+password form, if available
         UserModel user = context.getUser();
-        String currentUser = user.getUsername();
+        if (user == null)
+        {
+            log("No user found, requesting it via form.");
+            context.clearUser();
+            piForm.setMode(Mode.USERNAMEPASSWORD);
+        }
 
         // Check if the current user is member of an included or excluded group
-        if (!config.includedGroups().isEmpty())
+        if (user != null)
         {
-            if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains))
+            if (!config.includedGroups().isEmpty())
             {
-                context.success();
-                return;
+                if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains))
+                {
+                    context.success();
+                    return;
+                }
+            }
+            else if (!config.excludedGroups().isEmpty())
+            {
+                if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
+                {
+                    context.success();
+                    return;
+                }
             }
         }
-        else if (!config.excludedGroups().isEmpty())
+        else
         {
-            if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
-            {
-                context.success();
-                return;
-            }
+            log("There is no user yet, can not check for groups.");
         }
 
         String currentPassword = null;
 
-        // In some cases, there will be no FormParameters so check if it is possible to even get the password
-        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null
-            && context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        // In some cases, there will be no FormParameters so check if it is even possible to get the password
+        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
+            context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
         {
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
 
         Map<String, String> headers = getHeadersToForward(context, config);
 
-        // Prepare for possibly triggering challenges
-        PIResponse triggerResponse = null;
         String otpMessage = "Please enter your OTP!";
         if (!config.defaultOTPMessage().isEmpty())
         {
             otpMessage = config.defaultOTPMessage();
         }
 
-        // Set the default values, always assume OTP is available
-        context.form()
-               .setAttribute(FORM_MODE, "otp")
-               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, "")
-               .setAttribute(FORM_OTP_AVAILABLE, true)
-               .setAttribute(FORM_OTP_MESSAGE, otpMessage)
-               .setAttribute(FORM_PUSH_AVAILABLE, false)
-               .setAttribute(FORM_IMAGE_PUSH, "")
-               .setAttribute(FORM_IMAGE_OTP, "")
-               .setAttribute(FORM_IMAGE_WEBAUTHN, "")
-               .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, config.otpLength())
-               .setAttribute(FORM_POLL_IN_BROWSER_FAILED, false)
-               .setAttribute(FORM_POLL_IN_BROWSER_DECLINED, false)
-               .setAttribute(FORM_POLL_IN_BROWSER_URL, "")
-               .setAttribute(FORM_TRANSACTION_ID, "")
-               .setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(0));
+        // Set the default values
+        piForm.setPollInterval(config.pollingInterval().get(0));
+        piForm.setOtpAvailable(true);
+        piForm.setOtpMessage(otpMessage);
+        piForm.setPushAvailable(false);
+        piForm.setAutoSubmitLength(config.otpLength());
 
-        // Trigger challenges if configured. Service account has precedence over send password
-        if (config.triggerChallenge())
+        // Trigger challenges if configured. If not, the function does nothing
+        if (user != null)
         {
-            triggerResponse = privacyIDEA.triggerChallenges(currentUser, headers);
-        }
-        else if (config.sendPassword())
-        {
-            if (currentPassword != null)
+            PIResponse response = tryTriggerFirstStep(user.getUsername(), privacyIDEA, config, currentPassword, headers);
+            if (response != null)
             {
-                triggerResponse = privacyIDEA.validateCheck(currentUser, currentPassword, null, headers);
-            }
-            else
-            {
-                log("Cannot send password because it is null!");
+                if (response.value)
+                {
+                    context.success();
+                    return;
+                }
+                piForm = evaluateResponse(response, context, piForm, config);
             }
         }
-        else if (config.sendStaticPass())
-        {
-            triggerResponse = privacyIDEA.validateCheck(currentUser, config.staticPass(), null, headers);
-        }
 
-        // Evaluate for possibly triggered token
-        if (triggerResponse != null)
-        {
-            if (triggerResponse.value)
-            {
-                context.success();
-                return;
-            }
-
-            if (triggerResponse.error != null)
-            {
-                context.form().setError(triggerResponse.error.message);
-                context.form().setAttribute(FORM_ERROR, true);
-            }
-
-            if (!triggerResponse.multiChallenge.isEmpty())
-            {
-                extractChallengeDataToForm(triggerResponse, context, config);
-            }
-        }
         // Prepare the form and auth notes to pass infos to the UI and the next step
-        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, "0");
-
+        context.getAuthenticationSession().setAuthNote(NOTE_COUNTER, "0");
+        context.form().setAttribute(AUTH_FORM, piForm);
         Response responseForm = context.form().createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
     }
 
+    public PIResponse tryTriggerFirstStep(String username, PrivacyIDEA privacyIDEA, Configuration config, String currentPassword,
+                                          Map<String, String> headers)
+    {
+        // Try to trigger challenges if configured. Using a service account has precedence over sending the (static) password
+        PIResponse triggerResponse = null;
+        if (username != null)
+        {
+            if (config.triggerChallenge())
+            {
+                triggerResponse = privacyIDEA.triggerChallenges(username, headers);
+            }
+            else if (config.sendPassword())
+            {
+                if (currentPassword != null)
+                {
+                    triggerResponse = privacyIDEA.validateCheck(username, currentPassword, null, headers);
+                }
+                else
+                {
+                    logger.error("Cannot send password because it is null!");
+                }
+            }
+            else if (config.sendStaticPass())
+            {
+                triggerResponse = privacyIDEA.validateCheck(username, config.staticPass(), null, headers);
+            }
+        }
+        else
+        {
+            logger.error("Username is null, cannot trigger challenges.");
+        }
+        return triggerResponse;
+    }
+
+    public AuthenticationForm evaluateResponse(PIResponse response, AuthenticationFlowContext context, AuthenticationForm authForm,
+                                               Configuration config)
+    {
+        if (response != null)
+        {
+            if (response.error != null)
+            {
+                authForm.setErrorMessage(response.error.message);
+            }
+            if (!response.multiChallenge.isEmpty())
+            {
+                if (config == null)
+                {
+                    error("Configuration is null!");
+                    return authForm;
+                }
+                authForm.setChallengesTriggered(true);
+                String webAuthnSignRequest = "";
+                Mode mode = Mode.OTP;
+                String newOtpMessage = response.otpMessage();
+                // Images per challenge
+                List<Challenge> multiChallenge = response.multiChallenge;
+                for (Challenge c : multiChallenge)
+                {
+                    if ("poll".equals(c.getClientMode()))
+                    {
+                        authForm.setPushImage(c.getImage());
+                    }
+                    else if ("interactive".equals(c.getClientMode()))
+                    {
+                        authForm.setOtpImage(c.getImage());
+                    }
+                    else if ("webauthn".equals(c.getClientMode()))
+                    {
+                        authForm.setWebAuthnImage(c.getImage());
+                    }
+                }
+                // Poll in browser
+                if (config.pollInBrowser())
+                {
+                    authForm.setTransactionId(response.transactionID);
+                    newOtpMessage = response.otpMessage() + ". " + response.pushMessage();
+                    String url = config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl();
+                    authForm.setPollInBrowserURL(url);
+                }
+                // Push
+                if (response.pushAvailable())
+                {
+                    authForm.setPushAvailable(true);
+                    authForm.setPushMessage(response.pushMessage());
+                }
+                // WebAuthn
+                if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
+                {
+                    webAuthnSignRequest = response.mergedSignRequest();
+                    authForm.setWebAuthnSignRequest(webAuthnSignRequest);
+                }
+                // Passkey Registration
+                if (StringUtil.isNotBlank(response.passkeyRegistration))
+                {
+                    authForm.setPasskeyRegistration(response.passkeyRegistration);
+                    context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
+                }
+                // Preferred client mode
+                if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
+                {
+                    try
+                    {
+                        mode = Mode.valueOf(response.preferredClientMode.toUpperCase());
+                    }
+                    catch (IllegalArgumentException e)
+                    {
+                        error("Preferred client mode " + response.preferredClientMode + " is not valid, defaulting to OTP.");
+                    }
+                }
+                // Using poll in browser does not require push mode
+                if (mode.equals(Mode.PUSH) && config.pollInBrowser())
+                {
+                    mode = Mode.OTP;
+                }
+
+                authForm.setMode(mode);
+                authForm.setOtpMessage(newOtpMessage);
+                context.getAuthenticationSession().setAuthNote(NOTE_TRANSACTION_ID, response.transactionID);
+            }
+        }
+        return authForm;
+    }
+
     /**
-     * This function will be called when the privacyIDEA form is submitted.
+     * This function is called when the privacyIDEA form is submitted.
      *
      * @param context AuthenticationFlowContext
      */
     @Override
     public void action(AuthenticationFlowContext context)
     {
+        log("action() called.");
+        // Get the configuration and privacyIDEA instance for the current realm
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
-
         PrivacyIDEA privacyIDEA;
         Configuration config;
         if (piInstanceMap.containsKey(kcRealm))
@@ -250,246 +359,327 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                   AuthenticationFlowError.IDENTITY_PROVIDER_NOT_FOUND);
         }
 
+        // Check for cancel
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         if (formData.containsKey("cancel") || TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_DECLINED)))
         {
-            context.cancelLogin();
+            context.resetFlow();
             return;
         }
-        LoginFormsProvider form = context.form();
+
+        // Get the data from the forms and session
+        LoginFormsProvider kcForm = context.form();
         //logger.info("formData:");
         //formData.forEach((k, v) -> logger.info("key=" + k + ", value=" + v));
-
-        // Get data from the privacyIDEA form
-        String currentMode = formData.getFirst(FORM_MODE);
-        boolean pushAvailable = TRUE.equals(formData.getFirst(FORM_PUSH_AVAILABLE));
-        boolean otpAvailable = TRUE.equals(formData.getFirst(FORM_OTP_AVAILABLE));
-        boolean pollInBrowserFailed = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_FAILED));
-        boolean pollInBrowserDeclined = TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_DECLINED));
-        String pollInBrowserUrl = formData.getFirst(FORM_POLL_IN_BROWSER_URL);
-        String pushMessage = formData.getFirst(FORM_PUSH_MESSAGE);
-        String otpMessage = formData.getFirst(FORM_OTP_MESSAGE);
-        String imagePush = formData.getFirst(FORM_IMAGE_PUSH);
-        String imageOTP = formData.getFirst(FORM_IMAGE_OTP);
-        String imageWebauthn = formData.getFirst(FORM_IMAGE_WEBAUTHN);
-        String otpLength = formData.getFirst(FORM_AUTO_SUBMIT_OTP_LENGTH);
-        String tokenTypeChanged = formData.getFirst(FORM_MODE_CHANGED);
-        String transactionID = context.getAuthenticationSession().getAuthNote(AUTH_NOTE_TRANSACTION_ID);
-        String currentUserName = context.getUser().getUsername();
-        String webAuthnSignRequest = formData.getFirst(FORM_WEBAUTHN_SIGN_REQUEST);
-        String webAuthnSignResponse = formData.getFirst(FORM_WEBAUTHN_SIGN_RESPONSE);
-        // The origin is set by the form every time, no need to put it in the form again
-        String origin = formData.getFirst(FORM_WEBAUTHN_ORIGIN);
-
-        // Prepare the failure message, the message from privacyIDEA will be appended if possible
-        String authenticationFailureMessage = "Authentication failed.";
-
-        // Set the "old" values again
-        form.setAttribute(FORM_MODE, currentMode)
-            .setAttribute(FORM_PUSH_AVAILABLE, pushAvailable)
-            .setAttribute(FORM_OTP_AVAILABLE, otpAvailable)
-            .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-            .setAttribute(FORM_IMAGE_PUSH, imagePush)
-            .setAttribute(FORM_IMAGE_OTP, imageOTP)
-            .setAttribute(FORM_IMAGE_WEBAUTHN, imageWebauthn)
-            .setAttribute(FORM_AUTO_SUBMIT_OTP_LENGTH, otpLength)
-            .setAttribute(FORM_POLL_IN_BROWSER_FAILED, pollInBrowserFailed)
-            .setAttribute(FORM_POLL_IN_BROWSER_URL, pollInBrowserUrl)
-            .setAttribute(FORM_POLL_IN_BROWSER_DECLINED, pollInBrowserDeclined)
-            .setAttribute(FORM_TRANSACTION_ID, transactionID)
-            .setAttribute(FORM_PUSH_MESSAGE, pushMessage)
-            .setAttribute(FORM_OTP_MESSAGE, otpMessage);
-
-        // Log the error encountered in the browser
-        String error = formData.getFirst(FORM_ERROR_MESSAGE);
-        if (error != null && !error.isEmpty())
+        // AuthenticationFormResult
+        if (!formData.containsKey(AUTH_FORM_RESULT))
         {
-            error(error);
+            logger.error("No authenticationFormResult found in form data!");
+            return;
+        }
+        String t = formData.getFirst(AUTH_FORM_RESULT);
+        AuthenticationFormResult piFormResult = AuthenticationFormResult.fromJson(t);
+        if (piFormResult == null)
+        {
+            logger.error("AuthenticationFormResult could not be parsed: " + t);
+            return;
+        }
+        // AuthenticationForm
+        if (!formData.containsKey(AUTH_FORM))
+        {
+            logger.error("No authenticationForm found in form data!");
+            return;
+        }
+        t = formData.getFirst(AUTH_FORM);
+        AuthenticationForm piForm = AuthenticationForm.fromJson(t);
+        if (piForm == null)
+        {
+            logger.error("AuthenticationForm could not be parsed: " + t);
+            return;
+        }
+        logger.error("PiForm: " + piForm);
+        logger.error("PiFormResult: " + piFormResult);
+        // Reset requested: reset the flow
+        if (piFormResult.authenticationResetRequested)
+        {
+            context.resetFlow();
+            return;
         }
 
+        String transactionID = context.getAuthenticationSession().getAuthNote(NOTE_TRANSACTION_ID);
+        //logger.error("Transaction ID from session: " + transactionID);
         Map<String, String> headers = getHeadersToForward(context, config);
-        // Do not show the error message if something was triggered
+
+        // If the poll in browser error is present, log it
+        if (StringUtil.isNotBlank(piFormResult.pollInBrowserError))
+        {
+            logger.error("Poll in browser error: " + piFormResult.pollInBrowserError);
+        }
+
         boolean didTrigger = false;
         PIResponse response = null;
 
-        // Send a request to privacyIDEA depending on the mode
-        if (TOKEN_TYPE_PUSH.equals(currentMode))
+        // Passkey: Will return the username and end the authentication on success. This is different from the WebAuthn authentication
+        // Which is attempted later.
+        if (StringUtil.isNotBlank(piFormResult.passkeySignResponse))
+        {
+            if (StringUtil.isBlank(piFormResult.origin))
+            {
+                logger.error("Origin is missing for WebAuthn authentication!");
+            }
+            else
+            {
+                String passkeyTransactionID = context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
+                response = privacyIDEA.validateCheckPasskey(passkeyTransactionID, piFormResult.passkeySignResponse, piFormResult.origin,
+                                                            headers);
+                if (response != null)
+                {
+                    if (response.value)
+                    {
+                        if (StringUtil.isNotBlank(response.username))
+                        {
+                            context.clearUser();
+                            UserModel userModel = context.getSession().users().getUserByUsername(context.getRealm(), response.username);
+                            if (userModel == null)
+                            {
+                                error("User " + response.username + " not found in realm " + context.getRealm().getName());
+                                kcForm.setError("User not found!");
+                                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                                context.challenge(responseForm);
+                                return;
+                            }
+                            context.setUser(userModel);
+                        }
+                        context.success();
+                        return;
+                    }
+                }
+            }
+        }
+        // Passkey login requested: Get a challenge and return
+        if (piFormResult.passkeyLoginRequested)
+        {
+            PIResponse res = privacyIDEA.validateInitialize("passkey");
+            if (StringUtil.isNotBlank(res.passkeyChallenge))
+            {
+                piForm.setPasskeyChallenge(res.passkeyChallenge);
+                piForm.setMode(Mode.PASSKEY);
+                kcForm.setAttribute(AUTH_FORM, piForm);
+                context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, res.transactionID);
+                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                context.challenge(responseForm);
+                return;
+            }
+        }
+        // Passkey login cancelled: Remove the challenge and transaction ID
+        if (piFormResult.passkeyLoginCancelled)
+        {
+            piForm.setPasskeyChallenge("");
+            context.getAuthenticationSession().removeAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
+        }
+        // Passkey registration: enroll_via_multichallenge, this is after successful authentication
+        if (StringUtil.isNotBlank(piFormResult.passkeyRegistrationResponse))
+        {
+            String serial = context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL);
+            PIResponse res = privacyIDEA.validateCheckCompletePasskeyRegistration(transactionID, serial, context.getUser().getUsername(),
+                                                                                  piFormResult.passkeyRegistrationResponse,
+                                                                                  piFormResult.origin, headers);
+            if (res != null && res.value)
+            {
+                context.success();
+                return;
+            }
+            else if (res != null && res.error != null)
+            {
+                kcForm.setError(res.error.message);
+                kcForm.setAttribute(AUTH_FORM, piForm);
+                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
+                return;
+            }
+        }
+
+        // Set the user and verify the password, if that is necessary
+        boolean userRequested = piForm.getMode() == Mode.USERNAMEPASSWORD || piForm.getMode() == Mode.USERNAME;
+        if (userRequested)
+        {
+            String username = formData.getFirst(USERNAME);
+            String password = formData.getFirst(PASSWORD);
+            if (StringUtil.isBlank(username))
+            {
+                logger.error("Username was requested but has not been provided!");
+                kcForm.setError("Username is required!");
+                kcForm.setAttribute(AUTH_FORM, piForm);
+                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                context.challenge(responseForm);
+                return;
+            }
+            UserModel userModel = context.getSession().users().getUserByUsername(context.getRealm(), username);
+            if (userModel == null)
+            {
+                logger.error("User " + username + " not found in realm " + context.getRealm().getName());
+                kcForm.setError("Invalid Credentials!");
+                kcForm.setAttribute(AUTH_FORM, piForm);
+                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                context.challenge(responseForm);
+                return;
+            }
+            boolean passwordCorrect = userModel.credentialManager().isValid(UserCredentialModel.password(password));
+            if (!passwordCorrect)
+            {
+                logger.debug("User " + username + " tried to authenticate with a wrong password.");
+                kcForm.setError("Invalid Credentials!");
+                kcForm.setAttribute(AUTH_FORM, piForm);
+                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
+                return;
+            }
+            context.clearUser();
+            context.setUser(userModel);
+        }
+
+        // OTP / Push / WebAuthn
+        String currentUsername = context.getUser().getUsername();
+        Mode currentMode = piFormResult.modeChanged ? piFormResult.newMode : piForm.getMode();
+        error("Mode changed: " + piFormResult.modeChanged);
+        error("Current mode: " + currentMode);
+        piForm.setMode(currentMode);
+        kcForm.setAttribute(AUTH_FORM, piForm);
+
+        // Send a request to privacyIDEA depending on the mode. Evaluation of the response is done afterward independently of the mode.
+        if (Mode.PUSH.equals(currentMode))
         {
             // In push mode, poll for the transaction id to see if the challenge has been answered
             ChallengeStatus pollTransactionStatus = privacyIDEA.pollTransaction(transactionID);
             if (pollTransactionStatus == ChallengeStatus.accept)
             {
-                // If challenge has been answered, finalize with a call to validate check
-                response = privacyIDEA.validateCheck(currentUserName, "", transactionID, headers);
+                // If the challenge has been answered, finalize with a call to validate check
+                response = privacyIDEA.validateCheck(currentUsername, "", transactionID, headers);
             }
             else if (pollTransactionStatus == ChallengeStatus.declined)
             {
                 // If challenge has been declined, show the error message
-                log("Poll transaction: Authentication declined by a user.");
+                log("Push Authentication declined by the user.");
                 context.cancelLogin();
             }
             else if (pollTransactionStatus == ChallengeStatus.pending)
             {
                 // If challenge is still pending, show the error message
-                log("Push not verified yet.");
+                //log("Push not verified yet.");
             }
             else
             {
                 // If poll transaction failed, show the error message and fallback to otp mode.
-                form.setError("Push authentication failed. Please use another token. Fallback to OTP mode.");
-                error("Poll transaction failed.");
-                form.setAttribute(FORM_MODE, "otp");
+                kcForm.setError("Push authentication failed. Please use a different token or restart the login.");
+                logger.error("Poll transaction failed.");
+                piForm.setMode(Mode.OTP);
             }
         }
-        else if (webAuthnSignResponse != null && !webAuthnSignResponse.isEmpty())
+        else if (StringUtil.isNotBlank(piFormResult.webAuthnSignResponse))
         {
-            if (origin == null || origin.isEmpty())
+            if (StringUtil.isBlank(piFormResult.origin))
             {
-                error("Origin is missing for WebAuthn authentication!");
+                logger.error("Origin is missing for WebAuthn authentication!");
             }
             else
             {
-                response = privacyIDEA.validateCheckWebAuthn(currentUserName, transactionID, webAuthnSignResponse, origin, headers);
+                response = privacyIDEA.validateCheckWebAuthn(currentUsername, transactionID, piFormResult.webAuthnSignResponse,
+                                                             piFormResult.origin, headers);
             }
         }
-        else if (!TRUE.equals(tokenTypeChanged))
+        else if (Mode.USERNAMEPASSWORD.equals(currentMode))
+        {
+            String password = formData.getFirst(PASSWORD);
+            logger.error("tryTriggerFirstStep");
+            response = tryTriggerFirstStep(currentUsername, privacyIDEA, config, password, headers);
+        }
+        else if (!piFormResult.modeChanged)
         {
             String otp = formData.getFirst(FORM_OTP);
+            logger.error("validate check with otp/pw input");
+            if (piFormResult.passkeyLoginCancelled)
+            {
+                transactionID = "";
+            }
             // If the transaction ID is not present, it will not be added to validateCheck, so no need to check it here
-            response = privacyIDEA.validateCheck(currentUserName, otp, transactionID, headers);
+            response = privacyIDEA.validateCheck(currentUsername, otp, transactionID, headers);
         }
 
-        // Evaluate the response
+        // Evaluate the response: Check for success, error or new challenges
         if (response != null)
         {
-            // On success, finish the execution
             if (response.value)
             {
                 context.success();
                 return;
             }
-
             if (response.error != null)
             {
-                form.setError(response.error.message);
-                form.setAttribute(FORM_ERROR, true);
-                context.failureChallenge(AuthenticationFlowError.INVALID_USER, form.createForm(FORM_FILE_NAME));
+                kcForm.setError(response.error.message);
+                context.failureChallenge(AuthenticationFlowError.INVALID_USER, kcForm.createForm(FORM_FILE_NAME));
                 return;
             }
-
-            // If the authentication was not successful (yet), either the provided data was wrong
-            // or another challenge was triggered
-            if (!response.multiChallenge.isEmpty())
-            {
-                extractChallengeDataToForm(response, context, config);
-                didTrigger = true;
-            }
-            else
-            {
-                // The authentication failed without triggering anything so the things that have been sent before were wrong
-                authenticationFailureMessage += ". " + response.message;
-            }
+            piForm = evaluateResponse(response, context, piForm, config);
+            didTrigger = piForm.isChallengesTriggered();
         }
 
         // The authCounter is also used to determine the polling interval for push
         // If the authCounter is bigger than the size of the polling interval list, repeat the last value in the list
-        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(AUTH_NOTE_AUTH_COUNTER)) + 1;
+        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(NOTE_COUNTER)) + 1;
         authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 : authCounter);
-        context.getAuthenticationSession().setAuthNote(AUTH_NOTE_AUTH_COUNTER, Integer.toString(authCounter));
+        context.getAuthenticationSession().setAuthNote(NOTE_COUNTER, Integer.toString(authCounter));
+        piForm.setPollInterval(config.pollingInterval().get(authCounter));
 
-        // The message variables could be overwritten if a challenge was triggered. Therefore, add them here at the end
-        form.setAttribute(FORM_POLL_INTERVAL, config.pollingInterval().get(authCounter));
-
-        // Do not display the error if the token type was switched or if another challenge was triggered
-        if (!(TRUE.equals(tokenTypeChanged)) && !didTrigger)
+        // Prepare form for the next step, depending on what to do next
+        kcForm.setAttribute(AUTH_FORM, piForm);
+        String authenticationFailureMessage = "Authentication failed.";
+        if ((piFormResult.modeChanged && !didTrigger) ||
+            Mode.PUSH.equals(currentMode) && (response != null && StringUtil.isBlank(response.passkeyRegistration)))
         {
-            form.setError(TOKEN_TYPE_PUSH.equals(currentMode) ? "Authentication not verified yet." : authenticationFailureMessage);
-        }
-
-        Response responseForm = form.createForm(FORM_FILE_NAME);
-        context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
-    }
-
-    /**
-     * Extract the challenge data from the response and put it into the form.
-     *
-     * @param response PIResponse
-     * @param context  AuthenticationFlowContext
-     * @param config   Configuration
-     */
-    private void extractChallengeDataToForm(PIResponse response, AuthenticationFlowContext context, Configuration config)
-    {
-        if (context == null || config == null)
-        {
-            error("[extractChallengeDataToForm] Missing parameter!");
-            return;
-        }
-
-        // Variables to configure the UI
-        String webAuthnSignRequest = "";
-        String mode = "otp";
-        String newOtpMessage = response.otpMessage();
-        if (response.transactionID != null && !response.transactionID.isEmpty())
-        {
-            context.getAuthenticationSession().setAuthNote(AUTH_NOTE_TRANSACTION_ID, response.transactionID);
-        }
-
-        // Check for the images
-        List<Challenge> multiChallenge = response.multiChallenge;
-        for (Challenge c : multiChallenge)
-        {
-            if ("poll".equals(c.getClientMode()))
+            error("mode not changed and nothing triggered");
+            if (Mode.PUSH.equals(currentMode))
             {
-                context.form().setAttribute(FORM_IMAGE_PUSH, c.getImage());
+                kcForm.setError("Authentication not verified yet.");
             }
-            else if ("interactive".equals(c.getClientMode()))
+            context.challenge(kcForm.createForm(FORM_FILE_NAME));
+        }
+        else if (currentMode == Mode.USERNAMEPASSWORD || currentMode == Mode.USERNAME)
+        {
+            // Continue with 2nd step (second factor)
+            error("Continue with 2nd step (second factor)");
+            piForm.setMode(Mode.OTP);
+            kcForm.setAttribute(AUTH_FORM, piForm);
+            context.challenge(kcForm.createForm(FORM_FILE_NAME));
+        }
+        else if (response != null && StringUtil.isNotBlank(response.passkeyRegistration))
+        {
+            kcForm.setError(response.message);
+            context.challenge(kcForm.createForm(FORM_FILE_NAME));
+        }
+        else
+        {
+            // Fail
+            error("Fail");
+            if (!didTrigger)
             {
-                context.form().setAttribute(FORM_IMAGE_OTP, c.getImage());
+                error("setting auth fail");
+                kcForm.setError(authenticationFailureMessage);
+                context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
-            if ("webauthn".equals(c.getClientMode()))
+            // Check failed auth vs real error
+            else if (response.error != null)
             {
-                context.form().setAttribute(FORM_IMAGE_WEBAUTHN, c.getImage());
+                error("setting error from response");
+                piForm.setErrorMessage(response.error.message);
+                kcForm.setError(response.error.message);
+                context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
+            }
+            else
+            {
+                error("setting challenge");
+                context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
         }
-
-        // Check for poll in browser
-        if (config.pollInBrowser())
-        {
-            context.form().setAttribute(FORM_TRANSACTION_ID, response.transactionID);
-            newOtpMessage = response.otpMessage() + ". " + response.pushMessage();
-            context.form()
-                   .setAttribute(FORM_POLL_IN_BROWSER_URL,
-                                 config.pollInBrowserUrl().isEmpty() ? config.serverURL() : config.pollInBrowserUrl());
-        }
-
-        // Check for Push
-        if (response.pushAvailable())
-        {
-            context.form().setAttribute(FORM_PUSH_AVAILABLE, true);
-            context.form().setAttribute(FORM_PUSH_MESSAGE, response.pushMessage());
-        }
-
-        // Check for WebAuthn
-        if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
-        {
-            webAuthnSignRequest = response.mergedSignRequest();
-        }
-
-        // Check if response from server contains preferred client mode
-        if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
-        {
-            mode = response.preferredClientMode;
-        }
-        // Using poll in browser does not require push mode
-        if (mode.equals("push") && config.pollInBrowser())
-        {
-            mode = "otp";
-        }
-
-        context.form()
-               .setAttribute(FORM_MODE, mode)
-               .setAttribute(FORM_WEBAUTHN_SIGN_REQUEST, webAuthnSignRequest)
-               .setAttribute(FORM_OTP_MESSAGE, newOtpMessage);
     }
 
     /**
@@ -526,23 +716,26 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public boolean requiresUser()
     {
-        return true;
+        return false;
     }
 
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
     {
+        logger.info("Configured for realm " + realm.getName());
         return true;
     }
 
     @Override
     public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user)
     {
+        logger.info("Setting required actions for realm " + realm.getName() + " and user " + user.getUsername());
     }
 
     @Override
     public void close()
     {
+        logger.info("Closing PrivacyIDEA Authenticator.");
     }
 
     // IPILogger implementation

@@ -1,58 +1,36 @@
-window.piGetValue = function getValue (id) {
+window.piGetValue = function getValue(id) {
     const element = document.getElementById(id);
-    if (element !== null)
-    {
+    if (element !== null) {
         return element.value;
-    }
-    else
-    {
+    } else {
         console.log(id + " is null!");
         return "";
     }
 }
 
-window.piSetValue = function setValue (id, value) {
+window.piSetValue = function setValue(id, value) {
     const element = document.getElementById(id);
-    if (element !== null)
-    {
+    if (element !== null) {
         element.value = value;
-    }
-    else
-    {
+    } else {
         console.log(id + " is null!");
     }
 }
 
-window.piDisableElement = function disableElement (id) {
+window.piDisableElement = function disableElement(id) {
     const element = document.getElementById(id);
-    if (element !== null)
-    {
+    if (element !== null) {
         element.style.display = "none";
-    }
-    else
-    {
+    } else {
         console.log(id + " is null!");
     }
 }
 
-window.piEnableElement = function enableElement (id) {
+window.piEnableElement = function enableElement(id) {
     const element = document.getElementById(id);
-    if (element !== null)
-    {
+    if (element !== null) {
         element.style.display = "initial";
-    }
-    else
-    {
+    } else {
         console.log(id + " is null!");
     }
-}
-
-window.piChangeMode = function changeMode (newMode) {
-    piSetValue("mode", newMode);
-    piSetValue("modeChanged", "true");
-    piSubmit();
-}
-
-window.piSubmit = function submitForm () {
-    document.forms["kc-otp-login-form"].submit();
 }

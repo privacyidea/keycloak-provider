@@ -24,7 +24,7 @@ import java.util.Map;
 
 import static org.privacyidea.authenticator.Const.*;
 
-class Configuration
+public class Configuration
 {
     private final String serverURL;
     private final String realm;
@@ -48,7 +48,7 @@ class Configuration
     private final int configHash;
     private final String defaultOTPMessage;
 
-    Configuration(Map<String, String> configMap)
+    public Configuration(Map<String, String> configMap)
     {
         this.configHash = configMap.hashCode();
         this.serverURL = configMap.get(CONFIG_SERVER);
@@ -66,7 +66,6 @@ class Configuration
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         this.doSendStaticPass = configMap.get(CONFIG_SEND_STATIC_PASS) != null && configMap.get(CONFIG_SEND_STATIC_PASS).equals(TRUE);
-        // PI uses all lowercase letters for token types so change it here to match it internally
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
