@@ -1,8 +1,8 @@
 <#import "template.ftl" as layout>
 <!-- BASE JS SCRIPT: Create the formResult object (AuthenticationFormResult.java) -->
 <script>
-    let data = "${authenticationForm}";
-    console.log(data.replace(/(&quot;)/g, "\""));
+    //let data = "${authenticationForm}";
+    //console.log(data.replace(/(&quot;)/g, "\""));
     let formResult = {
         passkeyLoginRequested: false
     };
