@@ -1,7 +1,6 @@
 package org.privacyidea.authenticator;
 
 import com.google.gson.Gson;
-import java.util.stream.Stream;
 import org.keycloak.utils.StringUtil;
 
 /**
@@ -39,13 +38,6 @@ public class AuthenticationForm
     public boolean isPollInBrowserAvailable()
     {
         return StringUtil.isNotBlank(pollInBrowserURL) && StringUtil.isNotBlank(transactionId);
-    }
-
-    // Do the calculation if the <div> with other login options should be shown
-    public boolean isOfferOtherLoginOptions()
-    {
-        return (StringUtil.isNotBlank(webAuthnSignRequest) || pushAvailable) && StringUtil.isBlank(passkeyRegistration) &&
-               Stream.of(Mode.USERNAMEPASSWORD, Mode.PASSWORD, Mode.USERNAME).noneMatch(m -> m.equals(mode));
     }
 
     public String getPushImage()

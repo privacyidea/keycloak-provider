@@ -25,6 +25,12 @@ package org.privacyidea.authenticator;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -44,15 +50,19 @@ import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import static org.privacyidea.PIConstants.*;
-import static org.privacyidea.authenticator.Const.*;
+import static org.privacyidea.PIConstants.AUTH_FORM;
+import static org.privacyidea.PIConstants.AUTH_FORM_RESULT;
+import static org.privacyidea.PIConstants.PASSWORD;
+import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
+import static org.privacyidea.PIConstants.USERNAME;
+import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
+import static org.privacyidea.authenticator.Const.FORM_OTP;
+import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
+import static org.privacyidea.authenticator.Const.NOTE_COUNTER;
+import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
+import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.NOTE_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
 
 public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger
 {
@@ -63,7 +73,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
     public PrivacyIDEAAuthenticator()
     {
-        logger.info("PrivacyIDEA Authenticator initialized.");
+        log("PrivacyIDEA Authenticator initialized.");
     }
 
     /**
@@ -409,8 +419,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Get the data from the forms and session
         LoginFormsProvider kcForm = context.form();
-        //logger.info("formData:");
-        //formData.forEach((k, v) -> logger.info("key=" + k + ", value=" + v));
+        //log("formData:");
+        //formData.forEach((k, v) -> log("key=" + k + ", value=" + v));
         // AuthenticationFormResult
         if (!formData.containsKey(AUTH_FORM_RESULT))
         {
@@ -762,20 +772,20 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
     {
-        logger.info("Configured for realm " + realm.getName());
+        //log("Configured for realm " + realm.getName());
         return true;
     }
 
     @Override
     public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user)
     {
-        logger.info("Setting required actions for realm " + realm.getName() + " and user " + user.getUsername());
+        //log("Setting required actions for realm " + realm.getName() + " and user " + user.getUsername());
     }
 
     @Override
     public void close()
     {
-        logger.info("Closing PrivacyIDEA Authenticator.");
+        log("Closing PrivacyIDEA Authenticator.");
     }
 
     // IPILogger implementation
