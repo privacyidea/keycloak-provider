@@ -124,7 +124,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void authenticate(AuthenticationFlowContext context)
     {
-        log("authenticate() called.");
+        //log("authenticate() called.");
         final Pair currentPair = loadConfiguration(context);
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
         Configuration config = currentPair.configuration();
@@ -306,7 +306,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                         if (StringUtil.isNotBlank(image))
                         {
                             // TODO assume that if we have an image for a push token, it has to be enroll_via_multichallenge
-                            error("setting for push enrollviamulti");
                             authForm.setPushImage(c.getImage());
                             isEnrollViaMultichallenge = true;
                             mode = Mode.PUSH;
@@ -382,7 +381,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void action(AuthenticationFlowContext context)
     {
-        log("action() called.");
+        //log("action() called.");
         // Get the configuration and privacyIDEA instance for the current realm
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
@@ -438,8 +437,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             logger.error("AuthenticationForm could not be parsed: " + t);
             return;
         }
-        logger.error("PiForm: " + piForm);
-        logger.error("PiFormResult: " + piFormResult);
+        //logger.error("PiForm: " + piForm);
+        //logger.error("PiFormResult: " + piFormResult);
         // Reset requested: reset the flow
         if (piFormResult.authenticationResetRequested)
         {
@@ -668,7 +667,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if ((piFormResult.modeChanged && !didTrigger) ||
             Mode.PUSH.equals(currentMode) && (response != null && StringUtil.isBlank(response.passkeyRegistration)))
         {
-            error("mode not changed and nothing triggered");
             if (Mode.PUSH.equals(currentMode))
             {
                 piForm.setErrorMessage("push_auth_not_verified");
@@ -678,7 +676,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         else if (currentMode == Mode.USERNAMEPASSWORD || currentMode == Mode.USERNAME)
         {
             // Continue with 2nd step (second factor)
-            error("Continue with 2nd step (second factor)");
             // If there is no next Mode set yet, because no challenges were triggered, or it was not attempted, just continue with OTP
             final Mode nextMode = piForm.getMode();
             if (nextMode == Mode.USERNAMEPASSWORD || nextMode == Mode.USERNAME)
@@ -696,7 +693,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         else
         {
             // Fail
-            error("Fail");
             if (currentMode.equals(Mode.PUSH))
             {
                 piForm.setErrorMessage("push_auth_not_verified");
@@ -704,27 +700,23 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             else if (!didTrigger)
             {
-                error("setting auth fail");
                 kcForm.setError(authenticationFailureMessage);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             // Check failed auth vs real error
             else if (response.error != null)
             {
-                error("setting error from response");
                 piForm.setErrorMessage(response.error.message);
                 kcForm.setError(response.error.message);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             else if (response.authentication.equals(AuthenticationStatus.REJECT))
             {
-                error("setting reject");
                 kcForm.setError(response.message);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             else
             {
-                error("setting challenge");
                 context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
         }
