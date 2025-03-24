@@ -235,14 +235,6 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                         + "The last entry will be repeated.");
         configProperties.add(piPushTokenInterval);
 
-        ProviderConfigProperty piEnablePasskey = new ProviderConfigProperty();
-        piEnablePasskey.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piEnablePasskey.setName(Const.CONFIG_ENABLE_PASSKEY);
-        piEnablePasskey.setLabel("Enable passkey login");
-        piEnablePasskey.setHelpText("If enabled, a button will be displayed to offer login with a passkey.");
-        piEnablePasskey.setDefaultValue("false");
-        configProperties.add(piEnablePasskey);
-
         ProviderConfigProperty piDoLog = new ProviderConfigProperty();
         piDoLog.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piDoLog.setName(Const.CONFIG_ENABLE_LOG);

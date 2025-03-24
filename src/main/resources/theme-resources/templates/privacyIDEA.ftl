@@ -1,16 +1,15 @@
 <#import "template.ftl" as layout>
 <!-- BASE JS SCRIPT: Create the formResult object (AuthenticationFormResult.java) -->
 <script>
-    console.log("Mode is " + "${authenticationForm.mode}");
+    let data = "${authenticationForm}";
+    console.log(data.replace(/(&quot;)/g, "\""));
     let formResult = {
-        passkeyLoginRequested: false,
+        passkeyLoginRequested: false
     };
 </script>
 <head>
     <link rel="stylesheet" href="${url.resourcesPath}/css/pi-form.css">
-    <script type="text/javascript" src="${url.resourcesPath}/js/pi-utils.js"></script>
     <script type="text/javascript" src="${url.resourcesPath}/js/pi-webauthn.js"></script>
-    <script type="text/javascript" src="${url.resourcesPath}/js/pi-eventListeners.js"></script>
     <script type="text/javascript" src="${url.resourcesPath}/js/pi-form.js"></script>
 </head>
 <@layout.registrationLayout; section>
@@ -25,7 +24,8 @@
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
                     <!-- IMAGES AND PROMPTS -->
-                    <#if !authenticationForm.errorMessage?has_content>
+                    <!-- Show images if there is no error message, or if push has not been accepted yet -->
+                    <#if !authenticationForm.errorMessage?has_content || authenticationForm.errorMessage == "push_auth_not_verified">
                         <#if authenticationForm.mode = "push" && !(authenticationForm.passkeyRegistration?has_content)>
                             <#if authenticationForm.pushImage?has_content>
                                 <div class="center-text">
@@ -53,12 +53,20 @@
                             <h4 class="bold-text">${msg('privacyidea.passwordPrompt')}</h4>
                         </#if>
                     <#else>
-                        <div class="${properties.kcContentWrapperClass!}">
-                            <div class="${properties.kcLabelWrapperClass!}">
-                                <label for="login-error"><span
-                                            class="${properties.kcLabelClass!}">${authenticationForm.errorMessage}</span></label>
-                            </div>
+                        <!-- ERROR MESSAGE -->
+                    <div class="${properties.kcContentWrapperClass!}">
+                        <div class="${properties.kcLabelWrapperClass!}">
+                            <label for="login-error">
+                                    <span class="${properties.kcLabelClass!}">
+                                        <#if authenticationForm.errorMessage == "push_auth_not_verified">
+                                            ${msg('privacyidea.pushNotYetVerified')}
+                                        <#else>
+                                            ${authenticationForm.errorMessage}
+                                        </#if>
+                                    </span>
+                            </label>
                         </div>
+                    </div>
                     </#if>
                     <!-- USERNAME INPUT -->
                     <#if ["usernamepassword", "username"]?seq_contains(authenticationForm.mode)
@@ -116,13 +124,6 @@
                     </#if>
                 </div>
             </div>
-            <!-- Variables (should be removed) -->
-            <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
-                   value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
-            <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
-                   value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
-            <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}"
-                   type="hidden">
 
             <!-- Sign In Button -->
             <#if !(["passkey", "push"]?seq_contains(authenticationForm.mode)) && !(authenticationForm.passkeyRegistration?has_content)>
@@ -138,7 +139,7 @@
             <input id="authenticationForm" name="authenticationForm" value="${authenticationForm!""}" type="hidden">
 
             <!-- Passkey Button: Initiate passkey login by getting a challenge -->
-            <#if !authenticationForm.passkeyRegistration?has_content && authenticationForm.mode != "passkey">
+            <#if !authenticationForm.passkeyRegistration?has_content && authenticationForm.firstStep>
                 <div class="${properties.kcFormGroupClass!}">
                     <input class="pf-v5-c-button pf-m-block" type="button"
                            name="passkeyInitiateButton" id="passkeyInitiateButton" onclick="requestPasskeyLogin()"
@@ -169,6 +170,11 @@
                     setPushReload(${authenticationForm.pollInterval});
                 </script>
             </#if>
+            <#if authenticationForm.pollInBrowserAvailable>
+                <script>
+                    startPollingInBrowser("${authenticationForm.pollInBrowserURL}", "${authenticationForm.transactionId}", "${url.resourcesPath}");
+                </script>
+            </#if>
             <!-- WEBAUTHN -->
             <#if authenticationForm.mode = "webauthn">
                 <script>
@@ -177,24 +183,34 @@
             </#if>
 
             <!-- OTHER LOGIN OPTIONS DIV -->
-            <#if authenticationForm.offerOtherLoginOptions>
+            <#if !authenticationForm.firstStep && !authenticationForm.passkeyChallenge?has_content
+            && !authenticationForm.passkeyRegistration?has_content>
                 <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
                     <h3 id="alternateTokenHeader">${msg('privacyidea.alternateLoginOptions')}</h3>
+                    <!-- Passkey Button: Initiate passkey login by getting a challenge -->
+                    <#if !authenticationForm.passkeyRegistration?has_content && !authenticationForm.firstStep>
+                        <div class="${properties.kcFormGroupClass!}">
+                            <input class="pf-v5-c-button pf-m-block" type="button"
+                                   name="passkeyInitiateButton" id="passkeyInitiateButton"
+                                   onclick="requestPasskeyLogin()"
+                                   value="${msg('privacyidea.passkeyInitiateButton')}"/>
+                        </div>
+                    </#if>
                     <!-- OTP Button -->
                     <#if authenticationForm.otpAvailable && authenticationForm.mode != "otp">
-                        <input class="pf-v5-c-button" id="otpButton"
+                        <input class="pf-v5-c-button pf-m-block" id="otpButton"
                                name="otpButton" onclick="changeMode('otp')"
                                type="button" value="${msg('privacyidea.otpButton')}"/>
                     </#if>
                     <!-- Push Button -->
                     <#if authenticationForm.pushAvailable && authenticationForm.mode != "push">
-                        <input class="pf-v5-c-button" id="pushButton"
+                        <input class="pf-v5-c-button pf-m-block" id="pushButton"
                                name="pushButton" onclick="changeMode('push')"
                                type="button" value="${msg('privacyidea.pushButton')}"/>
                     </#if>
                     <!-- WebAuthn Button -->
                     <#if authenticationForm.webAuthnSignRequest?has_content>
-                        <input class="pf-v5-c-button" id="webAuthnButton"
+                        <input class="pf-v5-c-button pf-m-block" id="webAuthnButton"
                                onclick="webAuthnAuthentication('${authenticationForm.webAuthnSignRequest}', '${authenticationForm.mode}')"
                                name="webauthnButton" type="button"
                                value="${msg('privacyidea.webauthnButton')}"/>

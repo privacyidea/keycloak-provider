@@ -37,6 +37,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.utils.StringUtil;
+import org.privacyidea.AuthenticationStatus;
 import org.privacyidea.Challenge;
 import org.privacyidea.ChallengeStatus;
 import org.privacyidea.IPILogger;
@@ -141,21 +142,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if the current user is member of an included or excluded group
         if (user != null)
         {
-            if (!config.includedGroups().isEmpty())
+            boolean noMFAbyGroup = checkMFAExcludedByGroup(config, user);
+            if (noMFAbyGroup)
             {
-                if (user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains))
-                {
-                    context.success();
-                    return;
-                }
-            }
-            else if (!config.excludedGroups().isEmpty())
-            {
-                if (user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains))
-                {
-                    context.success();
-                    return;
-                }
+                context.success();
+                return;
             }
         }
         else
@@ -193,7 +184,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             PIResponse response = tryTriggerFirstStep(user.getUsername(), privacyIDEA, config, currentPassword, headers);
             if (response != null)
             {
-                if (response.value)
+                if (response.authenticationSuccessful())
                 {
                     context.success();
                     return;
@@ -208,6 +199,31 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         Response responseForm = context.form().createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
+    }
+
+    /**
+     * Check if the user is member of an included or excluded group. Included groups have precedence over excluded groups.
+     * If user is null, return false (=MFA required).
+     *
+     * @param config Configuration
+     * @param user   UserModel
+     * @return true if no MFA is required, false if MFA is required
+     */
+    private boolean checkMFAExcludedByGroup(Configuration config, UserModel user)
+    {
+        if (user == null || config == null)
+        {
+            return false;
+        }
+        if (!config.includedGroups().isEmpty())
+        {
+            return user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains);
+        }
+        else if (!config.excludedGroups().isEmpty())
+        {
+            return user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains);
+        }
+        return false;
     }
 
     public PIResponse tryTriggerFirstStep(String username, PrivacyIDEA privacyIDEA, Configuration config, String currentPassword,
@@ -244,11 +260,27 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         return triggerResponse;
     }
 
+    /**
+     * Evaluate the response from privacyIDEA and set the form values accordingly. If there is a response, a new AuthenticationForm is created
+     * and returned. Some values of the old form can be retained if they are not set to new values by the last response.
+     * If there is no response, the old form is returned.
+     *
+     * @param response PIResponse
+     * @param context  AuthenticationFlowContext
+     * @param authForm AuthenticationForm from the previous step
+     * @param config   Configuration
+     * @return AuthenticationForm with new values or the old one if no response
+     */
     public AuthenticationForm evaluateResponse(PIResponse response, AuthenticationFlowContext context, AuthenticationForm authForm,
                                                Configuration config)
     {
         if (response != null)
         {
+            Mode previousMode = authForm.getMode();
+            authForm = new AuthenticationForm();
+            authForm.setMode(previousMode);
+            boolean isEnrollViaMultichallenge = false;
+
             if (response.error != null)
             {
                 authForm.setErrorMessage(response.error.message);
@@ -261,7 +293,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     return authForm;
                 }
                 authForm.setChallengesTriggered(true);
-                String webAuthnSignRequest = "";
+                String webAuthnSignRequest;
                 Mode mode = Mode.OTP;
                 String newOtpMessage = response.otpMessage();
                 // Images per challenge
@@ -270,7 +302,16 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 {
                     if ("poll".equals(c.getClientMode()))
                     {
-                        authForm.setPushImage(c.getImage());
+                        String image = c.getImage();
+                        if (StringUtil.isNotBlank(image))
+                        {
+                            // TODO assume that if we have an image for a push token, it has to be enroll_via_multichallenge
+                            error("setting for push enrollviamulti");
+                            authForm.setPushImage(c.getImage());
+                            isEnrollViaMultichallenge = true;
+                            mode = Mode.PUSH;
+                            authForm.setOtpAvailable(false);
+                        }
                     }
                     else if ("interactive".equals(c.getClientMode()))
                     {
@@ -308,7 +349,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
                 }
                 // Preferred client mode
-                if (response.preferredClientMode != null && !response.preferredClientMode.isEmpty())
+                if (StringUtil.isNotBlank(response.preferredClientMode))
                 {
                     try
                     {
@@ -320,7 +361,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     }
                 }
                 // Using poll in browser does not require push mode
-                if (mode.equals(Mode.PUSH) && config.pollInBrowser())
+                if (mode.equals(Mode.PUSH) && config.pollInBrowser() && !isEnrollViaMultichallenge)
                 {
                     mode = Mode.OTP;
                 }
@@ -361,7 +402,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Check for cancel
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        if (formData.containsKey("cancel") || TRUE.equals(formData.getFirst(FORM_POLL_IN_BROWSER_DECLINED)))
+        if (formData.containsKey("cancel"))
         {
             context.resetFlow();
             return;
@@ -407,14 +448,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         String transactionID = context.getAuthenticationSession().getAuthNote(NOTE_TRANSACTION_ID);
-        //logger.error("Transaction ID from session: " + transactionID);
         Map<String, String> headers = getHeadersToForward(context, config);
-
-        // If the poll in browser error is present, log it
-        if (StringUtil.isNotBlank(piFormResult.pollInBrowserError))
-        {
-            logger.error("Poll in browser error: " + piFormResult.pollInBrowserError);
-        }
 
         boolean didTrigger = false;
         PIResponse response = null;
@@ -434,7 +468,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                             headers);
                 if (response != null)
                 {
-                    if (response.value)
+                    if (response.authenticationSuccessful())
                     {
                         if (StringUtil.isNotBlank(response.username))
                         {
@@ -499,7 +533,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
-        // Set the user and verify the password, if that is necessary
+        // Set the user and verify the password, check if MFA is required for the user
         boolean userRequested = piForm.getMode() == Mode.USERNAMEPASSWORD || piForm.getMode() == Mode.USERNAME;
         if (userRequested)
         {
@@ -536,13 +570,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             context.clearUser();
             context.setUser(userModel);
+
+            // Now that we have a user, we can check if MFA is required for the user's groups
+            boolean mfaExcludedByGroup = checkMFAExcludedByGroup(config, userModel);
+            if (mfaExcludedByGroup)
+            {
+                context.success();
+                return;
+            }
         }
 
         // OTP / Push / WebAuthn
         String currentUsername = context.getUser().getUsername();
         Mode currentMode = piFormResult.modeChanged ? piFormResult.newMode : piForm.getMode();
-        error("Mode changed: " + piFormResult.modeChanged);
-        error("Current mode: " + currentMode);
         piForm.setMode(currentMode);
         kcForm.setAttribute(AUTH_FORM, piForm);
 
@@ -562,16 +602,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 log("Push Authentication declined by the user.");
                 context.cancelLogin();
             }
-            else if (pollTransactionStatus == ChallengeStatus.pending)
-            {
-                // If challenge is still pending, show the error message
-                //log("Push not verified yet.");
-            }
-            else
+            else if (pollTransactionStatus != ChallengeStatus.pending)
             {
                 // If poll transaction failed, show the error message and fallback to otp mode.
                 kcForm.setError("Push authentication failed. Please use a different token or restart the login.");
-                logger.error("Poll transaction failed.");
                 piForm.setMode(Mode.OTP);
             }
         }
@@ -590,13 +624,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         else if (Mode.USERNAMEPASSWORD.equals(currentMode))
         {
             String password = formData.getFirst(PASSWORD);
-            logger.error("tryTriggerFirstStep");
             response = tryTriggerFirstStep(currentUsername, privacyIDEA, config, password, headers);
         }
         else if (!piFormResult.modeChanged)
         {
             String otp = formData.getFirst(FORM_OTP);
-            logger.error("validate check with otp/pw input");
             if (piFormResult.passkeyLoginCancelled)
             {
                 transactionID = "";
@@ -608,7 +640,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Evaluate the response: Check for success, error or new challenges
         if (response != null)
         {
-            if (response.value)
+            if (response.authenticationSuccessful())
             {
                 context.success();
                 return;
@@ -639,7 +671,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             error("mode not changed and nothing triggered");
             if (Mode.PUSH.equals(currentMode))
             {
-                kcForm.setError("Authentication not verified yet.");
+                piForm.setErrorMessage("push_auth_not_verified");
             }
             context.challenge(kcForm.createForm(FORM_FILE_NAME));
         }
@@ -647,7 +679,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             // Continue with 2nd step (second factor)
             error("Continue with 2nd step (second factor)");
-            piForm.setMode(Mode.OTP);
+            // If there is no next Mode set yet, because no challenges were triggered, or it was not attempted, just continue with OTP
+            final Mode nextMode = piForm.getMode();
+            if (nextMode == Mode.USERNAMEPASSWORD || nextMode == Mode.USERNAME)
+            {
+                piForm.setMode(Mode.OTP);
+            }
             kcForm.setAttribute(AUTH_FORM, piForm);
             context.challenge(kcForm.createForm(FORM_FILE_NAME));
         }
@@ -660,7 +697,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             // Fail
             error("Fail");
-            if (!didTrigger)
+            if (currentMode.equals(Mode.PUSH))
+            {
+                piForm.setErrorMessage("push_auth_not_verified");
+                context.challenge(kcForm.createForm(FORM_FILE_NAME));
+            }
+            else if (!didTrigger)
             {
                 error("setting auth fail");
                 kcForm.setError(authenticationFailureMessage);
@@ -672,6 +714,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 error("setting error from response");
                 piForm.setErrorMessage(response.error.message);
                 kcForm.setError(response.error.message);
+                context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
+            }
+            else if (response.authentication.equals(AuthenticationStatus.REJECT))
+            {
+                error("setting reject");
+                kcForm.setError(response.message);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             else

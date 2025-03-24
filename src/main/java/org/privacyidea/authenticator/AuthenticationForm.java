@@ -11,11 +11,10 @@ import org.keycloak.utils.StringUtil;
  */
 public class AuthenticationForm
 {
-    private String username = null;
     private Mode mode = Mode.OTP;
     private boolean otpAvailable = true;
     private String otpMessage = null;
-    private boolean pushAvailable = true;
+    private boolean pushAvailable = false;
     private String pushMessage = null;
     private String webAuthnSignRequest = null;
     private String autoSubmitLength = null;
@@ -32,11 +31,21 @@ public class AuthenticationForm
     private String passkeyRegistration = null;
     private String passkeyChallenge = null;
 
+    public boolean isFirstStep()
+    {
+        return Mode.USERNAME.equals(mode) || Mode.USERNAMEPASSWORD.equals(mode);
+    }
+
+    public boolean isPollInBrowserAvailable()
+    {
+        return StringUtil.isNotBlank(pollInBrowserURL) && StringUtil.isNotBlank(transactionId);
+    }
+
     // Do the calculation if the <div> with other login options should be shown
     public boolean isOfferOtherLoginOptions()
     {
-        return (StringUtil.isNotBlank(webAuthnSignRequest) || pushAvailable) && StringUtil.isBlank(passkeyRegistration)
-               && Stream.of(Mode.USERNAMEPASSWORD, Mode.PASSWORD, Mode.USERNAME).noneMatch(m -> m.equals(mode));
+        return (StringUtil.isNotBlank(webAuthnSignRequest) || pushAvailable) && StringUtil.isBlank(passkeyRegistration) &&
+               Stream.of(Mode.USERNAMEPASSWORD, Mode.PASSWORD, Mode.USERNAME).noneMatch(m -> m.equals(mode));
     }
 
     public String getPushImage()
@@ -67,16 +76,6 @@ public class AuthenticationForm
     public void setWebAuthnImage(String webAuthnImage)
     {
         this.webAuthnImage = webAuthnImage;
-    }
-
-    public String getUsername()
-    {
-        return username;
-    }
-
-    public void setUsername(String username)
-    {
-        this.username = username;
     }
 
     public String getErrorMessage()

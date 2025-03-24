@@ -26,7 +26,6 @@ function webAuthnAuthentication(signRequest, mode) {
         console.log("WebAuthn Authentication: Challenge data is empty!")
         return "";
     }
-    console.log("WebAuthn Authentication: signRequest: " + signRequest);
     let signRequestObject = JSON.parse(signRequest.replace(/(&quot;)/g, "\""));
     try {
         const webAuthnSignResponse = window.pi_webauthn.sign(signRequestObject);
@@ -168,7 +167,7 @@ function setAutoSubmit(inputLength) {
 }
 
 function changeMode(newMode) {
-    console.log("changeMode to " + newMode);
+    //console.log("changeMode to " + newMode);
     formResult.modeChanged = true;
     formResult.newMode = newMode;
     submitForm();
@@ -180,8 +179,61 @@ function submitForm() {
             + window.location.port : '');
     }
     formResult.origin = window.location.origin;
-    console.log("Submit, formResult:");
-    console.log(formResult);
+    //console.log("Submit, formResult:");
+    //console.log(formResult);
     document.querySelector("#authenticationFormResult").value = JSON.stringify(formResult);
     document.forms["kc-otp-login-form"].requestSubmit();
+}
+
+function startPollingInBrowser(url, transactionId, resourcesPath) {
+    let pushButton = document.querySelector("#pushButton");
+    if (pushButton) {
+        pushButton.style.display = "none";
+    }
+    let worker;
+    if (typeof (Worker) !== "undefined") {
+        if (typeof (worker) == "undefined") {
+            worker = new Worker(resourcesPath + "/js/pi-pollTransaction.worker.js");
+            let form = document.querySelector("#kc-login")
+            if (form) {
+                form.addEventListener('click', function (e) {
+                    if (worker) {
+                        worker.terminate();
+                        worker = undefined;
+                    }
+                });
+            }
+            worker.postMessage({'cmd': 'url', 'msg': url});
+            worker.postMessage({'cmd': 'transactionID', 'msg': transactionId});
+            worker.postMessage({'cmd': 'start'});
+            worker.addEventListener('message', function (e) {
+                let data = e.data;
+                switch (data.status) {
+                    case 'success':
+                        submitForm();
+                        break;
+                    case 'cancel':
+                        formResult.pollInBrowserCancelled = true;
+                        worker = undefined;
+                        submitForm();
+                        break;
+                    case 'error':
+                        console.log("Poll in Browser error: " + data.message);
+                        formResult.pollInBrowserCancelled = true;
+                        worker = undefined;
+                        if (pushButton) {
+                            pushButton.style.display = "initial";
+                        }
+                }
+            });
+        }
+    } else {
+        console.log("Poll in Browser error: The browser doesn't support WebWorker.");
+        worker.terminate();
+        formResult.pollInBrowserCancelled = true;
+        formResult.pollInBrowserError = "The browser doesn't support WebWorker.";
+        if (pushButton) {
+            pushButton.style.display = "initial";
+        }
+    }
 }

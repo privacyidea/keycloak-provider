@@ -37,7 +37,6 @@ final class Const
     // Will be used if no intervals are specified
     static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
 
-    static final String FORM_POLL_IN_BROWSER_DECLINED = "pollInBrowserDeclined";
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_OTP = "otp";
 
@@ -67,5 +66,4 @@ final class Const
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
     static final String CONFIG_ENABLE_LOG = "pidolog";
-    static final String CONFIG_ENABLE_PASSKEY = "pienablepasskey";
 }
