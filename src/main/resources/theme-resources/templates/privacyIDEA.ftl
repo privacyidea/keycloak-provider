@@ -52,6 +52,10 @@
                         <#elseif authenticationForm.mode = "password" && !(authenticationForm.passkeyRegistration?has_content)>
                             <h4 class="bold-text">${msg('privacyidea.passwordPrompt')}</h4>
                         </#if>
+                        <!-- ENROLLMENT LINK -->
+                        <#if authenticationForm.enrollmentLink?has_content>
+                            <a href="${authenticationForm.enrollmentLink}" target="_blank">${msg('privacyidea.enrollmentLinkText')}</a>
+                        </#if>
                     <#else>
                         <!-- ERROR MESSAGE -->
                     <div class="${properties.kcContentWrapperClass!}">

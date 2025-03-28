@@ -134,7 +134,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void authenticate(AuthenticationFlowContext context)
     {
-        //log("authenticate() called.");
         final Pair currentPair = loadConfiguration(context);
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
         Configuration config = currentPair.configuration();
@@ -144,14 +143,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         UserModel user = context.getUser();
         if (user == null)
         {
-            log("No user found, requesting it via form.");
             context.clearUser();
             piForm.setMode(Mode.USERNAMEPASSWORD);
         }
-
-        // Check if the current user is member of an included or excluded group
-        if (user != null)
+        else
         {
+            // Check if the current user is member of an included or excluded group
             boolean noMFAbyGroup = checkMFAExcludedByGroup(config, user);
             if (noMFAbyGroup)
             {
@@ -159,13 +156,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
         }
-        else
-        {
-            log("There is no user yet, can not check for groups.");
-        }
 
         String currentPassword = null;
-
         // In some cases, there will be no FormParameters so check if it is even possible to get the password
         if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
             context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
@@ -173,9 +165,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
         }
 
-        Map<String, String> headers = getHeadersToForward(context, config);
+        Map<String, String> headers = getHeaders(context, config);
 
-        String otpMessage = "Please enter your OTP!";
+        String otpMessage = "Please enter your OTP:";
         if (!config.defaultOTPMessage().isEmpty())
         {
             otpMessage = config.defaultOTPMessage();
@@ -290,7 +282,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             authForm = new AuthenticationForm();
             authForm.setMode(previousMode);
             boolean isEnrollViaMultichallenge = false;
-
+            authForm.setEnrollmentLink(response.enrollmentLink);
             if (response.error != null)
             {
                 authForm.setErrorMessage(response.error.message);
@@ -457,7 +449,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         String transactionID = context.getAuthenticationSession().getAuthNote(NOTE_TRANSACTION_ID);
-        Map<String, String> headers = getHeadersToForward(context, config);
+        Map<String, String> headers = getHeaders(context, config);
 
         boolean didTrigger = false;
         PIResponse response = null;
@@ -735,14 +727,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     /**
      * Extract the headers that should be forwarded to privacyIDEA from the original request to keycloak. The header names
      * can be defined in the configuration of this provider. The accept-language header is included by default.
+     * Also add the custom headers from the configuration if any are defined.
      *
      * @param context AuthenticationFlowContext
      * @param config  Configuration
      * @return Map of headers
      */
-    private Map<String, String> getHeadersToForward(AuthenticationFlowContext context, Configuration config)
+    private Map<String, String> getHeaders(AuthenticationFlowContext context, Configuration config)
     {
-        Map<String, String> headersToForward = new LinkedHashMap<>();
+        Map<String, String> headers = new LinkedHashMap<>();
         // Take all headers from config plus accept-language
         config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
 
@@ -753,14 +746,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (headerValues != null && !headerValues.isEmpty())
             {
                 String temp = String.join(",", headerValues);
-                headersToForward.put(header, temp);
+                headers.put(header, temp);
             }
             else
             {
                 log("No values for header " + header + " found.");
             }
         }
-        return headersToForward;
+        headers.putAll(config.customHeaders());
+        return headers;
     }
 
     @Override
@@ -785,7 +779,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void close()
     {
-        log("Closing PrivacyIDEA Authenticator.");
+        //log("Closing PrivacyIDEA Authenticator.");
     }
 
     // IPILogger implementation
@@ -794,7 +788,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.info("PrivacyIDEA Client: " + message);
+            logger.info(message);
         }
     }
 
@@ -803,7 +797,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.error("PrivacyIDEA Client: " + message);
+            logger.error(message);
         }
     }
 
@@ -812,7 +806,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.info("PrivacyIDEA Client: ", t);
+            logger.info(t);
         }
     }
 
@@ -821,7 +815,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         if (logEnabled)
         {
-            logger.error("PrivacyIDEA Client: ", t);
+            logger.error(t);
         }
     }
 }

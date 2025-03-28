@@ -19,9 +19,12 @@ package org.privacyidea.authenticator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jboss.logging.Logger;
 
+import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_DEFAULT_MESSAGE;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
@@ -46,6 +49,7 @@ import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_ARRAY;
 import static org.privacyidea.authenticator.Const.DEFAULT_POLLING_INTERVAL;
 import static org.privacyidea.authenticator.Const.TRUE;
 
+
 public class Configuration
 {
     private final String serverURL;
@@ -69,6 +73,10 @@ public class Configuration
     private final List<Integer> pollingInterval = new ArrayList<>();
     private final int configHash;
     private final String defaultOTPMessage;
+    private final Map<String, String> customHeaders = new HashMap<>();
+
+    private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
+
 
     public Configuration(Map<String, String> configMap)
     {
@@ -133,6 +141,21 @@ public class Configuration
         {
             this.pollingInterval.addAll(DEFAULT_POLLING_ARRAY);
         }
+        String entry = configMap.get(CONFIG_CUSTOM_HEADERS);
+        String[] entries = entry.split("##");
+        for (String e : entries)
+        {
+            String[] keyValue = e.split("=");
+            if (keyValue.length == 2)
+            {
+                customHeaders.put(keyValue[0], keyValue[1]);
+            }
+            else
+            {
+                logger.error("Invalid custom header entry: " + e);
+            }
+        }
+        logger.error("Header: " + customHeaders);
     }
 
     int configHash()
@@ -238,5 +261,10 @@ public class Configuration
     String defaultOTPMessage()
     {
         return defaultOTPMessage;
+    }
+
+    Map<String, String> customHeaders()
+    {
+        return customHeaders;
     }
 }

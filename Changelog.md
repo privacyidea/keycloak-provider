@@ -25,7 +25,7 @@
 
 ### v1.1.0 - 2022-07-01
 
-* Included groups setting to specify groups of keycloak users for which 2FA should be activated (#54). Check the [configuration documenation](https://github.com/privacyidea/keycloak-provider#configuration).
+* Included groups setting to specify groups of keycloak users for which 2FA should be activated (#54). Check the [configuration documentation](https://github.com/privacyidea/keycloak-provider#configuration).
 * It is now possible to configure the names of header that should be forwarded to privacyIDEA (#94)
 * If a user has multiple WebAuthn token, all of them can be used to log in (#84)
 

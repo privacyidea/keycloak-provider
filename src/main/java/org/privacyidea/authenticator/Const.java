@@ -66,4 +66,5 @@ final class Const
     static final String CONFIG_REALM = "pirealm";
     static final String CONFIG_SERVER = "piserver";
     static final String CONFIG_ENABLE_LOG = "pidolog";
+    static final String CONFIG_CUSTOM_HEADERS = "picustomheaders";
 }

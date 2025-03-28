@@ -48,8 +48,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         return SINGLETON;
     }
 
-    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {AuthenticationExecutionModel.Requirement.REQUIRED,
-                                                                                           AuthenticationExecutionModel.Requirement.DISABLED};
+    private static final AuthenticationExecutionModel.Requirement[] REQUIREMENT_CHOICES = {
+            AuthenticationExecutionModel.Requirement.REQUIRED, AuthenticationExecutionModel.Requirement.DISABLED};
 
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices()
@@ -77,170 +77,178 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
 
     static
     {
-        ProviderConfigProperty piServerUrl = new ProviderConfigProperty();
-        piServerUrl.setType(ProviderConfigProperty.STRING_TYPE);
-        piServerUrl.setName(Const.CONFIG_SERVER);
-        piServerUrl.setLabel("privacyIDEA URL");
-        piServerUrl.setHelpText("The URL of the privacyIDEA server (complete with scheme, host and port like \"https://<piserver>:port\")");
-        configProperties.add(piServerUrl);
+        ProviderConfigProperty serverURL = new ProviderConfigProperty();
+        serverURL.setType(ProviderConfigProperty.STRING_TYPE);
+        serverURL.setName(Const.CONFIG_SERVER);
+        serverURL.setLabel("privacyIDEA URL");
+        serverURL.setRequired(true);
+        serverURL.setHelpText("The URL of the privacyIDEA server. Example: https://privacyidea.company.com");
+        configProperties.add(serverURL);
 
-        ProviderConfigProperty piRealm = new ProviderConfigProperty();
-        piRealm.setType(ProviderConfigProperty.STRING_TYPE);
-        piRealm.setName(Const.CONFIG_REALM);
-        piRealm.setLabel("Realm");
-        piRealm.setHelpText("Select the realm where your users are stored. Leave empty to use the default realm "
-                            + "which is configured in the privacyIDEA server.");
-        configProperties.add(piRealm);
+        ProviderConfigProperty realm = new ProviderConfigProperty();
+        realm.setType(ProviderConfigProperty.STRING_TYPE);
+        realm.setName(Const.CONFIG_REALM);
+        realm.setLabel("Realm");
+        realm.setHelpText("Select the realm where your users are stored. Leave empty to use the default realm " +
+                          "which is configured in the privacyIDEA server.");
+        configProperties.add(realm);
 
-        ProviderConfigProperty piVerifySSL = new ProviderConfigProperty();
-        piVerifySSL.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piVerifySSL.setName(Const.CONFIG_VERIFY_SSL);
-        piVerifySSL.setLabel("Verify SSL");
-        piVerifySSL.setHelpText("Do not set this to false in a productive environment. "
-                                + "Disables the verification of the privacyIDEA server's certificate and hostname.");
-        configProperties.add(piVerifySSL);
+        ProviderConfigProperty verifySSL = new ProviderConfigProperty();
+        verifySSL.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        verifySSL.setName(Const.CONFIG_VERIFY_SSL);
+        verifySSL.setLabel("Verify SSL");
+        verifySSL.setHelpText("Do not set this to false in a productive environment. " +
+                              "Disables the verification of the privacyIDEA server's certificate and hostname.");
+        configProperties.add(verifySSL);
 
-        ProviderConfigProperty piDoTriggerChallenge = new ProviderConfigProperty();
-        piDoTriggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoTriggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
-        piDoTriggerChallenge.setLabel("Enable trigger challenge");
-        piDoTriggerChallenge.setHelpText("Choose if you want to trigger challenge-response token "
-                                         + "using the provided service account before the second step of authentication. "
-                                         + "This setting is mutually exclusive with sending any password "
-                                         + "and will take precedence over both.");
-        configProperties.add(piDoTriggerChallenge);
+        ProviderConfigProperty triggerChallenge = new ProviderConfigProperty();
+        triggerChallenge.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        triggerChallenge.setName(Const.CONFIG_TRIGGER_CHALLENGE);
+        triggerChallenge.setLabel("Enable trigger challenge");
+        triggerChallenge.setHelpText("Choose if you want to trigger challenge-response token " +
+                                     "using the provided service account before the second step of authentication. " +
+                                     "This setting is mutually exclusive with sending any password " +
+                                     "and will take precedence over both.");
+        configProperties.add(triggerChallenge);
 
-        ProviderConfigProperty piServiceAccount = new ProviderConfigProperty();
-        piServiceAccount.setType(ProviderConfigProperty.STRING_TYPE);
-        piServiceAccount.setName(Const.CONFIG_SERVICE_ACCOUNT);
-        piServiceAccount.setLabel("Service account");
-        piServiceAccount.setHelpText("Username of the service account. Needed for trigger challenge and token enrollment.");
-        configProperties.add(piServiceAccount);
+        ProviderConfigProperty serviceAccountName = new ProviderConfigProperty();
+        serviceAccountName.setType(ProviderConfigProperty.STRING_TYPE);
+        serviceAccountName.setName(Const.CONFIG_SERVICE_ACCOUNT);
+        serviceAccountName.setLabel("Service account");
+        serviceAccountName.setHelpText("Username of the service account. Needed for trigger challenge and token enrollment.");
+        configProperties.add(serviceAccountName);
 
-        ProviderConfigProperty piServicePass = new ProviderConfigProperty();
-        piServicePass.setType(ProviderConfigProperty.PASSWORD);
-        piServicePass.setName(Const.CONFIG_SERVICE_PASS);
-        piServicePass.setLabel("Service account password");
-        piServicePass.setHelpText("Password of the service account. Needed for trigger challenge and token enrollment.");
-        configProperties.add(piServicePass);
+        ProviderConfigProperty serviceAccountPass = new ProviderConfigProperty();
+        serviceAccountPass.setType(ProviderConfigProperty.PASSWORD);
+        serviceAccountPass.setName(Const.CONFIG_SERVICE_PASS);
+        serviceAccountPass.setLabel("Service account password");
+        serviceAccountPass.setHelpText("Password of the service account. Needed for trigger challenge and token enrollment.");
+        configProperties.add(serviceAccountPass);
 
-        ProviderConfigProperty piServiceRealm = new ProviderConfigProperty();
-        piServiceRealm.setType(ProviderConfigProperty.STRING_TYPE);
-        piServiceRealm.setName(Const.CONFIG_SERVICE_REALM);
-        piServiceRealm.setLabel("Service account realm");
-        piServiceRealm.setHelpText("Realm of the service account, if it is in a separate realm from the other accounts. "
-                                   + "Leave empty to use the general realm specified or the default realm "
-                                   + "if no realm is configured at all.");
-        configProperties.add(piServiceRealm);
+        ProviderConfigProperty serviceAccountRealm = new ProviderConfigProperty();
+        serviceAccountRealm.setType(ProviderConfigProperty.STRING_TYPE);
+        serviceAccountRealm.setName(Const.CONFIG_SERVICE_REALM);
+        serviceAccountRealm.setLabel("Service account realm");
+        serviceAccountRealm.setHelpText("Realm of the service account, if it is in a separate realm from the other accounts. " +
+                                        "Leave empty to use the general realm specified or the default realm " +
+                                        "if no realm is configured at all.");
+        configProperties.add(serviceAccountRealm);
 
-        ProviderConfigProperty piDoSendPassword = new ProviderConfigProperty();
-        piDoSendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoSendPassword.setName(Const.CONFIG_SEND_PASSWORD);
-        piDoSendPassword.setLabel("Send password");
-        piDoSendPassword.setHelpText("Choose if you want to send the password from the first login step to privacyIDEA. "
-                                     + "This can be used to trigger challenge-response token. "
-                                     + "This setting is mutually exclusive with trigger challenge and sending a static pass.");
-        configProperties.add(piDoSendPassword);
+        ProviderConfigProperty sendPassword = new ProviderConfigProperty();
+        sendPassword.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        sendPassword.setName(Const.CONFIG_SEND_PASSWORD);
+        sendPassword.setLabel("Send password");
+        sendPassword.setHelpText("Choose if you want to send the password from the first login step to privacyIDEA. " +
+                                 "This can be used to trigger challenge-response token. " +
+                                 "This setting is mutually exclusive with trigger challenge and sending a static pass.");
+        configProperties.add(sendPassword);
 
-        ProviderConfigProperty piSendStaticPass = new ProviderConfigProperty();
-        piSendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piSendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
-        piSendStaticPass.setLabel("Send static password");
-        piSendStaticPass.setHelpText("Enable to send the specified static password to privacyIDEA. "
-                                     + "Mutually exclusive with sending the password and trigger challenge.");
-        configProperties.add(piSendStaticPass);
+        ProviderConfigProperty sendStaticPass = new ProviderConfigProperty();
+        sendStaticPass.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        sendStaticPass.setName(Const.CONFIG_SEND_STATIC_PASS);
+        sendStaticPass.setLabel("Send static password");
+        sendStaticPass.setHelpText("Enable to send the specified static password to privacyIDEA. " +
+                                   "Mutually exclusive with sending the password and trigger challenge.");
+        configProperties.add(sendStaticPass);
 
-        ProviderConfigProperty piStaticPass = new ProviderConfigProperty();
-        piStaticPass.setType(ProviderConfigProperty.PASSWORD);
-        piStaticPass.setName(Const.CONFIG_STATIC_PASS);
-        piStaticPass.setLabel("Static pass");
-        piStaticPass.setHelpText("Set the static password which should be sent to privacyIDEA if \"send static password\" is enabled. "
-                                 + "Can be empty to send an empty password.");
-        configProperties.add(piStaticPass);
+        ProviderConfigProperty staticPass = new ProviderConfigProperty();
+        staticPass.setType(ProviderConfigProperty.PASSWORD);
+        staticPass.setName(Const.CONFIG_STATIC_PASS);
+        staticPass.setLabel("Static pass");
+        staticPass.setHelpText("Set the static password which should be sent to privacyIDEA if \"send static password\" is enabled. " +
+                               "Can be empty to send an empty password.");
+        configProperties.add(staticPass);
 
         ProviderConfigProperty piForwardClientIP = new ProviderConfigProperty();
         piForwardClientIP.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         piForwardClientIP.setName(Const.CONFIG_FORWARD_CLIENT_IP);
         piForwardClientIP.setLabel("Forward client IP");
-        piForwardClientIP.setHelpText("Enable this to forward the client IP to privacyIDEA. "
-                                      + "This can be used in privacyIDEA server if configured.");
+        piForwardClientIP.setHelpText(
+                "Enable this to forward the client IP to privacyIDEA. " + "This can be used in privacyIDEA server if configured.");
         configProperties.add(piForwardClientIP);
 
-        ProviderConfigProperty piIncludeGroups = new ProviderConfigProperty();
-        piIncludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
-        piIncludeGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
-        piIncludeGroups.setLabel("Included groups");
-        piIncludeGroups.setHelpText("Set groups for which the privacyIDEA workflow will be activated. "
-                                    + "The names should be separated with ',' (E.g. group1,group2)");
-        configProperties.add(piIncludeGroups);
+        ProviderConfigProperty includedGroups = new ProviderConfigProperty();
+        includedGroups.setType(ProviderConfigProperty.STRING_TYPE);
+        includedGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
+        includedGroups.setLabel("Included groups");
+        includedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be activated. " +
+                                   "The names should be separated with ',' (E.g. group1,group2)");
+        configProperties.add(includedGroups);
 
-        ProviderConfigProperty piExcludeGroups = new ProviderConfigProperty();
-        piExcludeGroups.setType(ProviderConfigProperty.STRING_TYPE);
-        piExcludeGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
-        piExcludeGroups.setLabel("Excluded groups");
-        piExcludeGroups.setHelpText("Set groups for which the privacyIDEA workflow will be skipped. "
-                                    + "The names should be separated with ',' (E.g. group1,group2). "
-                                    + "If chosen group is already set in 'Included groups', "
-                                    + "excluding for this group will be ignored.");
-        configProperties.add(piExcludeGroups);
+        ProviderConfigProperty excludedGroups = new ProviderConfigProperty();
+        excludedGroups.setType(ProviderConfigProperty.STRING_TYPE);
+        excludedGroups.setName(Const.CONFIG_EXCLUDED_GROUPS);
+        excludedGroups.setLabel("Excluded groups");
+        excludedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be skipped. " +
+                                   "The names should be separated with ',' (E.g. group1,group2). " +
+                                   "If chosen group is already set in 'Included groups', " + "excluding for this group will be ignored.");
+        configProperties.add(excludedGroups);
 
-        ProviderConfigProperty piDefaultOTPText = new ProviderConfigProperty();
-        piDefaultOTPText.setType(ProviderConfigProperty.STRING_TYPE);
-        piDefaultOTPText.setName(Const.CONFIG_DEFAULT_MESSAGE);
-        piDefaultOTPText.setLabel("Default OTP Text");
-        piDefaultOTPText.setHelpText("Set the default OTP text that will be shown if no challenge or error messages are present.");
-        configProperties.add(piDefaultOTPText);
+        ProviderConfigProperty defaultOTPText = new ProviderConfigProperty();
+        defaultOTPText.setType(ProviderConfigProperty.STRING_TYPE);
+        defaultOTPText.setName(Const.CONFIG_DEFAULT_MESSAGE);
+        defaultOTPText.setLabel("Default OTP Text");
+        defaultOTPText.setHelpText("Set the default OTP text that will be shown if no challenge or error messages are present.");
+        configProperties.add(defaultOTPText);
 
-        ProviderConfigProperty piOtpLength = new ProviderConfigProperty();
-        piOtpLength.setType(ProviderConfigProperty.STRING_TYPE);
-        piOtpLength.setName(Const.CONFIG_OTP_LENGTH);
-        piOtpLength.setLabel("Auto-Submit OTP Length");
-        piOtpLength.setHelpText("Automatically submit the login form after X digits were entered. "
-                                + "Leave empty to disable. NOTE: Only digits can be entered!");
-        configProperties.add(piOtpLength);
+        ProviderConfigProperty autoSubmitLength = new ProviderConfigProperty();
+        autoSubmitLength.setType(ProviderConfigProperty.STRING_TYPE);
+        autoSubmitLength.setName(Const.CONFIG_OTP_LENGTH);
+        autoSubmitLength.setLabel("Auto-Submit OTP Length");
+        autoSubmitLength.setHelpText("Automatically submit the login form after X digits were entered. " +
+                                     "Leave empty to disable. NOTE: Only digits can be entered!");
+        configProperties.add(autoSubmitLength);
 
-        ProviderConfigProperty piForwardedHeaders = new ProviderConfigProperty();
-        piForwardedHeaders.setType(ProviderConfigProperty.STRING_TYPE);
-        piForwardedHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
-        piForwardedHeaders.setLabel("Headers to forward");
-        piForwardedHeaders.setHelpText("Set the headers which should be forwarded to privacyIDEA. "
-                                       + "If the header does not exist or has no value, it will be ignored. "
-                                       + "The headers should be separated with ','.");
-        configProperties.add(piForwardedHeaders);
+        ProviderConfigProperty forwardHeaders = new ProviderConfigProperty();
+        forwardHeaders.setType(ProviderConfigProperty.STRING_TYPE);
+        forwardHeaders.setName(Const.CONFIG_FORWARDED_HEADERS);
+        forwardHeaders.setLabel("Headers to forward");
+        forwardHeaders.setHelpText("Set the headers which should be forwarded to privacyIDEA. " +
+                                   "If the header does not exist or has no value, it will be ignored. " +
+                                   "The headers should be separated with ','.");
+        configProperties.add(forwardHeaders);
 
-        ProviderConfigProperty piPollInBrowser = new ProviderConfigProperty();
-        piPollInBrowser.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piPollInBrowser.setName(Const.CONFIG_POLL_IN_BROWSER);
-        piPollInBrowser.setLabel("Poll in browser");
-        piPollInBrowser.setDefaultValue(false);
-        piPollInBrowser.setHelpText("Enable this to do the polling for accepted push requests in the user's browser. "
-                                    + "When enabled, the login page does not refresh when checking for successful push authentication. "
-                                    + "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
-        configProperties.add(piPollInBrowser);
+        ProviderConfigProperty customHeaders = new ProviderConfigProperty();
+        customHeaders.setType(ProviderConfigProperty.MULTIVALUED_STRING_TYPE);
+        customHeaders.setName(Const.CONFIG_CUSTOM_HEADERS);
+        customHeaders.setLabel("Custom Headers");
+        customHeaders.setHelpText("Set a custom headers to send with each request. Each entry needs to have the format key=value. " +
+                                  "Entries that do not have this format will be ignored. Do not use well known headers like 'Authorization'.");
+        configProperties.add(customHeaders);
 
-        ProviderConfigProperty piPollInBrowserUrl = new ProviderConfigProperty();
-        piPollInBrowserUrl.setType(ProviderConfigProperty.STRING_TYPE);
-        piPollInBrowserUrl.setName(Const.CONFIG_POLL_IN_BROWSER_URL);
-        piPollInBrowserUrl.setLabel("URL for poll in browser");
-        piPollInBrowserUrl.setHelpText("Optional. If poll in browser should use a deviating URL, set it here. "
-                                       + "Otherwise, the general URL will be used.");
-        configProperties.add(piPollInBrowserUrl);
+        ProviderConfigProperty pollInBrowser = new ProviderConfigProperty();
+        pollInBrowser.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        pollInBrowser.setName(Const.CONFIG_POLL_IN_BROWSER);
+        pollInBrowser.setLabel("Poll in browser");
+        pollInBrowser.setDefaultValue(false);
+        pollInBrowser.setHelpText("Enable this to do the polling for accepted push requests in the user's browser. " +
+                                  "When enabled, the login page does not refresh when checking for successful push authentication. " +
+                                  "NOTE: privacyIDEA has to be reachable from the user's browser and a valid SSL certificate has to be in place.");
+        configProperties.add(pollInBrowser);
 
-        ProviderConfigProperty piPushTokenInterval = new ProviderConfigProperty();
-        piPushTokenInterval.setType(ProviderConfigProperty.STRING_TYPE);
-        piPushTokenInterval.setName(Const.CONFIG_PUSH_INTERVAL);
-        piPushTokenInterval.setLabel("Push refresh interval");
-        piPushTokenInterval.setHelpText("Set the refresh interval for push tokens in seconds. Use a comma separated list. "
-                                        + "The last entry will be repeated.");
-        configProperties.add(piPushTokenInterval);
+        ProviderConfigProperty pollInBrowserURL = new ProviderConfigProperty();
+        pollInBrowserURL.setType(ProviderConfigProperty.STRING_TYPE);
+        pollInBrowserURL.setName(Const.CONFIG_POLL_IN_BROWSER_URL);
+        pollInBrowserURL.setLabel("URL for poll in browser");
+        pollInBrowserURL.setHelpText(
+                "Optional. If poll in browser should use a deviating URL, set it here. " + "Otherwise, the general URL will be used.");
+        configProperties.add(pollInBrowserURL);
 
-        ProviderConfigProperty piDoLog = new ProviderConfigProperty();
-        piDoLog.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        piDoLog.setName(Const.CONFIG_ENABLE_LOG);
-        piDoLog.setLabel("Enable logging");
-        piDoLog.setHelpText("If enabled, log messages will be written to the keycloak server logfile.");
-        piDoLog.setDefaultValue("false");
-        configProperties.add(piDoLog);
+        ProviderConfigProperty pushTokenPollInterval = new ProviderConfigProperty();
+        pushTokenPollInterval.setType(ProviderConfigProperty.STRING_TYPE);
+        pushTokenPollInterval.setName(Const.CONFIG_PUSH_INTERVAL);
+        pushTokenPollInterval.setLabel("Push refresh interval");
+        pushTokenPollInterval.setHelpText(
+                "Set the refresh interval for push tokens in seconds. Use a comma separated list. " + "The last entry will be repeated.");
+        configProperties.add(pushTokenPollInterval);
+
+        ProviderConfigProperty debugLog = new ProviderConfigProperty();
+        debugLog.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        debugLog.setName(Const.CONFIG_ENABLE_LOG);
+        debugLog.setLabel("Enable logging");
+        debugLog.setHelpText("If enabled, log messages will be written to the keycloak server logfile.");
+        debugLog.setDefaultValue("false");
+        configProperties.add(debugLog);
     }
 
     @Override

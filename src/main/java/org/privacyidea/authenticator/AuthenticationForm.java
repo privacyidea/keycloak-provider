@@ -24,6 +24,7 @@ public class AuthenticationForm
     private String pushImage = null;
     private String otpImage = null;
     private String webAuthnImage = null;
+    private String enrollmentLink = null;
     private boolean challengesTriggered = false;
     // passkeyChallenge is separate from fido2SignRequest, because we need to remember if we are using passkey (=> we get the username
     // from privacyIDEA) or the regular webauthn that has been triggered for the user explicitly.
@@ -234,5 +235,15 @@ public class AuthenticationForm
     public void setPasskeyChallenge(String passkeyChallenge)
     {
         this.passkeyChallenge = passkeyChallenge;
+    }
+
+    public String getEnrollmentLink()
+    {
+        return enrollmentLink;
+    }
+
+    public void setEnrollmentLink(String enrollmentLink)
+    {
+        this.enrollmentLink = enrollmentLink;
     }
 }
