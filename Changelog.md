@@ -1,9 +1,19 @@
 # Changelog
 
+### v1.5.0 - 2025-04-09
+
+* Added support for passkey token, including enroll_via_multichallenge.
+* Added the capability to request and check username and password, to be able to use passkey in the first step. This means
+it is no longer necessary to have username and or password requested before using this plugin in the authentication, but still possible.
+* Removed poll interval setting.
+* Removed default OTP text setting, texts can be edited in the theme-resources/messages directory.
+* Added a configuration to allow setting custom headers.
+* Added a configuration to set custom http timeouts.
+
 ### v1.4.1 - 2024-03-05
 
 * Fixed a bug that would cause empty error messages to appear in the log
-* The threadpool allows core threads to time out, which will reduce the memory footprint of the provider 
+* The thread pool allows core threads to time out, which will reduce the memory footprint of the provider 
 
 ### v1.4.0 - 2023-11-07
 

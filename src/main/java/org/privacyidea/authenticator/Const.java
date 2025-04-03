@@ -32,10 +32,8 @@ final class Const
     static final String TRUE = "true";
 
     static final String HEADER_ACCEPT_LANGUAGE = "accept-language";
-    // Will be used if single value from config cannot be parsed
-    static final int DEFAULT_POLLING_INTERVAL = 2;
     // Will be used if no intervals are specified
-    static final List<Integer> DEFAULT_POLLING_ARRAY = Arrays.asList(4, 2, 2, 2, 3);
+    static final List<Integer> POLLING_INTERVALS = Arrays.asList(4, 3, 2);
 
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_OTP = "otp";
@@ -67,4 +65,6 @@ final class Const
     static final String CONFIG_SERVER = "piserver";
     static final String CONFIG_ENABLE_LOG = "pidolog";
     static final String CONFIG_CUSTOM_HEADERS = "picustomheaders";
+    static final String CONFIG_HTTP_TIMEOUT_MS = "pihttptimeoutms";
+
 }

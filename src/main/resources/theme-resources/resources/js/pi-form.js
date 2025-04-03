@@ -159,7 +159,7 @@ function setAutoSubmit(inputLength) {
     if (otpField) {
         otpField.addEventListener("keyup", function () {
             // catch parse int error?
-            if (document.querySelector("#otp").length === parseInt(inputLength)) {
+            if (otpField.value.length === parseInt(inputLength)) {
                 submitForm();
             }
         });

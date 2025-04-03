@@ -54,13 +54,14 @@
                         </#if>
                         <!-- ENROLLMENT LINK -->
                         <#if authenticationForm.enrollmentLink?has_content>
-                            <a href="${authenticationForm.enrollmentLink}" target="_blank">${msg('privacyidea.enrollmentLinkText')}</a>
+                            <a href="${authenticationForm.enrollmentLink}"
+                               target="_blank">${msg('privacyidea.enrollmentLinkText')}</a>
                         </#if>
                     <#else>
                         <!-- ERROR MESSAGE -->
-                    <div class="${properties.kcContentWrapperClass!}">
-                        <div class="${properties.kcLabelWrapperClass!}">
-                            <label for="login-error">
+                        <div class="${properties.kcContentWrapperClass!}">
+                            <div class="${properties.kcLabelWrapperClass!}">
+                                <label for="login-error">
                                     <span class="${properties.kcLabelClass!}">
                                         <#if authenticationForm.errorMessage == "push_auth_not_verified">
                                             ${msg('privacyidea.pushNotYetVerified')}
@@ -68,9 +69,9 @@
                                             ${authenticationForm.errorMessage}
                                         </#if>
                                     </span>
-                            </label>
+                                </label>
+                            </div>
                         </div>
-                    </div>
                     </#if>
                     <!-- USERNAME INPUT -->
                     <#if ["usernamepassword", "username"]?seq_contains(authenticationForm.mode)
@@ -180,7 +181,7 @@
                 </script>
             </#if>
             <!-- WEBAUTHN -->
-            <#if authenticationForm.mode = "webauthn">
+            <#if authenticationForm.mode = "webauthn" && authenticationForm.webAuthnSignRequest?has_content>
                 <script>
                     webAuthnAuthentication('${authenticationForm.webAuthnSignRequest}', '${authenticationForm.mode}')
                 </script>

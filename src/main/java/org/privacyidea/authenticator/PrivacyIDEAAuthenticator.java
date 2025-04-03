@@ -85,11 +85,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     private Pair loadConfiguration(final AuthenticationFlowContext context)
     {
         // Get the configuration and privacyIDEA instance for the current realm
-        // If none is found then create a new one
-        final int incomingHash = context.getAuthenticatorConfig().getConfig().hashCode();
+        // If none is found or the configuration has changed, create a new one
         final String kcRealm = context.getRealm().getName();
         final Pair currentPair = piInstanceMap.get(kcRealm);
-
+        final int incomingHash = context.getAuthenticatorConfig().getConfig().hashCode();
         if (currentPair == null || incomingHash != currentPair.configuration().configHash())
         {
             final Map<String, String> configMap = context.getAuthenticatorConfig().getConfig();
@@ -97,14 +96,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             String kcVersion = Version.VERSION;
             String providerVersion = PrivacyIDEAAuthenticator.class.getPackage().getImplementationVersion();
             String fullUserAgent = PLUGIN_USER_AGENT + "/" + providerVersion + " Keycloak/" + kcVersion;
-            String clientIP = config.forwardClientIP() ? context.getConnection().getRemoteAddr() : "";
             PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
                                                  .verifySSL(config.sslVerify())
                                                  .logger(this)
                                                  .realm(config.realm())
                                                  .serviceAccount(config.serviceAccountName(), config.serviceAccountPass())
                                                  .serviceRealm(config.serviceAccountRealm())
-                                                 .forwardClientIP(clientIP)
+                                                 .httpTimeoutMs(config.httpTimeoutMs())
                                                  .build();
 
             // Close the old privacyIDEA instance to shut down the thread pool before replacing it in the map
@@ -156,7 +154,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
         }
-
         String currentPassword = null;
         // In some cases, there will be no FormParameters so check if it is even possible to get the password
         if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
@@ -167,23 +164,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         Map<String, String> headers = getHeaders(context, config);
 
-        String otpMessage = "Please enter your OTP:";
-        if (!config.defaultOTPMessage().isEmpty())
-        {
-            otpMessage = config.defaultOTPMessage();
-        }
-
         // Set the default values
         piForm.setPollInterval(config.pollingInterval().get(0));
-        piForm.setOtpAvailable(true);
-        piForm.setOtpMessage(otpMessage);
-        piForm.setPushAvailable(false);
         piForm.setAutoSubmitLength(config.otpLength());
 
         // Trigger challenges if configured. If not, the function does nothing
         if (user != null)
         {
-            PIResponse response = tryTriggerFirstStep(user.getUsername(), privacyIDEA, config, currentPassword, headers);
+            PIResponse response = tryTriggerFirstStep(user.getUsername(), privacyIDEA, config, currentPassword,
+                                                      getAdditionalParams(context, config), headers);
             if (response != null)
             {
                 if (response.authenticationSuccessful())
@@ -229,7 +218,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     }
 
     public PIResponse tryTriggerFirstStep(String username, PrivacyIDEA privacyIDEA, Configuration config, String currentPassword,
-                                          Map<String, String> headers)
+                                          Map<String, String> additionalParams, Map<String, String> headers)
     {
         // Try to trigger challenges if configured. Using a service account has precedence over sending the (static) password
         PIResponse triggerResponse = null;
@@ -237,13 +226,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             if (config.triggerChallenge())
             {
-                triggerResponse = privacyIDEA.triggerChallenges(username, headers);
+                triggerResponse = privacyIDEA.triggerChallenges(username, additionalParams, headers);
             }
             else if (config.sendPassword())
             {
                 if (currentPassword != null)
                 {
-                    triggerResponse = privacyIDEA.validateCheck(username, currentPassword, null, headers);
+                    triggerResponse = privacyIDEA.validateCheck(username, currentPassword, null, additionalParams, headers);
                 }
                 else
                 {
@@ -252,7 +241,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             else if (config.sendStaticPass())
             {
-                triggerResponse = privacyIDEA.validateCheck(username, config.staticPass(), null, headers);
+                triggerResponse = privacyIDEA.validateCheck(username, config.staticPass(), null, additionalParams, headers);
             }
         }
         else
@@ -408,7 +397,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.resetFlow();
             return;
         }
-
         // Get the data from the forms and session
         LoginFormsProvider kcForm = context.form();
         //log("formData:");
@@ -447,7 +435,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.resetFlow();
             return;
         }
-
+        piForm.setAutoSubmitLength(config.otpLength());
         String transactionID = context.getAuthenticationSession().getAuthNote(NOTE_TRANSACTION_ID);
         Map<String, String> headers = getHeaders(context, config);
 
@@ -595,7 +583,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (pollTransactionStatus == ChallengeStatus.accept)
             {
                 // If the challenge has been answered, finalize with a call to validate check
-                response = privacyIDEA.validateCheck(currentUsername, "", transactionID, headers);
+                response = privacyIDEA.validateCheck(currentUsername, "", transactionID, getAdditionalParams(context, config), headers);
             }
             else if (pollTransactionStatus == ChallengeStatus.declined)
             {
@@ -619,13 +607,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else
             {
                 response = privacyIDEA.validateCheckWebAuthn(currentUsername, transactionID, piFormResult.webAuthnSignResponse,
-                                                             piFormResult.origin, headers);
+                                                             piFormResult.origin, getAdditionalParams(context, config), headers);
             }
         }
         else if (Mode.USERNAMEPASSWORD.equals(currentMode))
         {
             String password = formData.getFirst(PASSWORD);
-            response = tryTriggerFirstStep(currentUsername, privacyIDEA, config, password, headers);
+            response = tryTriggerFirstStep(currentUsername, privacyIDEA, config, password, getAdditionalParams(context, config), headers);
         }
         else if (!piFormResult.modeChanged)
         {
@@ -635,7 +623,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 transactionID = "";
             }
             // If the transaction ID is not present, it will not be added to validateCheck, so no need to check it here
-            response = privacyIDEA.validateCheck(currentUsername, otp, transactionID, headers);
+            response = privacyIDEA.validateCheck(currentUsername, otp, transactionID, getAdditionalParams(context, config), headers);
         }
 
         // Evaluate the response: Check for success, error or new challenges
@@ -722,6 +710,24 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
         }
+    }
+
+    private Map<String, String> getAdditionalParams(AuthenticationFlowContext context, Configuration config)
+    {
+        Map<String, String> additionalParams = new LinkedHashMap<>();
+        if (config.forwardClientIP())
+        {
+            String clientIP = context.getConnection().getRemoteAddr();
+            if (StringUtil.isBlank(clientIP))
+            {
+                logger.error("ClientIP is empty, cannot forward it to privacyIDEA.");
+            }
+            else
+            {
+                additionalParams.put("clientip", clientIP);
+            }
+        }
+        return additionalParams;
     }
 
     /**
