@@ -2,29 +2,22 @@
 
 This provider allows you to use privacyIDEA's MFA with Keycloak.  
 We added a detailed how-to on our [blog](https://community.privacyidea.org/t/how-to-use-keycloak-with-privacyidea/1132).
+With version 1.5.0 of this provider, the username and password step of keycloak is not required any more, this provider will handle it.
+If you still want to use it, this provider will use the username and password provided.
 
 ## Download
 
 * Check our latest [releases](https://github.com/privacyidea/keycloak-provider/releases).
-* Download the PrivacyIDEA-Provider.jar for your keycloak version.
 
 ## Installation
 
 **Make sure to pick the correct jar for your keycloak version from
-the [releases page](https://github.com/privacyidea/keycloak-provider/releases)!**
-
-#### Keycloak >= 17
+the [releases page](https://github.com/privacyidea/keycloak-provider/releases) if there are multiple options!**
 
 * Keycloak has to be shut down.
 * Move the jar file into the `providers` directory.
-* Go to `bin` and run `kc.sh build` (or the batch file on windows).
+* Go to `bin` and run `kc.sh build` (or the batch file on windows). Or just start keycloak, depending on the version.
 * Start keycloak again.
-
-#### Keycloak <= 16
-
-* Move the packed jar file into your deployment directory `standalone/deployment`.
-* Optional: Move the template privacyIDEA.ftl to `themes/base/login`.
-  NOTE: For releases from version 0.6 onward, the template will be deployed automatically, so this step can be skipped.
 
 Now you can enable the execution for your auth flow.  
 If you set the execution as 'required', every user needs to log in with a second factor.
