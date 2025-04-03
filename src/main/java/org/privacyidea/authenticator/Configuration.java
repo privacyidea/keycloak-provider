@@ -111,13 +111,20 @@ public class Configuration
         this.pollingInterval.addAll(POLLING_INTERVALS);
 
         String entry = configMap.get(CONFIG_CUSTOM_HEADERS);
-        String[] entries = entry.split("##");
-        for (String e : entries)
+        if (entry != null && !entry.isEmpty())
         {
-            String[] keyValue = e.split("=");
-            if (keyValue.length == 2)
+            String[] entries = entry.split("##");
+            for (String e : entries)
             {
-                customHeaders.put(keyValue[0], keyValue[1]);
+                if (e == null || e.isEmpty())
+                {
+                    continue;
+                }
+                String[] keyValue = e.split("=");
+                if (keyValue.length == 2)
+                {
+                    customHeaders.put(keyValue[0], keyValue[1]);
+                }
             }
         }
 

@@ -483,7 +483,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (piFormResult.passkeyLoginRequested)
         {
             PIResponse res = privacyIDEA.validateInitialize("passkey");
-            if (StringUtil.isNotBlank(res.passkeyChallenge))
+            if (res != null && StringUtil.isNotBlank(res.passkeyChallenge))
             {
                 piForm.setPasskeyChallenge(res.passkeyChallenge);
                 piForm.setMode(Mode.PASSKEY);
