@@ -1,91 +1,239 @@
-function doWebAuthn ()
-{
-    // If we are in push mode, reload the page because in push mode the page refreshes every x seconds which could interrupt WebAuthn
-    // Afterward, WebAuthn is started directly
-    if (piGetValue("mode") === "push")
-    {
-        piChangeMode("webauthn");
-    }
-    else
-    {
-        try
-        {
-            const requestStr = piGetValue("webauthnSignRequest");
-            const requestJSON = JSON.parse(requestStr);
-            const webAuthnSignResponse = window.pi_webauthn.sign(requestJSON);
+function bytesToBase64(bytes) {
+    const binString = Array.from(bytes, (byte) =>
+        String.fromCodePoint(byte),).join("");
+    return btoa(binString);
+}
 
-            webAuthnSignResponse.then((webauthnResponse) => {
-                piSetValue("webauthnSignResponse", JSON.stringify(webauthnResponse));
-                piSubmit();
+function base64URLToBytes(base64URLString) {
+    const base64 = base64URLString.replace(/-/g, '+').replace(/_/g, '/');
+    const padLength = (4 - (base64.length % 4)) % 4;
+    const padded = base64.padEnd(base64.length + padLength, '=');
+    const binary = atob(padded);
+    const buffer = new ArrayBuffer(binary.length);
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return buffer;
+}
+
+function webAuthnAuthentication(signRequest, mode) {
+    if (mode === "push") {
+        changeMode("webauthn");
+        return;
+    }
+    if (!signRequest) {
+        console.log("WebAuthn Authentication: Challenge data is empty!")
+        return "";
+    }
+    let signRequestObject = JSON.parse(signRequest.replace(/(&quot;)/g, "\""));
+    try {
+        const webAuthnSignResponse = window.pi_webauthn.sign(signRequestObject);
+        webAuthnSignResponse.then((webauthnResponse) => {
+            formResult.webAuthnSignResponse = JSON.stringify(webauthnResponse);
+            submitForm();
+        });
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+function passkeyAuthentication(passkeyChallenge, mode) {
+    if (mode === "push") {
+        changeMode("passkey");
+        return;
+    }
+    if (!passkeyChallenge) {
+        console.log("Passkey Authentication: Challenge data is empty!")
+        return "";
+    }
+    formResult.passkeyLoginCancelled = false;
+    let challengeObject = JSON.parse(passkeyChallenge.replace(/(&quot;)/g, "\""));
+    let userVerification = "preferred";
+    if (["required", "preferred", "discouraged"].includes(challengeObject.user_verification)) {
+        userVerification = challengeObject.user_verification;
+    }
+    navigator.credentials.get({
+        publicKey: {
+            challenge: Uint8Array.from(challengeObject.challenge, c => c.charCodeAt(0)),
+            rpId: challengeObject.rpId,
+            userVerification: userVerification,
+        },
+    }).then(credential => {
+        let params = {
+            transaction_id: challengeObject.transaction_id,
+            credential_id: credential.id,
+            authenticatorData: bytesToBase64(
+                new Uint8Array(credential.response.authenticatorData)),
+            clientDataJSON: bytesToBase64(new Uint8Array(credential.response.clientDataJSON)),
+            signature: bytesToBase64(new Uint8Array(credential.response.signature)),
+            userHandle: bytesToBase64(new Uint8Array(credential.response.userHandle)),
+        };
+        formResult.passkeySignResponse = JSON.stringify(params);
+        submitForm();
+    }, function (error) {
+        console.log("Passkey authentication error: " + error);
+        formResult.passkeyLoginCancelled = true;
+    });
+}
+
+// Use the passkey_registration from the response as input to this function
+function registerPasskey(registrationData) {
+    let data = JSON.parse(registrationData.replace(/(&quot;)/g, "\""));
+    let excludedCredentials = [];
+    if (data.excludeCredentials) {
+        for (const cred of data.excludeCredentials) {
+            excludedCredentials.push({
+                id: base64URLToBytes(cred.id),
+                type: cred.type,
             });
         }
-        catch (err)
-        {
-            console.log(piGetValue("webauthnErrorMsg") + err);
-            piSetValue("errorMessage", piGetValue("webauthnErrorMsg") + err);
+    }
+
+    return navigator.credentials.create({
+        publicKey: {
+            rp: data.rp,
+            user: {
+                id: base64URLToBytes(data.user.id),
+                name: data.user.name,
+                displayName: data.user.displayName
+            },
+            challenge: Uint8Array.from(data.challenge, c => c.charCodeAt(0)),
+            pubKeyCredParams: data.pubKeyCredParams,
+            excludeCredentials: excludedCredentials,
+            authenticatorSelection: data.authenticatorSelection,
+            timeout: data.timeout,
+            extensions: {
+                credProps: true,
+            },
+            attestation: data.attestation
         }
+    }).then(function (publicKeyCred) {
+        let params = {
+            credential_id: publicKeyCred.id,
+            rawId: bytesToBase64(new Uint8Array(publicKeyCred.rawId)),
+            authenticatorAttachment: publicKeyCred.authenticatorAttachment,
+            attestationObject: bytesToBase64(
+                new Uint8Array(publicKeyCred.response.attestationObject)),
+            clientDataJSON: bytesToBase64(new Uint8Array(publicKeyCred.response.clientDataJSON)),
+        }
+        if (publicKeyCred.response.attestationObject) {
+            params.attestationObject = bytesToBase64(
+                new Uint8Array(publicKeyCred.response.attestationObject));
+        }
+        const extResults = publicKeyCred.getClientExtensionResults();
+        if (extResults.credProps) {
+            params.credProps = extResults.credProps;
+        }
+        formResult.passkeyRegistrationResponse = JSON.stringify(params);
+        submitForm();
+    }, function (error) {
+        console.log("Error while registering passkey:");
+        console.log(error);
+        return null;
+    });
+}
+
+function requestPasskeyLogin() {
+    formResult.passkeyLoginRequested = true;
+    submitForm();
+}
+
+function authenticationReset() {
+    formResult.authenticationResetRequested = true;
+    submitForm();
+}
+
+function setPushReload(intervalSeconds) {
+    if (!intervalSeconds) {
+        console.log("Interval seconds is empty, using default of 2s.");
+        intervalSeconds = 2;
+    }
+    window.setTimeout(() => {
+        submitForm();
+    }, parseInt(intervalSeconds) * 1000);
+}
+
+function setAutoSubmit(inputLength) {
+    let otpField = document.querySelector("#otp")
+    if (otpField) {
+        otpField.addEventListener("keyup", function () {
+            // catch parse int error?
+            if (otpField.value.length === parseInt(inputLength)) {
+                submitForm();
+            }
+        });
     }
 }
 
-function piMain ()
-{
-    // ALTERNATE TOKEN SECTION VISIBILITY
-    if (piGetValue("webauthnSignRequest").length < 1 && piGetValue("isPushAvailable") !== true)
-    {
-        piDisableElement("alternateToken");
-    }
+function changeMode(newMode) {
+    //console.log("changeMode to " + newMode);
+    formResult.modeChanged = true;
+    formResult.newMode = newMode;
+    submitForm();
+}
 
-    // PUSH
-    if (piGetValue("mode") === "push")
-    {
-        piDisableElement("kc-login");
-        piDisableElement("otp");
-        window.onload = () => {
-            window.setTimeout(() => {
-                piSubmit();
-            }, parseInt(piGetValue("pollingInterval")) * 1000);
-        }
-    }
-
-    // POLL BY RELOAD
-    if (piGetValue("mode") === "push")
-    {
-        const pollingIntervals = [ 4, 3, 2 ];
-        let loadCounter = piGetValue("loadCounter");
-        let refreshTime;
-
-        if (loadCounter > (pollingIntervals.length - 1))
-        {
-            refreshTime = pollingIntervals[(pollingIntervals.length - 1)];
-        }
-        else
-        {
-            refreshTime = pollingIntervals[Number(loadCounter - 1)];
-        }
-
-        refreshTime *= 1000;
-
-        window.setTimeout(function () {
-            piSubmit();
-        }, refreshTime);
-    }
-
-    // WEBAUTHN
-    if (piGetValue("mode") === "webauthn")
-    {
-        window.onload = () => {
-            doWebAuthn();
-        }
-    }
-    if (!window.location.origin)
-    {
+function submitForm() {
+    if (!window.location.origin) {
         window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':'
-                                 + window.location.port : '');
+            + window.location.port : '');
     }
-    piSetValue("origin", window.origin);
+    formResult.origin = window.location.origin;
+    //console.log("Submit, formResult:");
+    //console.log(formResult);
+    document.querySelector("#authenticationFormResult").value = JSON.stringify(formResult);
+    document.forms["kc-otp-login-form"].requestSubmit();
 }
 
-// Wait until the document is ready
-document.addEventListener("DOMContentLoaded", function () {
-    piMain();
-});
+function startPollingInBrowser(url, transactionId, resourcesPath) {
+    let pushButton = document.querySelector("#pushButton");
+    if (pushButton) {
+        pushButton.style.display = "none";
+    }
+    let worker;
+    if (typeof (Worker) !== "undefined") {
+        if (typeof (worker) == "undefined") {
+            worker = new Worker(resourcesPath + "/js/pi-pollTransaction.worker.js");
+            let form = document.querySelector("#kc-login")
+            if (form) {
+                form.addEventListener('click', function (e) {
+                    if (worker) {
+                        worker.terminate();
+                        worker = undefined;
+                    }
+                });
+            }
+            worker.postMessage({'cmd': 'url', 'msg': url});
+            worker.postMessage({'cmd': 'transactionID', 'msg': transactionId});
+            worker.postMessage({'cmd': 'start'});
+            worker.addEventListener('message', function (e) {
+                let data = e.data;
+                switch (data.status) {
+                    case 'success':
+                        submitForm();
+                        break;
+                    case 'cancel':
+                        formResult.pollInBrowserCancelled = true;
+                        worker = undefined;
+                        submitForm();
+                        break;
+                    case 'error':
+                        console.log("Poll in Browser error: " + data.message);
+                        formResult.pollInBrowserCancelled = true;
+                        worker = undefined;
+                        if (pushButton) {
+                            pushButton.style.display = "initial";
+                        }
+                }
+            });
+        }
+    } else {
+        console.log("Poll in Browser error: The browser doesn't support WebWorker.");
+        worker.terminate();
+        formResult.pollInBrowserCancelled = true;
+        formResult.pollInBrowserError = "The browser doesn't support WebWorker.";
+        if (pushButton) {
+            pushButton.style.display = "initial";
+        }
+    }
+}

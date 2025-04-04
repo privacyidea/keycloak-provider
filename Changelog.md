@@ -1,9 +1,19 @@
 # Changelog
 
+### v1.5.0 - 2025-04-09
+
+* Added support for passkey token, including enroll_via_multichallenge.
+* Added the capability to request and check username and password, to be able to use passkey in the first step. This means
+it is no longer necessary to have username and or password requested before using this plugin in the authentication, but still possible.
+* Removed poll interval setting.
+* Removed default OTP text setting, texts can be edited in the theme-resources/messages directory.
+* Added a configuration to allow setting custom headers.
+* Added a configuration to set custom http timeouts.
+
 ### v1.4.1 - 2024-03-05
 
 * Fixed a bug that would cause empty error messages to appear in the log
-* The threadpool allows core threads to time out, which will reduce the memory footprint of the provider 
+* The thread pool allows core threads to time out, which will reduce the memory footprint of the provider 
 
 ### v1.4.0 - 2023-11-07
 
@@ -25,7 +35,7 @@
 
 ### v1.1.0 - 2022-07-01
 
-* Included groups setting to specify groups of keycloak users for which 2FA should be activated (#54). Check the [configuration documenation](https://github.com/privacyidea/keycloak-provider#configuration).
+* Included groups setting to specify groups of keycloak users for which 2FA should be activated (#54). Check the [configuration documentation](https://github.com/privacyidea/keycloak-provider#configuration).
 * It is now possible to configure the names of header that should be forwarded to privacyIDEA (#94)
 * If a user has multiple WebAuthn token, all of them can be used to log in (#84)
 

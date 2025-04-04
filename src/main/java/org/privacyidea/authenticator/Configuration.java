@@ -19,12 +19,34 @@ package org.privacyidea.authenticator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.privacyidea.authenticator.Const.*;
+import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
+import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
+import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
+import static org.privacyidea.authenticator.Const.CONFIG_FORWARD_CLIENT_IP;
+import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_OTP_LENGTH;
+import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
+import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
+import static org.privacyidea.authenticator.Const.CONFIG_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
+import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_PASS;
+import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_STATIC_PASS;
+import static org.privacyidea.authenticator.Const.CONFIG_TRIGGER_CHALLENGE;
+import static org.privacyidea.authenticator.Const.CONFIG_VERIFY_SSL;
+import static org.privacyidea.authenticator.Const.POLLING_INTERVALS;
+import static org.privacyidea.authenticator.Const.TRUE;
 
-class Configuration
+
+public class Configuration
 {
     private final String serverURL;
     private final String realm;
@@ -46,9 +68,10 @@ class Configuration
     private final String pollInBrowserUrl;
     private final List<Integer> pollingInterval = new ArrayList<>();
     private final int configHash;
-    private final String defaultOTPMessage;
+    private final Map<String, String> customHeaders = new HashMap<>();
+    private final int httpTimeoutMs;
 
-    Configuration(Map<String, String> configMap)
+    public Configuration(Map<String, String> configMap)
     {
         this.configHash = configMap.hashCode();
         this.serverURL = configMap.get(CONFIG_SERVER);
@@ -60,13 +83,11 @@ class Configuration
         this.serviceAccountRealm = configMap.get(CONFIG_SERVICE_REALM) == null ? "" : configMap.get(CONFIG_SERVICE_REALM);
         this.staticPass = configMap.get(CONFIG_STATIC_PASS) == null ? "" : configMap.get(CONFIG_STATIC_PASS);
         this.forwardClientIP = configMap.get(CONFIG_FORWARD_CLIENT_IP) != null && configMap.get(CONFIG_FORWARD_CLIENT_IP).equals(TRUE);
-        this.defaultOTPMessage = configMap.get(CONFIG_DEFAULT_MESSAGE) == null ? "" : configMap.get(CONFIG_DEFAULT_MESSAGE);
         this.otpLength = configMap.get(CONFIG_OTP_LENGTH) == null ? "" : configMap.get(CONFIG_OTP_LENGTH);
         this.pollInBrowser = (configMap.get(CONFIG_POLL_IN_BROWSER) != null && configMap.get(CONFIG_POLL_IN_BROWSER).equals(TRUE));
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         this.doSendStaticPass = configMap.get(CONFIG_SEND_STATIC_PASS) != null && configMap.get(CONFIG_SEND_STATIC_PASS).equals(TRUE);
-        // PI uses all lowercase letters for token types so change it here to match it internally
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
@@ -87,31 +108,27 @@ class Configuration
             this.forwardedHeaders.addAll(Arrays.asList(forwardedHeadersStr.split(",")));
         }
 
-        // Set intervals to either default or configured values
-        String s = configMap.get(CONFIG_PUSH_INTERVAL);
-        if (s != null)
+        this.pollingInterval.addAll(POLLING_INTERVALS);
+
+        String entry = configMap.get(CONFIG_CUSTOM_HEADERS);
+        if (entry != null && !entry.isEmpty())
         {
-            List<String> strPollingIntervals = Arrays.asList(s.split(","));
-            if (!strPollingIntervals.isEmpty())
+            String[] entries = entry.split("##");
+            for (String e : entries)
             {
-                this.pollingInterval.clear();
-                for (String str : strPollingIntervals)
+                if (e == null || e.isEmpty())
                 {
-                    try
-                    {
-                        this.pollingInterval.add(Integer.parseInt(str));
-                    }
-                    catch (NumberFormatException e)
-                    {
-                        this.pollingInterval.add(DEFAULT_POLLING_INTERVAL);
-                    }
+                    continue;
+                }
+                String[] keyValue = e.split("=");
+                if (keyValue.length == 2)
+                {
+                    customHeaders.put(keyValue[0], keyValue[1]);
                 }
             }
         }
-        else
-        {
-            this.pollingInterval.addAll(DEFAULT_POLLING_ARRAY);
-        }
+
+        this.httpTimeoutMs = Integer.parseInt(configMap.getOrDefault("httpTimeoutMs", "10000"));
     }
 
     int configHash()
@@ -214,8 +231,13 @@ class Configuration
         return doSendPassword;
     }
 
-    String defaultOTPMessage()
+    Map<String, String> customHeaders()
     {
-        return defaultOTPMessage;
+        return customHeaders;
+    }
+
+    public int httpTimeoutMs()
+    {
+        return httpTimeoutMs;
     }
 }

@@ -1,9 +1,15 @@
 <#import "template.ftl" as layout>
+<!-- BASE JS SCRIPT: Create the formResult object (AuthenticationFormResult.java) -->
+<script>
+    //let data = "${authenticationForm}";
+    //console.log(data.replace(/(&quot;)/g, "\""));
+    let formResult = {
+        passkeyLoginRequested: false
+    };
+</script>
 <head>
     <link rel="stylesheet" href="${url.resourcesPath}/css/pi-form.css">
     <script type="text/javascript" src="${url.resourcesPath}/js/pi-webauthn.js"></script>
-    <script type="text/javascript" src="${url.resourcesPath}/js/pi-utils.js"></script>
-    <script type="text/javascript" src="${url.resourcesPath}/js/pi-eventListeners.js"></script>
     <script type="text/javascript" src="${url.resourcesPath}/js/pi-form.js"></script>
 </head>
 <@layout.registrationLayout; section>
@@ -11,97 +17,211 @@
         ${msg("loginTitle",realm.name)}
     <#elseif section = "header">
         ${msg("loginTitleHtml",realm.name)}
-
     <#elseif section = "form">
-        <form id="kc-otp-login-form" onsubmit="login.disabled = true; return true;" class="${properties.kcFormClass!}"
-              action="${url.loginAction}"
-              method="post">
+        <form id="kc-otp-login-form" onsubmit="submitForm();"
+              class="${properties.kcFormClass!}"
+              action="${url.loginAction}" method="post">
             <div class="${properties.kcFormGroupClass!}">
                 <div class="${properties.kcInputWrapperClass!}">
-                    <#if (!hasError)!true>
-                        <#if mode = "push">
-                            <#if (pushImage!"") != "">
+                    <!-- IMAGES AND PROMPTS -->
+                    <!-- Show images if there is no error message, or if push has not been accepted yet -->
+                    <#if !authenticationForm.errorMessage?has_content || authenticationForm.errorMessage == "push_auth_not_verified">
+                        <#if authenticationForm.mode = "push" && !(authenticationForm.passkeyRegistration?has_content)>
+                            <#if authenticationForm.pushImage?has_content>
                                 <div class="center-text">
-                                    <img alt="chal_img" src="${pushImage}">
+                                    <img alt="challenge_img" src="${authenticationForm.pushImage}">
                                 </div>
                             </#if>
-                            <h4 class="bold-text">${pushMessage}</h4>
-                        <#elseif mode = "webauthn">
-                            <#if (webauthnImage!"") != "">
+                            <h4 class="bold-text">${authenticationForm.pushMessage}</h4>
+                        <#elseif authenticationForm.mode = "webauthn" && !(authenticationForm.passkeyRegistration?has_content)>
+                            <#if authenticationForm.webAuthnImage?has_content>
                                 <div class="center-text">
-                                    <img alt="chal_img" src="${webauthnImage}">
+                                    <img alt="challenge_img" src="${authenticationForm.webAuthnImage}">
                                 </div>
                             </#if>
-                        <#elseif mode = "otp">
-                            <#if (otpImage!"") != "">
+                        <#elseif authenticationForm.mode = "otp" && !(authenticationForm.passkeyRegistration?has_content)>
+                            <#if authenticationForm.otpImage?has_content>
                                 <div class="center-text">
-                                    <img alt="chal_img" src="${otpImage}">
+                                    <img alt="challenge_img" src="${authenticationForm.otpImage}">
                                 </div>
                             </#if>
-                            <h4 class="bold-text">${otpMessage}</h4>
-                        <#else>
-                            <h4 class="bold-text">${otpMessage}</h4>
+                        <#elseif authenticationForm.mode = "usernamepassword" && !(authenticationForm.passkeyRegistration?has_content)>
+                            <h4 class="bold-text">${msg('privacyidea.usernamepasswordPrompt')}</h4>
+                        <#elseif authenticationForm.mode = "username" && !(authenticationForm.passkeyRegistration?has_content)>
+                            <h4 class="bold-text">${msg('privacyidea.usernamePrompt')}</h4>
+                        <#elseif authenticationForm.mode = "password" && !(authenticationForm.passkeyRegistration?has_content)>
+                            <h4 class="bold-text">${msg('privacyidea.passwordPrompt')}</h4>
                         </#if>
-                    </#if>
-
-                    <input id="otp" name="otp" type="text" class="${properties.kcInputClass!}" autofocus/>
-                </div>
-            </div>
-
-            <div class="${properties.kcFormGroupClass!}">
-                <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
-                    <#-- These inputs will be returned to privacyIDEAAuthenticator -->
-                    <input id="mode" name="mode" value="${mode}" type="hidden">
-                    <input id="pushAvailable" name="pushAvailable" value="${pushAvailable?c}" type="hidden">
-                    <input id="otpAvailable" name="otpAvailable" value="${otpAvailable?c}" type="hidden">
-                    <input id="pushMessage" name="pushMessage" value="${pushMessage!""}" type="hidden">
-                    <input id="otpMessage" name="otpMessage" value="${otpMessage!""}" type="hidden">
-                    <input id="pushImage" name="pushImage" value="${pushImage!""}" type="hidden">
-                    <input id="otpImage" name="otpImage" value="${otpImage!""}" type="hidden">
-                    <input id="webauthnImage" name="webauthnImage" value="${webauthnImage!""}" type="hidden">
-                    <input id="otpLength" name="otpLength" value="${otpLength!""}" type="hidden">
-                    <input id="modeChanged" name="modeChanged" value="false" type="hidden">
-                    <input id="resourcesPath" name="resourcesPath" value="${url.resourcesPath}" type="hidden">
-                    <input id="pollInBrowserUrl" name="pollInBrowserUrl" value="${pollInBrowserUrl}" type="hidden">
-                    <input id="pollInBrowserFailed" name="pollInBrowserFailed" value="${pollInBrowserFailed?c}" type="hidden">
-                    <input id="pollInBrowserDeclined" name="pollInBrowserDeclined" value="${pollInBrowserDeclined?c}" type="hidden">
-                    <input id="transactionID" name="transactionID" value="${transactionID}" type="hidden">
-                    <input id="errorMsg" name="errorMsg" value="" type="hidden">
-                    <input id="webauthnSignRequest" name="webauthnSignRequest" value="${webauthnSignRequest!""}" type="hidden">
-                    <input id="webauthnSignResponse" name="webauthnSignResponse" value="" type="hidden">
-                    <input id="origin" name="origin" value="" type="hidden">
-                    <input id="pollInBrowserErrorMsg" name="pollInBrowserErrorMsg"
-                           value="${msg('privacyidea.pollInBrowserError')}" type="hidden">
-                    <input id="noWebWorkerSupportMsg" name="noWebWorkerSupportMsg"
-                           value="${msg('privacyidea.noWebWorkerSupport')}" type="hidden">
-                    <input id="webauthnErrorMsg" name="webauthnErrorMsg" value="${msg('privacyidea.webauthnError')}" type="hidden">
-
-                    <input class="pf-c-button pf-m-primary pf-m-block btn-lg" name="login" id="kc-login" type="submit"
-                           value="${msg('privacyidea.signIn')}"/>
-
-                    <#-- ALTERNATE LOGIN OPTIONS class="${properties.kcFormButtonsClass!}" -->
-                    <div id="alternateToken" class="padding-top-20">
-                        <h3 id="alternateTokenHeader">${msg('privacyidea.alternateLoginOptions')}</h3>
-
-                        <div class="${properties.kcFormButtonsWrapperClass!}">
-                            <#if otpAvailable>
-                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="otpButton" id="otpButton" type="button" value="${msg('privacyidea.otpButton')}"/>
-                            </#if>
-
-                            <#if pushAvailable>
-                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="pushButton" id="pushButton" type="button" value="${msg('privacyidea.pushButton')}"/>
-                            </#if>
-
-                            <#if !(webauthnSignRequest = "")>
-                                <input class="${properties.kcButtonClass!} ${properties.kcButtonDefaultClass!} ${properties.kcButtonLargeClass!}"
-                                       name="webauthnButton" id="webAuthnButton" type="button" value="${msg('privacyidea.webauthnButton')}"/>
-                            </#if>
+                        <!-- ENROLLMENT LINK -->
+                        <#if authenticationForm.enrollmentLink?has_content>
+                            <a href="${authenticationForm.enrollmentLink}"
+                               target="_blank">${msg('privacyidea.enrollmentLinkText')}</a>
+                        </#if>
+                    <#else>
+                        <!-- ERROR MESSAGE -->
+                        <div class="${properties.kcContentWrapperClass!}">
+                            <div class="${properties.kcLabelWrapperClass!}">
+                                <label for="login-error">
+                                    <span class="${properties.kcLabelClass!}">
+                                        <#if authenticationForm.errorMessage == "push_auth_not_verified">
+                                            ${msg('privacyidea.pushNotYetVerified')}
+                                        <#else>
+                                            ${authenticationForm.errorMessage}
+                                        </#if>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
+                    </#if>
+                    <!-- USERNAME INPUT -->
+                    <#if ["usernamepassword", "username"]?seq_contains(authenticationForm.mode)
+                    && !(authenticationForm.passkeyRegistration?has_content)>
+                        <div class="${properties.kcContentWrapperClass!}">
+                            <div class="${properties.kcLabelWrapperClass!}">
+                                <label for="username"><span class="${properties.kcLabelClass!}">Username</span></label>
+                            </div>
+                            <div class="${properties.kcInputWrapperClass!}">
+                                <input id="username" name="username" type="text" class="${properties.kcInputClass!}"
+                                       value="" autofocus/>
+                            </div>
+                        </div>
+                    </#if>
+                    <!-- PASSWORD INPUT -->
+                    <#if ["usernamepassword", "password"]?seq_contains(authenticationForm.mode)
+                    && !(authenticationForm.passkeyRegistration?has_content)>
+                        <div class="${properties.kcContentWrapperClass!}">
+                            <div class="${properties.kcLabelWrapperClass!}">
+                                <label for="password"><span class="${properties.kcLabelClass!}">Password</span></label>
+                            </div>
+                            <div class="${properties.kcInputWrapperClass!}">
+                                <input id="password" name="password" type="password" class="${properties.kcInputClass!}"
+                                       value="" autofocus/>
+                            </div>
+                        </div>
+                    </#if>
+                    <!-- OTP INPUT -->
+                    <#if !(["usernamepassword", "push", "passkey"]?seq_contains(authenticationForm.mode))
+                    &&  !(authenticationForm.passkeyRegistration?has_content)>
+                        <div class="${properties.kcContentWrapperClass!}">
+                            <div class="${properties.kcLabelWrapperClass!}">
+                                <label for="otp"><span class="${properties.kcLabelClass!}">
+                                        <#if (authenticationForm.otpMessage)?has_content>
+                                            ${authenticationForm.otpMessage}
+                                        <#else>
+                                            ${msg('privacyidea.otpPrompt')}
+                                        </#if>
+                                    </span></label>
+                            </div>
+                            <div class="${properties.kcInputWrapperClass!}">
+                                <input id="otp" name="otp" type="text" class="${properties.kcInputClass!}"
+                                       value="" autocomplete="new-password" autofocus/>
+                            </div>
+                        </div>
+                    </#if>
+                    <!-- Passkey Registration (enroll_via_multichallenge) with retry button -->
+                    <#if authenticationForm.passkeyRegistration?has_content>
+                        <script>
+                            registerPasskey("${authenticationForm.passkeyRegistration}");
+                        </script>
+                        <input class="pf-v5-c-button pf-m-primary pf-m-block" id="retryPasskeyRegistration"
+                               value="${msg('privacyidea.passkeyRegisterRetryButton')}" name="retryPasskeyRegistration"
+                               type="button" onclick="registerPasskey('${authenticationForm.passkeyRegistration}')"/>
+                    </#if>
                 </div>
             </div>
+
+            <!-- Sign In Button -->
+            <#if !(["passkey", "push"]?seq_contains(authenticationForm.mode)) && !(authenticationForm.passkeyRegistration?has_content)>
+                <div id="kc-username" class="${properties.kcFormGroupClass!}">
+                    <input class="pf-v5-c-button pf-m-primary pf-m-block" name="login" id="kc-login"
+                           type="submit" value="${msg('privacyidea.signIn')}"/>
+                </div>
+            </#if>
+
+            <!-- AuthenticationFormResult: JSON of that class with the data that has to be passed back -->
+            <input id="authenticationFormResult" name="authenticationFormResult" value="" type="hidden">
+            <!-- Readonly authenticationForm is also passed back to preserve the state -->
+            <input id="authenticationForm" name="authenticationForm" value="${authenticationForm!""}" type="hidden">
+
+            <!-- Passkey Button: Initiate passkey login by getting a challenge -->
+            <#if !authenticationForm.passkeyRegistration?has_content && authenticationForm.firstStep>
+                <div class="${properties.kcFormGroupClass!}">
+                    <input class="pf-v5-c-button pf-m-block" type="button"
+                           name="passkeyInitiateButton" id="passkeyInitiateButton" onclick="requestPasskeyLogin()"
+                           value="${msg('privacyidea.passkeyInitiateButton')}"/>
+                </div>
+            </#if>
+            <!-- Passkey Authentication with retry button -->
+            <#if authenticationForm.passkeyChallenge?has_content>
+                <script>
+                    passkeyAuthentication("${authenticationForm.passkeyChallenge}", "${authenticationForm.mode}");
+                </script>
+                <input class="pf-v5-c-button pf-m-primary pf-m-block" id="retryPasskeyAuthentication"
+                       value="${msg('privacyidea.passkeyRetryButton')}" name="retryPasskeyAuthentication" type="button"
+                       onclick="passkeyAuthentication('${authenticationForm.passkeyChallenge}', '${authenticationForm.mode}')"/>
+                <input class="pf-v5-c-button pf-m-block" id="resetAuthentication"
+                       value="${msg('privacyidea.resetLogin')}" name="resetAuthentication" type="button"
+                       onclick="authenticationReset()"/>
+            </#if>
+            <!-- AUTO SUBMIT -->
+            <#if authenticationForm.autoSubmitLength?has_content>
+                <script>
+                    setAutoSubmit("${authenticationForm.autoSubmitLength}");
+                </script>
+            </#if>
+            <!-- PUSH POLLING-->
+            <#if authenticationForm.mode = "push">
+                <script>
+                    setPushReload(${authenticationForm.pollInterval});
+                </script>
+            </#if>
+            <#if authenticationForm.pollInBrowserAvailable>
+                <script>
+                    startPollingInBrowser("${authenticationForm.pollInBrowserURL}", "${authenticationForm.transactionId}", "${url.resourcesPath}");
+                </script>
+            </#if>
+            <!-- WEBAUTHN -->
+            <#if authenticationForm.mode = "webauthn" && authenticationForm.webAuthnSignRequest?has_content>
+                <script>
+                    webAuthnAuthentication('${authenticationForm.webAuthnSignRequest}', '${authenticationForm.mode}')
+                </script>
+            </#if>
+
+            <!-- OTHER LOGIN OPTIONS DIV -->
+            <#if !authenticationForm.firstStep && !authenticationForm.passkeyChallenge?has_content
+            && !authenticationForm.passkeyRegistration?has_content>
+                <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
+                    <h3 id="alternateTokenHeader">${msg('privacyidea.alternateLoginOptions')}</h3>
+                    <!-- Passkey Button: Initiate passkey login by getting a challenge -->
+                    <#if !authenticationForm.passkeyRegistration?has_content && !authenticationForm.firstStep>
+                        <div class="${properties.kcFormGroupClass!}">
+                            <input class="pf-v5-c-button pf-m-block" type="button"
+                                   name="passkeyInitiateButton" id="passkeyInitiateButton"
+                                   onclick="requestPasskeyLogin()"
+                                   value="${msg('privacyidea.passkeyInitiateButton')}"/>
+                        </div>
+                    </#if>
+                    <!-- OTP Button -->
+                    <#if authenticationForm.otpAvailable && authenticationForm.mode != "otp">
+                        <input class="pf-v5-c-button pf-m-block" id="otpButton"
+                               name="otpButton" onclick="changeMode('otp')"
+                               type="button" value="${msg('privacyidea.otpButton')}"/>
+                    </#if>
+                    <!-- Push Button -->
+                    <#if authenticationForm.pushAvailable && authenticationForm.mode != "push">
+                        <input class="pf-v5-c-button pf-m-block" id="pushButton"
+                               name="pushButton" onclick="changeMode('push')"
+                               type="button" value="${msg('privacyidea.pushButton')}"/>
+                    </#if>
+                    <!-- WebAuthn Button -->
+                    <#if authenticationForm.webAuthnSignRequest?has_content>
+                        <input class="pf-v5-c-button pf-m-block" id="webAuthnButton"
+                               onclick="webAuthnAuthentication('${authenticationForm.webAuthnSignRequest}', '${authenticationForm.mode}')"
+                               name="webauthnButton" type="button"
+                               value="${msg('privacyidea.webauthnButton')}"/>
+                    </#if>
+                </div>
+            </#if>
         </form>
     </#if>
 </@layout.registrationLayout>
