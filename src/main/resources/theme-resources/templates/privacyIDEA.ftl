@@ -100,7 +100,7 @@
                         </div>
                     </#if>
                     <!-- OTP INPUT -->
-                    <#if !(["usernamepassword", "push", "passkey"]?seq_contains(authenticationForm.mode))
+                    <#if !(["usernamepassword", "username", "push", "passkey"]?seq_contains(authenticationForm.mode))
                     &&  !(authenticationForm.passkeyRegistration?has_content)>
                         <div class="${properties.kcContentWrapperClass!}">
                             <div class="${properties.kcLabelWrapperClass!}">

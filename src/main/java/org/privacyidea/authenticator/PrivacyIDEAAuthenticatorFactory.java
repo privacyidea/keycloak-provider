@@ -159,6 +159,15 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                "Can be empty to send an empty password.");
         configProperties.add(staticPass);
 
+        ProviderConfigProperty disablePasswordCheck = new ProviderConfigProperty();
+        disablePasswordCheck.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        disablePasswordCheck.setDefaultValue(false);
+        disablePasswordCheck.setName(Const.CONFIG_DISABLE_PASSWORD_CHECK);
+        disablePasswordCheck.setLabel("Disable Password Check");
+        disablePasswordCheck.setHelpText("Whether the user is required to enter the password. Can be disabled to add the keycloak password " +
+                                         "step after the privacyIDEA step or require no password at all.");
+        configProperties.add(disablePasswordCheck);
+
         ProviderConfigProperty includedGroups = new ProviderConfigProperty();
         includedGroups.setType(ProviderConfigProperty.STRING_TYPE);
         includedGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
