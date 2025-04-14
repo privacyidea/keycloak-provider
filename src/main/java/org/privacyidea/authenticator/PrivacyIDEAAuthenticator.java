@@ -142,7 +142,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (user == null)
         {
             context.clearUser();
-            piForm.setMode(Mode.USERNAMEPASSWORD);
+            piForm.setMode(config.isDisablePasswordCheck() ? Mode.USERNAME : Mode.USERNAMEPASSWORD);
         }
         else
         {
@@ -527,7 +527,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (userRequested)
         {
             String username = formData.getFirst(USERNAME);
-            String password = formData.getFirst(PASSWORD);
+
             if (StringUtil.isBlank(username))
             {
                 logger.error("Username was requested but has not been provided!");
@@ -547,15 +547,19 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.challenge(responseForm);
                 return;
             }
-            boolean passwordCorrect = userModel.credentialManager().isValid(UserCredentialModel.password(password));
-            if (!passwordCorrect)
+            if (!config.isDisablePasswordCheck())
             {
-                logger.debug("User " + username + " tried to authenticate with a wrong password.");
-                kcForm.setError("Invalid Credentials!");
-                kcForm.setAttribute(AUTH_FORM, piForm);
-                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
-                context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
-                return;
+                String password = formData.getFirst(PASSWORD);
+                boolean passwordCorrect = userModel.credentialManager().isValid(UserCredentialModel.password(password));
+                if (!passwordCorrect)
+                {
+                    logger.debug("User " + username + " tried to authenticate with a wrong password.");
+                    kcForm.setError("Invalid Credentials!");
+                    kcForm.setAttribute(AUTH_FORM, piForm);
+                    Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                    context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
+                    return;
+                }
             }
             context.clearUser();
             context.setUser(userModel);

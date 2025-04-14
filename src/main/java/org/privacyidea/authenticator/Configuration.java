@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
+import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSWORD_CHECK;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
@@ -70,6 +71,7 @@ public class Configuration
     private final int configHash;
     private final Map<String, String> customHeaders = new HashMap<>();
     private final int httpTimeoutMs;
+    private final boolean disablePasswordCheck;
 
     public Configuration(Map<String, String> configMap)
     {
@@ -89,6 +91,8 @@ public class Configuration
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         this.doSendStaticPass = configMap.get(CONFIG_SEND_STATIC_PASS) != null && configMap.get(CONFIG_SEND_STATIC_PASS).equals(TRUE);
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
+        this.disablePasswordCheck =
+                configMap.get(CONFIG_DISABLE_PASSWORD_CHECK) != null && configMap.get(CONFIG_DISABLE_PASSWORD_CHECK).equals(TRUE);
 
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
@@ -239,5 +243,10 @@ public class Configuration
     public int httpTimeoutMs()
     {
         return httpTimeoutMs;
+    }
+
+    public boolean isDisablePasswordCheck()
+    {
+        return disablePasswordCheck;
     }
 }
