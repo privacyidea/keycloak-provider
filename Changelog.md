@@ -9,6 +9,7 @@ it is no longer necessary to have username and or password requested before usin
 * Removed default OTP text setting, texts can be edited in the theme-resources/messages directory.
 * Added a configuration to allow setting custom headers.
 * Added a configuration to set custom http timeouts.
+* Removed the deprecated token enrollment function from this plugin in favor of enroll_via_multichallenge in the privacyIDEA server.
 
 ### v1.4.1 - 2024-03-05
 
