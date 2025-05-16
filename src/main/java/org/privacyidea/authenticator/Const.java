@@ -38,10 +38,13 @@ final class Const
     static final String FORM_FILE_NAME = "privacyIDEA.ftl";
     static final String FORM_OTP = "otp";
 
-    static final String NOTE_TRANSACTION_ID = "transaction_id";
-    static final String NOTE_PASSKEY_TRANSACTION_ID = "passkey_transaction_id";
+    static final String NOTE_OTP_TRANSACTION_ID = "pi_otp_transaction_id";
+    static final String NOTE_WEBAUTHN_TRANSACTION_ID = "pi_webauthn_transaction_id";
+    static final String NOTE_PUSH_TRANSACTION_ID = "pi_push_transaction_id";
+    static final String NOTE_PASSKEY_TRANSACTION_ID = "pi_passkey_transaction_id";
     static final String NOTE_COUNTER = "authCounter";
     static final String NOTE_PASSKEY_REGISTRATION_SERIAL = "passkey_registration_serial";
+    static final String NOTE_PREVIOUS_RESPONSE = "pi_previous_response";
 
     // Changing the config value names will reset the current config
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";
@@ -66,5 +69,5 @@ final class Const
     static final String CONFIG_CUSTOM_HEADERS = "picustomheaders";
     static final String CONFIG_HTTP_TIMEOUT_MS = "pihttptimeoutms";
     static final String CONFIG_DISABLE_PASSWORD_CHECK = "pidisablepasswordcheck";
-
+    static final String CONFIG_DISABLE_PASSKEY_LOGIN = "pidisablepasskeylogin";
 }

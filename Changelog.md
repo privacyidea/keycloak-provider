@@ -1,5 +1,14 @@
 # Changelog
 
+### v1.5.1 - 2025-05-15
+
+* Added a setting to disable the "login with passkey" button.
+* Fixed a bug that would cause the authentication to successfully end preemptively when using the triggerchallenge setting
+    with some versions of the privacyIDEA server.
+* Fixed a bug that would cause triggerchallenge to not work when disable password check was enabled.
+* Fixed a bug that would cause the OTP button to be shown when an OTP input was already visible.
+* Fixed a bug that would cause challenges to be lost after an OTP had been entered wrong.
+
 ### v1.5.0 - 2025-04-09
 
 * Added support for passkey token, including enroll_via_multichallenge.

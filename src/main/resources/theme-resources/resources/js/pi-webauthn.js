@@ -87,6 +87,7 @@ var pi_webauthn = navigator.credentials ? window.pi_webauthn || {} : null;
             .credentials
             .get({publicKey: publicKeyCredentialRequestOptions})
             .then(function (assertion) {
+                console.log("WebAuthnSign: assertion", assertion);
                 if (!assertion) {
                     console.log("WebAuthnSign: assertion failed!");
                     return Promise.reject();

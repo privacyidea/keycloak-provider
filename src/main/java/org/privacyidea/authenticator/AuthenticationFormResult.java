@@ -17,7 +17,6 @@ public class AuthenticationFormResult
     // their use is inverted.
     public String webAuthnSignResponse = null;
     public String passkeySignResponse = null;
-    public boolean pollInBrowserCancelled = false;
     public String origin = null;
     public String passkeyRegistrationResponse = null;
 
