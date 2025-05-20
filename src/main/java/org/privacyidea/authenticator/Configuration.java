@@ -72,6 +72,7 @@ public class Configuration
     private final Map<String, String> customHeaders = new HashMap<>();
     private final int httpTimeoutMs;
     private final boolean disablePasswordCheck;
+    private final boolean disablePasskeyLogin;
 
     public Configuration(Map<String, String> configMap)
     {
@@ -93,7 +94,8 @@ public class Configuration
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
         this.disablePasswordCheck =
                 configMap.get(CONFIG_DISABLE_PASSWORD_CHECK) != null && configMap.get(CONFIG_DISABLE_PASSWORD_CHECK).equals(TRUE);
-
+        this.disablePasskeyLogin =
+                configMap.get("pidisablepasskeylogin") != null && configMap.get("pidisablepasskeylogin").equals(TRUE);
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
         {
@@ -248,5 +250,10 @@ public class Configuration
     public boolean isDisablePasswordCheck()
     {
         return disablePasswordCheck;
+    }
+
+    public boolean isDisablePasskeyLogin()
+    {
+        return disablePasskeyLogin;
     }
 }

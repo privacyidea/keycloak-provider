@@ -237,3 +237,30 @@ function startPollingInBrowser(url, transactionId, resourcesPath) {
         }
     }
 }
+
+function setLoginOptionsVisibility() {
+    let ids = ["passkeyInitiateButton", "otpButton", "pushButton", "webAuthnButton"]
+    let shouldShow = false;
+    for (let id of ids) {
+        let element = document.querySelector("#" + id);
+        if (element && window.getComputedStyle(element).display !== "none" && window.getComputedStyle(element).display !== "hidden") {
+            shouldShow = true;
+            break;
+        }
+    }
+    if (!shouldShow) {
+        let element = document.querySelector("#alternateToken");
+        if (element) {
+            element.style.display = "none";
+        }
+    }
+
+    // If the otp input field is visible, hide the otp button
+    let otpInput = document.querySelector("#otp");
+    if (otpInput && otpInput.style.display !== "none" && otpInput.style.display !== "hidden") {
+        let element = document.querySelector("#otpButton");
+        if (element) {
+            element.style.display = "none";
+        }
+    }
+}

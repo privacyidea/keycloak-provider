@@ -30,6 +30,18 @@ public class AuthenticationForm
     // from privacyIDEA) or the regular webauthn that has been triggered for the user explicitly.
     private String passkeyRegistration = null;
     private String passkeyChallenge = null;
+    private boolean disablePasskeyLogin = false;
+    private boolean isEnrollViaMultichallenge = false;
+
+    public AuthenticationForm(Configuration configuration)
+    {
+        this.disablePasskeyLogin = configuration.isDisablePasskeyLogin();
+        if (configuration.pollInBrowser())
+        {
+            this.pollInBrowserURL = configuration.pollInBrowserUrl();
+        }
+        this.autoSubmitLength = configuration.otpLength();
+    }
 
     public boolean isFirstStep()
     {
@@ -245,5 +257,25 @@ public class AuthenticationForm
     public void setEnrollmentLink(String enrollmentLink)
     {
         this.enrollmentLink = enrollmentLink;
+    }
+
+    public boolean isDisablePasskeyLogin()
+    {
+        return disablePasskeyLogin;
+    }
+
+    public void setDisablePasskeyLogin(boolean disablePasskeyLogin)
+    {
+        this.disablePasskeyLogin = disablePasskeyLogin;
+    }
+
+    public boolean isEnrollViaMultichallenge()
+    {
+        return isEnrollViaMultichallenge;
+    }
+
+    public void setEnrollViaMultichallenge(boolean enrollViaMultichallenge)
+    {
+        isEnrollViaMultichallenge = enrollViaMultichallenge;
     }
 }

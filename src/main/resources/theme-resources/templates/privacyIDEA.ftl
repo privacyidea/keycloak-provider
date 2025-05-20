@@ -64,7 +64,9 @@
                                 <label for="login-error">
                                     <span class="${properties.kcLabelClass!}">
                                         <#if authenticationForm.errorMessage == "push_auth_not_verified">
-                                            ${msg('privacyidea.pushNotYetVerified')}
+                                            <p style="color:red;">${msg('privacyidea.pushNotYetVerified')}</p>
+                                        <#elseif authenticationForm.errorMessage == "passkey_authentication_failed">
+                                            <p style="color:red;">${msg('privacyidea.passkeyAuthenticationFailed')}</p>
                                         <#else>
                                             ${authenticationForm.errorMessage}
                                         </#if>
@@ -143,7 +145,9 @@
             <!-- Readonly authenticationForm is also passed back to preserve the state -->
             <input id="authenticationForm" name="authenticationForm" value="${authenticationForm!""}" type="hidden">
 
-            <!-- Passkey Button: Initiate passkey login by getting a challenge -->
+            <!-- Passkey login feature toggle -->
+            <#if !authenticationForm.disablePasskeyLogin>
+                <!-- Passkey Button: Initiate passkey login by getting a challenge -->
             <#if !authenticationForm.passkeyRegistration?has_content && authenticationForm.firstStep>
                 <div class="${properties.kcFormGroupClass!}">
                     <input class="pf-v5-c-button pf-m-block" type="button"
@@ -151,18 +155,25 @@
                            value="${msg('privacyidea.passkeyInitiateButton')}"/>
                 </div>
             </#if>
-            <!-- Passkey Authentication with retry button -->
-            <#if authenticationForm.passkeyChallenge?has_content>
+                <!-- Passkey Authentication with retry button -->
+            <#if authenticationForm.passkeyChallenge?has_content && (!authenticationForm.errorMessage?has_content
+            || authenticationForm.errorMessage == "passkey_authentication_failed")>
+
+            <input class="pf-v5-c-button pf-m-primary pf-m-block" id="retryPasskeyAuthentication"
+                   value="${msg('privacyidea.passkeyRetryButton')}" name="retryPasskeyAuthentication" type="button"
+                   onclick="passkeyAuthentication('${authenticationForm.passkeyChallenge}', '${authenticationForm.mode}')"/>
+            <input class="pf-v5-c-button pf-m-block" id="resetAuthentication"
+                   value="${msg('privacyidea.resetLogin')}" name="resetAuthentication" type="button"
+                   onclick="authenticationReset()"/>
+            </#if>
+                <!-- Only trigger passkey authentication automatically if there has been no error before -->
+            <#if authenticationForm.passkeyChallenge?has_content && !authenticationForm.errorMessage?has_content>
                 <script>
                     passkeyAuthentication("${authenticationForm.passkeyChallenge}", "${authenticationForm.mode}");
                 </script>
-                <input class="pf-v5-c-button pf-m-primary pf-m-block" id="retryPasskeyAuthentication"
-                       value="${msg('privacyidea.passkeyRetryButton')}" name="retryPasskeyAuthentication" type="button"
-                       onclick="passkeyAuthentication('${authenticationForm.passkeyChallenge}', '${authenticationForm.mode}')"/>
-                <input class="pf-v5-c-button pf-m-block" id="resetAuthentication"
-                       value="${msg('privacyidea.resetLogin')}" name="resetAuthentication" type="button"
-                       onclick="authenticationReset()"/>
             </#if>
+            </#if> <!-- END OF PASSKEY -->
+
             <!-- AUTO SUBMIT -->
             <#if authenticationForm.autoSubmitLength?has_content>
                 <script>
@@ -183,7 +194,7 @@
             <!-- WEBAUTHN -->
             <#if authenticationForm.mode = "webauthn" && authenticationForm.webAuthnSignRequest?has_content>
                 <script>
-                    webAuthnAuthentication('${authenticationForm.webAuthnSignRequest}', '${authenticationForm.mode}')
+                    webAuthnAuthentication('${authenticationForm.webAuthnSignRequest}', '${authenticationForm.mode}');
                 </script>
             </#if>
 
@@ -193,7 +204,8 @@
                 <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
                     <h3 id="alternateTokenHeader">${msg('privacyidea.alternateLoginOptions')}</h3>
                     <!-- Passkey Button: Initiate passkey login by getting a challenge -->
-                    <#if !authenticationForm.passkeyRegistration?has_content && !authenticationForm.firstStep>
+                    <#if !authenticationForm.disablePasskeyLogin && !authenticationForm.passkeyRegistration?has_content
+                    && !authenticationForm.firstStep>
                         <div class="${properties.kcFormGroupClass!}">
                             <input class="pf-v5-c-button pf-m-block" type="button"
                                    name="passkeyInitiateButton" id="passkeyInitiateButton"
@@ -222,6 +234,11 @@
                     </#if>
                 </div>
             </#if>
+            <script>
+                // If none of the buttons of the "other login options" are shown, hide the whole div with the text
+                // This is easier than having a huge check for the div, as each button can have its own logic
+                setLoginOptionsVisibility();
+            </script>
         </form>
     </#if>
 </@layout.registrationLayout>

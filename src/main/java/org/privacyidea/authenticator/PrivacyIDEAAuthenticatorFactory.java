@@ -168,6 +168,14 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                          "step after the privacyIDEA step or require no password at all.");
         configProperties.add(disablePasswordCheck);
 
+        ProviderConfigProperty disablePasskeyLogin = new ProviderConfigProperty();
+        disablePasskeyLogin.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        disablePasskeyLogin.setDefaultValue(false);
+        disablePasskeyLogin.setName(Const.CONFIG_DISABLE_PASSKEY_LOGIN);
+        disablePasskeyLogin.setLabel("Disable Passkey Login");
+        disablePasskeyLogin.setHelpText("Disable the passkey login button, removing the option to log in with passkeys.");
+        configProperties.add(disablePasskeyLogin);
+
         ProviderConfigProperty includedGroups = new ProviderConfigProperty();
         includedGroups.setType(ProviderConfigProperty.STRING_TYPE);
         includedGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
