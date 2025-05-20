@@ -4,7 +4,7 @@ This provider allows you to use privacyIDEA's MFA with Keycloak.
 We added a detailed how-to on our [blog](https://community.privacyidea.org/t/how-to-use-keycloak-with-privacyidea/1132).
 With version 1.5.0 of this provider, the username and password step of keycloak is not required any more, this provider will handle it.
 If you still want to use it, this provider will use the username and password provided.
-
+Another option that is now possible is to have the check for the second factor first with this provider and then add a step with the keycloak password form after this.
 ## Download
 
 * Check our latest [releases](https://github.com/privacyidea/keycloak-provider/releases).
