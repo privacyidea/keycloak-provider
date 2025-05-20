@@ -243,7 +243,7 @@ function setLoginOptionsVisibility() {
     let shouldShow = false;
     for (let id of ids) {
         let element = document.querySelector("#" + id);
-        if (element && element.style.display !== "none" && element.style.display !== "hidden") {
+        if (element && window.getComputedStyle(element).display !== "none" && window.getComputedStyle(element).display !== "hidden") {
             shouldShow = true;
             break;
         }
