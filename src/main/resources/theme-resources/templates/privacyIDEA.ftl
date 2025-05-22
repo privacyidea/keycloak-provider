@@ -115,7 +115,7 @@
                                     </span></label>
                             </div>
                             <div class="${properties.kcInputWrapperClass!}">
-                                <input id="otp" name="otp" type="text" class="${properties.kcInputClass!}"
+                                <input id="otp" name="otp" type="password" class="${properties.kcInputClass!}"
                                        value="" autocomplete="new-password" autofocus/>
                             </div>
                         </div>

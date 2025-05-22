@@ -92,7 +92,7 @@ public class Util
     private AuthenticationForm challengesToForm(AuthenticationForm authForm, PIResponse response, Configuration config,
                                                 AuthenticationFlowContext context)
     {
-        if (response.multiChallenge == null || response.multiChallenge.isEmpty())
+        if (response == null || response.multiChallenge == null || response.multiChallenge.isEmpty())
         {
             return authForm;
         }
