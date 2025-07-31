@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
-            <version>26.2.4</version>
+            <version>26.3.2</version>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
