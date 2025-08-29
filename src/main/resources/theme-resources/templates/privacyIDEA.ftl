@@ -32,7 +32,9 @@
                                     <img alt="challenge_img" src="${authenticationForm.pushImage}">
                                 </div>
                             </#if>
-                            <h4 class="bold-text">${authenticationForm.pushMessage}</h4>
+                            <#if authenticationForm.pushMessage?has_content>
+                                <h4 class="bold-text">${authenticationForm.pushMessage}</h4>
+                            </#if>
                         <#elseif authenticationForm.mode = "webauthn" && !(authenticationForm.passkeyRegistration?has_content)>
                             <#if authenticationForm.webAuthnImage?has_content>
                                 <div class="center-text">

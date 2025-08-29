@@ -242,7 +242,7 @@ public class Util
             }
             else
             {
-                additionalParams.put("clientip", clientIP);
+                additionalParams.put("client", clientIP);
             }
         }
         return additionalParams;
