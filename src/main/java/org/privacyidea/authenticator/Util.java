@@ -250,8 +250,6 @@ public class Util
                 authForm = challengesToForm(authForm, previousResponse, config, context);
                 authForm.setErrorMessage(response.message);
             }
-        } else {
-            logger.log("evaluateResponse: response is null");
         }
         return authForm;
     }
@@ -283,7 +281,6 @@ public class Util
         {
             if (config.triggerChallenge())
             {
-                logger.log("triggerchallenge");
                 triggerResponse = privacyIDEA.triggerChallenges(username, additionalParams, headers);
             }
             else if (config.sendPassword())
