@@ -284,10 +284,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 }
                 piForm = util.evaluateResponse(response, context, piForm, config);
             }
-            else
-            {
-                log("response from triggering is null");
-            }
         }
 
         // Prepare the form and auth notes to pass infos to the UI and the next step
