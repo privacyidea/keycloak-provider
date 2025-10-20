@@ -157,6 +157,7 @@
                            value="${msg('privacyidea.passkeyInitiateButton')}"/>
                 </div>
             </#if>
+
                 <!-- Passkey Authentication with retry button -->
             <#if authenticationForm.passkeyChallenge?has_content && (!authenticationForm.errorMessage?has_content
             || authenticationForm.errorMessage == "passkey_authentication_failed")>
@@ -174,7 +175,8 @@
                     passkeyAuthentication("${authenticationForm.passkeyChallenge}", "${authenticationForm.mode}");
                 </script>
             </#if>
-            </#if> <!-- END OF PASSKEY -->
+            </#if> <!-- ENDIF PASSKEY DISABLED -->
+            <!-- END OF PASSKEY -->
 
             <!-- AUTO SUBMIT -->
             <#if authenticationForm.autoSubmitLength?has_content>
