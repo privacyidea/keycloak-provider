@@ -436,7 +436,10 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                             return;
                         }
                         context.success();
+                        // TODO this needs to be evaluated in the ProtocolMapper and is not complete/working yet
+                        log("Setting privacyidea_authentication_method to fido2");
                         context.getAuthenticationSession().setAuthNote("privacyidea_authentication_method", "fido2");
+                        context.getAuthenticationSession().getUserSessionNotes().put("privacyidea_authentication_method", "fido2");
                     }
                     else
                     {
@@ -626,6 +629,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.success();
                 if (fido2Used)
                 {
+                    // TODO this needs to be evaluated in the ProtocolMapper and is not complete/working yet
                     log("Setting privacyidea_authentication_method to fido2");
                     context.getAuthenticationSession().setAuthNote("privacyidea_authentication_method", "fido2");
                     context.getAuthenticationSession().getUserSessionNotes().put("privacyidea_authentication_method", "fido2");
