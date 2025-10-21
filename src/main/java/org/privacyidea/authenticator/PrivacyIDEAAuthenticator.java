@@ -28,6 +28,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -360,6 +361,36 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
                 return;
+            }
+        }
+
+        // Cancel enrollment via multichallenge
+        if (piFormResult.enrollmentViaMultichallengeCancelled)
+        {
+            String transactionID = Stream.of(otpTransactionId,
+                                             pushTransactionId,
+                                             webAuthnTransactionId,
+                                             context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID))
+                                         .filter(StringUtil::isNotBlank)
+                                         .findFirst()
+                                         .orElse(null);
+
+            PIResponse piResponse = privacyIDEA.validateCheckCancelEnrollment(transactionID, headers);
+            if (piResponse != null)
+            {
+                if (piResponse.error != null)
+                {
+                    kcForm.setError(piResponse.error.message);
+                    kcForm.setAttribute(AUTH_FORM, piForm);
+                    Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                    context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
+                    return;
+                }
+                else if (piResponse.authenticationSuccessful())
+                {
+                    context.success();
+                    return;
+                }
             }
         }
 

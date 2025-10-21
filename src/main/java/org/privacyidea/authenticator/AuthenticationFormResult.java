@@ -19,6 +19,7 @@ public class AuthenticationFormResult
     public String passkeySignResponse = null;
     public String origin = null;
     public String passkeyRegistrationResponse = null;
+    public boolean enrollmentViaMultichallengeCancelled = false;
 
     public String toString() {
         return new Gson().toJson(this);
