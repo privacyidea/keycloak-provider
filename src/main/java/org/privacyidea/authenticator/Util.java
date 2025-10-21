@@ -111,6 +111,7 @@ public class Util
                     // TODO assume that if we have an image for a push token, it has to be enroll_via_multichallenge
                     authForm.setPushImage(c.getImage());
                     authForm.setEnrollViaMultichallenge(true);
+                    authForm.setEnrollViaMultichallengeOptional(response.isEnrollViaMultichallengeOptional);
                     mode = Mode.PUSH;
                     authForm.setOtpAvailable(false);
                 }
