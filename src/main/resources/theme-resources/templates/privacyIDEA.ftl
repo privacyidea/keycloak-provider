@@ -60,9 +60,10 @@
                                target="_blank">${msg('privacyidea.enrollmentLinkText')}</a>
                         </#if>
                         <#if authenticationForm.enrollViaMultichallengeOptional>
+                            <br>
                             <input class="pf-v5-c-button pf-m-block" id="cancelEnrollment"
                                    value="${msg('privacyidea.cancelEnrollment')}" name="cancelEnrollment"
-                                   type="button" onclick="cancelEnrollment()"/>
+                                   type="button" onclick="cancelEnrollmentViaMc()"/>
                         </#if>
                     <#else>
                         <!-- ERROR MESSAGE -->
