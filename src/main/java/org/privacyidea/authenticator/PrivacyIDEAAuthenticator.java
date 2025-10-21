@@ -28,6 +28,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -366,10 +367,18 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Cancel enrollment via multichallenge
         if (piFormResult.enrollmentViaMultichallengeCancelled)
         {
-            PIResponse piResponse = privacyIDEA.validateCheckCancelEnrollment(context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID), headers);
+            String transactionID = Stream.of(otpTransactionId,
+                                             pushTransactionId,
+                                             webAuthnTransactionId,
+                                             context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID))
+                                         .filter(StringUtil::isNotBlank)
+                                         .findFirst()
+                                         .orElse(null);
+
+            PIResponse piResponse = privacyIDEA.validateCheckCancelEnrollment(transactionID, headers);
             if (piResponse != null)
             {
-                if (StringUtil.isNotBlank(piResponse.error.message))
+                if (piResponse.error != null)
                 {
                     kcForm.setError(piResponse.error.message);
                     kcForm.setAttribute(AUTH_FORM, piForm);
