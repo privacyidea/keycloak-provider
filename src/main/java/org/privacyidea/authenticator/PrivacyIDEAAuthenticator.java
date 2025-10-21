@@ -363,6 +363,28 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
         }
 
+        // Cancel enrollment via multichallenge
+        if (piFormResult.enrollmentViaMultichallengeCancelled)
+        {
+            PIResponse piResponse = privacyIDEA.validateCheckCancelEnrollment(context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID), headers);
+            if (piResponse != null)
+            {
+                if (StringUtil.isNotBlank(piResponse.error.message))
+                {
+                    kcForm.setError(piResponse.error.message);
+                    kcForm.setAttribute(AUTH_FORM, piForm);
+                    Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                    context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
+                    return;
+                }
+                else if (piResponse.authenticationSuccessful())
+                {
+                    context.success();
+                    return;
+                }
+            }
+        }
+
         // Set the user and verify the password, check if MFA is required for the user
         boolean userRequested = piForm.getMode() == Mode.USERNAMEPASSWORD || piForm.getMode() == Mode.USERNAME;
         if (userRequested)
