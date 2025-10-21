@@ -144,6 +144,11 @@ function authenticationReset() {
     submitForm();
 }
 
+function cancelEnrollment() {
+    formResult.enrollmentViaMultichallengeCancelled = true;
+    authenticationReset();
+}
+
 function setPushReload(intervalSeconds) {
     if (!intervalSeconds) {
         console.log("Interval seconds is empty, using default of 2s.");
