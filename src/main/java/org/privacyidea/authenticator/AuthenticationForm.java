@@ -32,6 +32,7 @@ public class AuthenticationForm
     private String passkeyChallenge = null;
     private boolean disablePasskeyLogin = false;
     private boolean isEnrollViaMultichallenge = false;
+    private boolean isEnrollViaMultichallengeOptional = false;
 
     public AuthenticationForm(Configuration configuration)
     {
@@ -277,5 +278,15 @@ public class AuthenticationForm
     public void setEnrollViaMultichallenge(boolean enrollViaMultichallenge)
     {
         isEnrollViaMultichallenge = enrollViaMultichallenge;
+    }
+
+    public boolean isEnrollViaMultichallengeOptional()
+    {
+        return isEnrollViaMultichallengeOptional;
+    }
+
+    public void setEnrollViaMultichallengeOptional(boolean enrollViaMultichallengeOptional)
+    {
+        isEnrollViaMultichallengeOptional = enrollViaMultichallengeOptional;
     }
 }
