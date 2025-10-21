@@ -144,9 +144,9 @@ function authenticationReset() {
     submitForm();
 }
 
-function cancelEnrollment() {
+function cancelEnrollmentViaMc() {
     formResult.enrollmentViaMultichallengeCancelled = true;
-    authenticationReset();
+    submitForm();
 }
 
 function setPushReload(intervalSeconds) {
