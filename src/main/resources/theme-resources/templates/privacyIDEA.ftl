@@ -54,10 +54,15 @@
                         <#elseif authenticationForm.mode = "password" && !(authenticationForm.passkeyRegistration?has_content)>
                             <h4 class="bold-text">${msg('privacyidea.passwordPrompt')}</h4>
                         </#if>
-                        <!-- ENROLLMENT LINK -->
+                        <!-- ENROLLMENT LINK & CANCEL ENROLLMENT -->
                         <#if authenticationForm.enrollmentLink?has_content>
                             <a href="${authenticationForm.enrollmentLink}"
                                target="_blank">${msg('privacyidea.enrollmentLinkText')}</a>
+                        </#if>
+                        <#if authenticationForm.enrollViaMultichallengeOptional>
+                            <input class="pf-v5-c-button pf-m-block" id="cancelEnrollment"
+                                   value="${msg('privacyidea.cancelEnrollment')}" name="cancelEnrollment"
+                                   type="button" onclick="cancelEnrollment()"/>
                         </#if>
                     <#else>
                         <!-- ERROR MESSAGE -->
