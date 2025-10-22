@@ -106,13 +106,24 @@ public class Util
         {
             if ("poll".equals(c.getClientMode()))
             {
-                String image = c.getImage();
-                if (StringUtil.isNotBlank(image))
+                if ("push".equals(c.getType()))
                 {
-                    authForm.setPushImage(c.getImage());
-                    // TODO assume that if we have an image for a push token, it has to be enroll_via_multichallenge
+                    String image = c.getImage();
+                    if (StringUtil.isNotBlank(image))
+                    {
+                        authForm.setPushImage(image);
+                        // TODO assume that if we have an image for a push token, it has to be enroll_via_multichallenge
+                        authForm.setEnrollViaMultichallenge(true);
+                        mode = Mode.PUSH;
+                        authForm.setOtpAvailable(false);
+                    }
+                }
+                else if ("smartphone".equals(c.getType()))
+                {
+                    authForm.setSmartphoneImage(c.getImage());
                     authForm.setEnrollViaMultichallenge(true);
                     mode = Mode.PUSH;
+                    context.getAuthenticationSession().setAuthNote(NOTE_PUSH_TRANSACTION_ID, c.getTransactionID());
                     authForm.setOtpAvailable(false);
                 }
             }
