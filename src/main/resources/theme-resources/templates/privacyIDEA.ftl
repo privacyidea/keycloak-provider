@@ -31,6 +31,10 @@
                                 <div class="center-text">
                                     <img alt="challenge_img" src="${authenticationForm.pushImage}">
                                 </div>
+                            <#elseif authenticationForm.smartphoneImage?has_content>
+                                <div class="center-text">
+                                    <img alt="challenge_img" src="${authenticationForm.smartphoneImage}">
+                                </div>
                             </#if>
                             <#if authenticationForm.pushMessage?has_content>
                                 <h4 class="bold-text">${authenticationForm.pushMessage}</h4>
