@@ -23,6 +23,7 @@ public class AuthenticationForm
     private String errorMessage = null;
     private String pushImage = null;
     private String otpImage = null;
+    private String smartphoneImage = null;
     private String webAuthnImage = null;
     private String enrollmentLink = null;
     private boolean challengesTriggered = false;
@@ -62,6 +63,16 @@ public class AuthenticationForm
     public void setPushImage(String pushImage)
     {
         this.pushImage = pushImage;
+    }
+
+    public String getSmartphoneImage()
+    {
+        return smartphoneImage;
+    }
+
+    public void setSmartphoneImage(String smartphoneImage)
+    {
+        this.smartphoneImage = smartphoneImage;
     }
 
     public String getOtpImage()
