@@ -35,6 +35,7 @@ import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.CONFIG_REALM;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
+import static org.privacyidea.authenticator.Const.CONFIG_PASSKEY_ONLY;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
