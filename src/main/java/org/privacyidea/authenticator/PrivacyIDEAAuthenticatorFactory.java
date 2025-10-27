@@ -184,9 +184,9 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         passkeyOnly.setDefaultValue(false);
         passkeyOnly.setHelpText("Enable this to run the privacyIDEA Provider in the Passkey Only mode. " +
                                 "When enabled, authentication will only be possible using passkeys. " +
-                                "PUSH, One-Time Passwords, and other tokens will not be accessible for user." +
+                                "PUSH, One-Time Passwords, and other tokens will not be accessible for users." +
                                 "NOTE: This requires that users have passkeys enrolled in privacyIDEA." +
-                                "NOTE: Remember to not enabling the 'Disable Passkey Login' option. Otherwise, this will be ignored.");
+                                "NOTE: Remember to not enable the 'Disable Passkey Login' option. Otherwise, this will be ignored.");
         configProperties.add(passkeyOnly);
 
         ProviderConfigProperty includedGroups = new ProviderConfigProperty();
