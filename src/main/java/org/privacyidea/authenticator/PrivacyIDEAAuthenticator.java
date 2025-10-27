@@ -141,15 +141,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if a user is already present.
         // If no user is present, request it. Optionally request the password if not disabled.
         UserModel user = context.getUser();
-        logger.error("user: " + user);
+
         if (user == null)
         {
             context.clearUser();
-            if (config.isPasskeyOnly() && !config.isDisablePasskeyLogin())
-            {
-                piForm.setMode(Mode.PASSKEYONLY);
-            }
-            else if (config.isDisablePasswordCheck())
+
+            if (config.isDisablePasswordCheck())
             {
                 piForm.setMode(Mode.USERNAME);
             }
@@ -168,7 +165,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
         }
-        logger.error("piForm mode: " + piForm.getMode());
+
+        if (config.isPasskeyOnly() && !config.isDisablePasskeyLogin())
+        {
+            piForm.setMode(Mode.PASSKEYONLY);
+        }
+
         String currentPassword = null;
         // In some cases, there will be no FormParameters so check if it is even possible to get the password
         if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
@@ -266,8 +268,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             logger.error("AuthenticationForm could not be parsed: " + t);
             return;
         }
-        //logger.error("PiForm: " + piForm);
-        //logger.error("PiFormResult: " + piFormResult);
+
         // Reset requested: reset the flow
         if (piFormResult.authenticationResetRequested)
         {
