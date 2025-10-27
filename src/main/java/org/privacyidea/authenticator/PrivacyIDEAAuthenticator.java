@@ -25,10 +25,6 @@ package org.privacyidea.authenticator;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -45,6 +41,11 @@ import org.privacyidea.ChallengeStatus;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static org.privacyidea.PIConstants.AUTH_FORM;
 import static org.privacyidea.PIConstants.AUTH_FORM_RESULT;
@@ -140,10 +141,22 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if a user is already present.
         // If no user is present, request it. Optionally request the password if not disabled.
         UserModel user = context.getUser();
+        logger.error("user: " + user);
         if (user == null)
         {
             context.clearUser();
-            piForm.setMode(config.isDisablePasswordCheck() ? Mode.USERNAME : Mode.USERNAMEPASSWORD);
+            if (config.isPasskeyOnly() && !config.isDisablePasskeyLogin())
+            {
+                piForm.setMode(Mode.PASSKEYONLY);
+            }
+            else if (config.isDisablePasswordCheck())
+            {
+                piForm.setMode(Mode.USERNAME);
+            }
+            else
+            {
+                piForm.setMode(Mode.USERNAMEPASSWORD);
+            }
         }
         else
         {
@@ -155,6 +168,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
         }
+        logger.error("piForm mode: " + piForm.getMode());
         String currentPassword = null;
         // In some cases, there will be no FormParameters so check if it is even possible to get the password
         if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
@@ -276,7 +290,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             if (StringUtil.isBlank(piFormResult.origin))
             {
-                logger.error("Origin is missing for WebAuthn authentication!");
+                logger.error("Origin is missing for passkey authentication!");
             }
             else
             {
@@ -285,29 +299,38 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                                                             headers);
                 if (response != null)
                 {
-                    if (response.authenticationSuccessful())
+                    if (StringUtil.isNotBlank(response.username))
                     {
-                        if (StringUtil.isNotBlank(response.username))
+                        context.clearUser();
+                        UserModel userModel = context.getSession().users().getUserByUsername(context.getRealm(), response.username);
+                        if (userModel == null)
                         {
-                            context.clearUser();
-                            UserModel userModel = context.getSession().users().getUserByUsername(context.getRealm(), response.username);
-                            if (userModel == null)
-                            {
-                                error("User " + response.username + " not found in realm " + context.getRealm().getName());
-                                kcForm.setError("User not found!");
-                                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
-                                context.challenge(responseForm);
-                                return;
-                            }
-                            context.setUser(userModel);
-                        }
-                        if (context.getUser() == null)
-                        {
-                            error("No user set after passkey authentication!");
-                            context.failure(AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR);
+                            error("User " + response.username + " not found in realm " + context.getRealm().getName());
+                            kcForm.setError("User not found!");
+                            Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                            context.challenge(responseForm);
                             return;
                         }
+                        context.setUser(userModel);
+                    }
+                    if (context.getUser() == null)
+                    {
+                        error("No user set after passkey authentication!");
+                        context.failure(AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR);
+                        return;
+                    }
+
+                    if (response.authenticationSuccessful())
+                    {
                         context.success();
+                    }
+                    else if (response.authentication == AuthenticationStatus.CHALLENGE)
+                    {
+                        piForm = util.evaluateResponse(response, context, piForm, config);
+                        kcForm.setAttribute(AUTH_FORM, piForm);
+                        Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                        context.challenge(responseForm);
+                        return;
                     }
                     else
                     {
