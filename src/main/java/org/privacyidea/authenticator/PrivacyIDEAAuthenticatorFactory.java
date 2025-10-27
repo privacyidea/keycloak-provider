@@ -186,7 +186,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                 "When enabled, authentication will only be possible using passkeys. " +
                                 "PUSH, One-Time Passwords, and other tokens will not be accessible for user." +
                                 "NOTE: This requires that users have passkeys enrolled in privacyIDEA." +
-                                "NOTE: Remember to not enabling the 'Disable Passkey Login' option. Otherwise, this will be ignored.");
+                                "NOTE: Remember to not enable the 'Disable Passkey Login' option. Otherwise, this will be ignored.");
         configProperties.add(passkeyOnly);
 
         ProviderConfigProperty includedGroups = new ProviderConfigProperty();
