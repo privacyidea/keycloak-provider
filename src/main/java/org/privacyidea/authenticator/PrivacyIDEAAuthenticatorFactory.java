@@ -194,7 +194,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         includedGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
         includedGroups.setLabel("Included groups");
         includedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be activated. " +
-                                   "The names should be separated with ',' (E.g. group1,group2)");
+                                   "The names should be separated with ',' (E.g. group1,group2)" +
+                                   "NOTE: Group membership check will be ignored by usernameless authentication.");
         configProperties.add(includedGroups);
 
         ProviderConfigProperty excludedGroups = new ProviderConfigProperty();
@@ -203,7 +204,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         excludedGroups.setLabel("Excluded groups");
         excludedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be skipped. " +
                                    "The names should be separated with ',' (E.g. group1,group2). " +
-                                   "If chosen group is already set in 'Included groups', " + "excluding for this group will be ignored.");
+                                   "If chosen group is already set in 'Included groups', " + "excluding for this group will be ignored. " +
+                                   "NOTE: Group membership check will be ignored by usernameless authentication.");
         configProperties.add(excludedGroups);
 
         ProviderConfigProperty autoSubmitLength = new ProviderConfigProperty();
