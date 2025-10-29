@@ -145,15 +145,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (user == null)
         {
             context.clearUser();
-
-            if (config.isDisablePasswordCheck())
-            {
-                piForm.setMode(Mode.USERNAME);
-            }
-            else
-            {
-                piForm.setMode(Mode.USERNAMEPASSWORD);
-            }
+            piForm.setMode(config.isDisablePasswordCheck() ? Mode.USERNAME : Mode.USERNAMEPASSWORD);
         }
         else
         {
