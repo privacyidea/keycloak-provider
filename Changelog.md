@@ -1,5 +1,14 @@
 # Changelog
 
+### v1.6.0 - 2025-10-30
+
+* Feature: Passkey only. It is now possible to limit login only to passkey tokens. 
+Passkey login will be triggered automatically and processed without need to provide the usernames or passwords.
+* Feature: Enrollment via multichallenge optional. It is now possible to cancel the enrollment via multichallenge and log in.
+* Feature: Smartphone container enrollment via multichallenge.
+* Bugfix: Enrollment via multichallenge wasn't working correctly in the usernameless scenario.
+* Bugfix: Fixed a bug causing the client IP couldn't be forwarded to the privacyIDEA server.
+
 ### v1.5.1 - 2025-05-15
 
 * Added a setting to disable the "login with passkey" button.

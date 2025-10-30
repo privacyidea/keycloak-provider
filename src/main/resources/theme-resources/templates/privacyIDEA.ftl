@@ -213,10 +213,7 @@
 
             <!-- PASSKEY ONLY MODE -->
             <#if authenticationForm.mode = "passkeyonly" && !authenticationForm.passkeyRegistration?has_content>
-                <div class="${properties.kcFormGroupClass!}">
-                    <input class="pf-v5-c-button pf-m-block" type="button" name="passkeyInitiateButton" id="passkeyInitiateButton"
-                           onclick="requestPasskeyLogin()" value="${msg('privacyidea.passkeyInitiateButton')}"/>
-                </div>
+                <script>requestPasskeyLogin()</script>
             </#if>
 
             <!-- OTHER LOGIN OPTIONS DIV -->

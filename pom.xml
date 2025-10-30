@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2023 NetKnights GmbH - micha.preusser@netknights.it
+  ~ Copyright 2025 NetKnights GmbH - micha.preusser@netknights.it
   ~ nils.behlen@netknights.it
   ~ lukas.matusiewicz@netknights.it
   ~ - Modified
@@ -26,7 +26,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.privacyidea</groupId>
     <artifactId>privacyidea-keycloak-provider</artifactId>
-    <version>1.5.1</version>
+    <version>1.6.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-services</artifactId>
-            <version>26.3.3</version>
+            <version>26.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
