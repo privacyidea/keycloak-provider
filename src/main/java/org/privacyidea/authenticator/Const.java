@@ -57,6 +57,7 @@ final class Const
     static final String CONFIG_SEND_PASSWORD = "pisendpassword";
     static final String CONFIG_TRIGGER_CHALLENGE = "pidotriggerchallenge";
     static final String CONFIG_SEND_STATIC_PASS = "pisendstaticpass";
+    static final String CONFIG_PASSKEY_ONLY = "pipasskeyonly";
     static final String CONFIG_OTP_LENGTH = "piotplength";
     static final String CONFIG_SERVICE_PASS = "piservicepass";
     static final String CONFIG_SERVICE_ACCOUNT = "piserviceaccount";

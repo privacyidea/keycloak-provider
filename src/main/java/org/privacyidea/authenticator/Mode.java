@@ -17,7 +17,9 @@ public enum Mode
     @SerializedName("webauthn")
     WEBAUTHN("webauthn"),
     @SerializedName("push")
-    PUSH("push");
+    PUSH("push"),
+    @SerializedName("passkeyonly")
+    PASSKEYONLY("passkeyonly");
 
     private final String mode;
 

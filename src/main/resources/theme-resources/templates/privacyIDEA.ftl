@@ -14,9 +14,9 @@
 </head>
 <@layout.registrationLayout; section>
     <#if section = "title">
-        ${msg("loginTitle",realm.name)}
+        ${msg("loginTitle",realm.displayName)}
     <#elseif section = "header">
-        ${msg("loginTitleHtml",realm.name)}
+        ${msg("loginTitleHtml",realm.displayName)}
     <#elseif section = "form">
         <form id="kc-otp-login-form" onsubmit="submitForm();"
               class="${properties.kcFormClass!}"
@@ -114,7 +114,7 @@
                         </div>
                     </#if>
                     <!-- OTP INPUT -->
-                    <#if !(["usernamepassword", "username", "push", "passkey"]?seq_contains(authenticationForm.mode))
+                    <#if !(["usernamepassword", "username", "push", "passkey", "passkeyonly"]?seq_contains(authenticationForm.mode))
                     &&  !(authenticationForm.passkeyRegistration?has_content)>
                         <div class="${properties.kcContentWrapperClass!}">
                             <div class="${properties.kcLabelWrapperClass!}">
@@ -145,7 +145,8 @@
             </div>
 
             <!-- Sign In Button -->
-            <#if !(["passkey", "push"]?seq_contains(authenticationForm.mode)) && !(authenticationForm.passkeyRegistration?has_content)>
+            <#if !(["passkey", "push", "passkeyonly"]?seq_contains(authenticationForm.mode))
+            && !(authenticationForm.passkeyRegistration?has_content)>
                 <div id="kc-username" class="${properties.kcFormGroupClass!}">
                     <input class="pf-v5-c-button pf-m-primary pf-m-block" name="login" id="kc-login"
                            type="submit" value="${msg('privacyidea.signIn')}"/>
@@ -210,9 +211,14 @@
                 </script>
             </#if>
 
+            <!-- PASSKEY ONLY MODE -->
+            <#if authenticationForm.mode = "passkeyonly" && !authenticationForm.passkeyRegistration?has_content>
+                <script>requestPasskeyLogin()</script>
+            </#if>
+
             <!-- OTHER LOGIN OPTIONS DIV -->
-            <#if !authenticationForm.firstStep && !authenticationForm.passkeyChallenge?has_content
-            && !authenticationForm.passkeyRegistration?has_content>
+            <#if !authenticationForm.firstStep && !authenticationForm.passkeyChallenge?has_content && authenticationForm.mode != "passkeyonly"
+            && !authenticationForm.passkeyRegistration?has_content && !authenticationForm.enrollViaMultichallenge>
                 <div id="alternateToken" class="${properties.kcFormButtonsClass!}">
                     <h3 id="alternateTokenHeader">${msg('privacyidea.alternateLoginOptions')}</h3>
                     <!-- Passkey Button: Initiate passkey login by getting a challenge -->

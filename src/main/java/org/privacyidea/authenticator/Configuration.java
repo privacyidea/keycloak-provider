@@ -35,6 +35,7 @@ import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.CONFIG_REALM;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
+import static org.privacyidea.authenticator.Const.CONFIG_PASSKEY_ONLY;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVICE_ACCOUNT;
@@ -73,6 +74,7 @@ public class Configuration
     private final int httpTimeoutMs;
     private final boolean disablePasswordCheck;
     private final boolean disablePasskeyLogin;
+    private final boolean passkeyOnly;
 
     public Configuration(Map<String, String> configMap)
     {
@@ -91,6 +93,7 @@ public class Configuration
         this.pollInBrowserUrl = configMap.get(CONFIG_POLL_IN_BROWSER_URL) == null ? "" : configMap.get(CONFIG_POLL_IN_BROWSER_URL);
         this.doSendPassword = configMap.get(CONFIG_SEND_PASSWORD) != null && configMap.get(CONFIG_SEND_PASSWORD).equals(TRUE);
         this.doSendStaticPass = configMap.get(CONFIG_SEND_STATIC_PASS) != null && configMap.get(CONFIG_SEND_STATIC_PASS).equals(TRUE);
+        this.passkeyOnly = configMap.get(CONFIG_PASSKEY_ONLY) != null && configMap.get(CONFIG_PASSKEY_ONLY).equals(TRUE);
         this.doLog = configMap.get(CONFIG_ENABLE_LOG) != null && configMap.get(CONFIG_ENABLE_LOG).equals(TRUE);
         this.disablePasswordCheck =
                 configMap.get(CONFIG_DISABLE_PASSWORD_CHECK) != null && configMap.get(CONFIG_DISABLE_PASSWORD_CHECK).equals(TRUE);
@@ -255,5 +258,10 @@ public class Configuration
     public boolean isDisablePasskeyLogin()
     {
         return disablePasskeyLogin;
+    }
+
+    public boolean isPasskeyOnly()
+    {
+        return passkeyOnly;
     }
 }

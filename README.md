@@ -61,3 +61,8 @@ If you want to change any of the default texts for any localization, you can dir
 
 * First, the client submodule has to be build using maven: ``mvn clean install`` in ``java-client``.
 * Then build with ``mvn clean install`` in the provider directory and go on with **Installation**.
+
+## Usernameless Authentication
+
+If you decide to use an usernameless authentication, the group membership can not be evaluated and the excluded and included group setting will have no effect.
+If you had users excluded previously, make sure they have a passkey token before enabling this feature.

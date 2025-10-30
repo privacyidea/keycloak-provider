@@ -99,6 +99,7 @@ public class Util
 
         authForm.setChallengesTriggered(true);
         authForm.setEnrollViaMultichallengeOptional(response.isEnrollViaMultichallengeOptional);
+        authForm.setEnrollViaMultichallenge(response.isEnrollViaMultichallenge);
         Mode mode = Mode.OTP;
         String newOtpMessage = response.otpMessage();
         // Images per challenge
@@ -113,7 +114,6 @@ public class Util
                     {
                         authForm.setPushImage(image);
                         // TODO assume that if we have an image for a push token, it has to be enroll_via_multichallenge
-                        authForm.setEnrollViaMultichallenge(true);
                         mode = Mode.PUSH;
                         authForm.setOtpAvailable(false);
                     }
@@ -121,7 +121,6 @@ public class Util
                 else if ("smartphone".equals(c.getType()))
                 {
                     authForm.setSmartphoneImage(c.getImage());
-                    authForm.setEnrollViaMultichallenge(true);
                     mode = Mode.PUSH;
                     context.getAuthenticationSession().setAuthNote(NOTE_PUSH_TRANSACTION_ID, c.getTransactionID());
                     authForm.setOtpAvailable(false);

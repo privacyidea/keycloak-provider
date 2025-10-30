@@ -173,15 +173,29 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         disablePasskeyLogin.setDefaultValue(false);
         disablePasskeyLogin.setName(Const.CONFIG_DISABLE_PASSKEY_LOGIN);
         disablePasskeyLogin.setLabel("Disable Passkey Login");
-        disablePasskeyLogin.setHelpText("Disable the passkey login button, removing the option to log in with passkeys.");
+        disablePasskeyLogin.setHelpText("Disable the passkey login button, removing the option to log in with passkeys. " +
+                                        "NOTE: If this is enabled, the 'Passkey Only' option will be ignored.");
         configProperties.add(disablePasskeyLogin);
+
+        ProviderConfigProperty passkeyOnly = new ProviderConfigProperty();
+        passkeyOnly.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        passkeyOnly.setName(Const.CONFIG_PASSKEY_ONLY);
+        passkeyOnly.setLabel("Passkey Only");
+        passkeyOnly.setDefaultValue(false);
+        passkeyOnly.setHelpText("Enable this to run the privacyIDEA Provider in the Passkey Only mode. " +
+                                "When enabled, authentication will only be possible using passkeys. " +
+                                "PUSH, One-Time Passwords, and other tokens will not be accessible for users." +
+                                "NOTE: This requires that users have passkeys enrolled in privacyIDEA." +
+                                "NOTE: Remember to not enable the 'Disable Passkey Login' option. Otherwise, this will be ignored.");
+        configProperties.add(passkeyOnly);
 
         ProviderConfigProperty includedGroups = new ProviderConfigProperty();
         includedGroups.setType(ProviderConfigProperty.STRING_TYPE);
         includedGroups.setName(Const.CONFIG_INCLUDED_GROUPS);
         includedGroups.setLabel("Included groups");
         includedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be activated. " +
-                                   "The names should be separated with ',' (E.g. group1,group2)");
+                                   "The names should be separated with ',' (E.g. group1,group2)" +
+                                   "NOTE: When using usernameless authentication, the group membership check will be ignored!");
         configProperties.add(includedGroups);
 
         ProviderConfigProperty excludedGroups = new ProviderConfigProperty();
@@ -190,7 +204,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         excludedGroups.setLabel("Excluded groups");
         excludedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be skipped. " +
                                    "The names should be separated with ',' (E.g. group1,group2). " +
-                                   "If chosen group is already set in 'Included groups', " + "excluding for this group will be ignored.");
+                                   "If chosen group is already set in 'Included groups', " + "excluding for this group will be ignored. " +
+                                   "NOTE: When using usernameless authentication, the group membership check will be ignored!");
         configProperties.add(excludedGroups);
 
         ProviderConfigProperty autoSubmitLength = new ProviderConfigProperty();
@@ -205,8 +220,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         forwardClientIP.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         forwardClientIP.setName(Const.CONFIG_FORWARD_CLIENT_IP);
         forwardClientIP.setLabel("Forward Client IP");
-        forwardClientIP.setHelpText(
-                "Enable this to forward the client IP to privacyIDEA. This can be used in privacyIDEA server if configured.");
+        forwardClientIP.setHelpText("Enable this to forward the client IP to privacyIDEA. This can be used in privacyIDEA server if configured.");
         configProperties.add(forwardClientIP);
 
         ProviderConfigProperty httpTimeoutMs = new ProviderConfigProperty();
@@ -249,8 +263,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         pollInBrowserURL.setType(ProviderConfigProperty.STRING_TYPE);
         pollInBrowserURL.setName(Const.CONFIG_POLL_IN_BROWSER_URL);
         pollInBrowserURL.setLabel("URL for Poll in Browser");
-        pollInBrowserURL.setHelpText(
-                "Optional. If poll in browser should use a deviating URL, set it here. " + "Otherwise, the general URL will be used.");
+        pollInBrowserURL.setHelpText("Optional. If poll in browser should use a deviating URL, set it here. " +
+                                     "Otherwise, the general URL will be used.");
         configProperties.add(pollInBrowserURL);
 
         ProviderConfigProperty debugLog = new ProviderConfigProperty();
