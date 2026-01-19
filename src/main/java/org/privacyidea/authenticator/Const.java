@@ -46,6 +46,21 @@ final class Const
     static final String NOTE_PASSKEY_REGISTRATION_SERIAL = "passkey_registration_serial";
     static final String NOTE_PREVIOUS_RESPONSE = "pi_previous_response";
 
+    // OpenID Connect constants
+    static final String OPENID_PARAM_SCOPE = "scope";
+    static final String OPENID_VALUE = "openid";
+    static final String OPENID_PARAM_ID_TOKEN_HINT = "id_token_hint";
+    static final String OPENID_CLAIM_PREFERRED_USERNAME = "preferred_username";
+
+    // Error Messages
+    static final String MSG_INVALID_CREDENTIALS = "Invalid Credentials!";
+    static final String MSG_USERNAME_REQUIRED = "Username is required!";
+    static final String MSG_USER_NOT_FOUND = "User not found!";
+    static final String MSG_PASSKEY_AUTH_FAILED = "passkey_authentication_failed";
+    static final String MSG_PUSH_NOT_VERIFIED = "push_auth_not_verified";
+    static final String MSG_AUTH_FAILED = "Authentication failed.";
+    static final String MSG_PUSH_FAILED = "Push authentication failed. Please use a different token or restart the login.";
+
     // Changing the config value names will reset the current config
     static final String CONFIG_PUSH_INTERVAL = "pipushtokeninterval";
     static final String CONFIG_EXCLUDED_GROUPS = "piexcludegroups";
@@ -70,4 +85,6 @@ final class Const
     static final String CONFIG_HTTP_TIMEOUT_MS = "pihttptimeoutms";
     static final String CONFIG_DISABLE_PASSWORD_CHECK = "pidisablepasswordcheck";
     static final String CONFIG_DISABLE_PASSKEY_LOGIN = "pidisablepasskeylogin";
+    static final String CONFIG_OPENID_SEARCH_ATTRIBUTE = "piOpenIdSearchAttribute";
+    static final String CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE = "piEnableOpenIdSearch";
 }

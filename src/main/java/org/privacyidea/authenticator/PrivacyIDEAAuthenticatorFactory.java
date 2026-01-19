@@ -9,6 +9,8 @@
  * Copyright 2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  * <p>
+ * SPDX-License-Identifier: Apache-2.0
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -175,6 +177,22 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         disablePasskeyLogin.setLabel("Disable Passkey Login");
         disablePasskeyLogin.setHelpText("Disable the passkey login button, removing the option to log in with passkeys.");
         configProperties.add(disablePasskeyLogin);
+
+        ProviderConfigProperty enableOpenIdSearch = new ProviderConfigProperty();
+        enableOpenIdSearch.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        enableOpenIdSearch.setDefaultValue(false);
+        enableOpenIdSearch.setName(Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE);
+        enableOpenIdSearch.setLabel("Enable OpenID Search");
+        enableOpenIdSearch.setHelpText("Enable searching for the user with the incoming OpenID requests preferred_username parameter.");
+        configProperties.add(enableOpenIdSearch);
+
+        ProviderConfigProperty realmUserAttribute = new ProviderConfigProperty();
+        realmUserAttribute.setType(ProviderConfigProperty.STRING_TYPE);
+        realmUserAttribute.setName(Const.CONFIG_OPENID_SEARCH_ATTRIBUTE);
+        realmUserAttribute.setLabel("OpenID Search Attribute");
+        realmUserAttribute.setHelpText("The user attribute which will be used to search the user with the incoming OpenID requests" +
+                                       " preferred_username parameter.");
+        configProperties.add(realmUserAttribute);
 
         ProviderConfigProperty includedGroups = new ProviderConfigProperty();
         includedGroups.setType(ProviderConfigProperty.STRING_TYPE);
