@@ -3,6 +3,8 @@
  * lukas.matusiewicz@netknights.it
  * - Modified
  * <p>
+ * SPDX-License-Identifier: Apache-2.0
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,12 +26,15 @@ import java.util.List;
 import java.util.Map;
 
 import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
+import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSKEY_LOGIN;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSWORD_CHECK;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
+import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARD_CLIENT_IP;
 import static org.privacyidea.authenticator.Const.CONFIG_INCLUDED_GROUPS;
+import static org.privacyidea.authenticator.Const.CONFIG_OPENID_SEARCH_ATTRIBUTE;
 import static org.privacyidea.authenticator.Const.CONFIG_OTP_LENGTH;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
@@ -74,6 +79,8 @@ public class Configuration
     private final int httpTimeoutMs;
     private final boolean disablePasswordCheck;
     private final boolean disablePasskeyLogin;
+    private final String searchUserAttribute;
+    private final boolean enableOpenIdSearchByAttribute;
     private final boolean passkeyOnly;
 
     public Configuration(Map<String, String> configMap)
@@ -98,7 +105,10 @@ public class Configuration
         this.disablePasswordCheck =
                 configMap.get(CONFIG_DISABLE_PASSWORD_CHECK) != null && configMap.get(CONFIG_DISABLE_PASSWORD_CHECK).equals(TRUE);
         this.disablePasskeyLogin =
-                configMap.get("pidisablepasskeylogin") != null && configMap.get("pidisablepasskeylogin").equals(TRUE);
+                configMap.get(CONFIG_DISABLE_PASSKEY_LOGIN) != null && configMap.get(CONFIG_DISABLE_PASSKEY_LOGIN).equals(TRUE);
+
+        this.searchUserAttribute = configMap.get(CONFIG_OPENID_SEARCH_ATTRIBUTE) == null ? "" : configMap.get(CONFIG_OPENID_SEARCH_ATTRIBUTE);
+        this.enableOpenIdSearchByAttribute = configMap.get(CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE) != null && configMap.get(CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE).equals(TRUE);
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
         {
@@ -258,6 +268,16 @@ public class Configuration
     public boolean isDisablePasskeyLogin()
     {
         return disablePasskeyLogin;
+    }
+
+    public String searchUserAttribute()
+    {
+        return searchUserAttribute;
+    }
+
+    public boolean isOpenIDSearchByAttributeEnabled()
+    {
+        return enableOpenIdSearchByAttribute;
     }
 
     public boolean isPasskeyOnly()
