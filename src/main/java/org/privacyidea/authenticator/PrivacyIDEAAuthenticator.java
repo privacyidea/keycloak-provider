@@ -428,9 +428,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String webAuthnTransactionId = "";
         if (authenticationSession != null)
         {
-            otpTransactionId = context.getAuthenticationSession().getAuthNote(NOTE_OTP_TRANSACTION_ID);
-            pushTransactionId = context.getAuthenticationSession().getAuthNote(NOTE_PUSH_TRANSACTION_ID);
-            webAuthnTransactionId = context.getAuthenticationSession().getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
+            otpTransactionId = authenticationSession.getAuthNote(NOTE_OTP_TRANSACTION_ID);
+            pushTransactionId = authenticationSession.getAuthNote(NOTE_PUSH_TRANSACTION_ID);
+            webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
         }
         else
         {
