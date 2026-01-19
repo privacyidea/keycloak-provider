@@ -420,9 +420,21 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             return;
         }
         piForm.setAutoSubmitLength(config.otpLength());
-        String otpTransactionId = authenticationSession.getAuthNote(NOTE_OTP_TRANSACTION_ID);
-        String pushTransactionId = authenticationSession.getAuthNote(NOTE_PUSH_TRANSACTION_ID);
-        String webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
+        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
+
+        String otpTransactionId = "";
+        String pushTransactionId = "";
+        String webAuthnTransactionId = "";
+        if (authenticationSession != null)
+        {
+            otpTransactionId = authenticationSession.getAuthNote(NOTE_OTP_TRANSACTION_ID);
+            pushTransactionId = authenticationSession.getAuthNote(NOTE_PUSH_TRANSACTION_ID);
+            webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
+        }
+        else
+        {
+            error("AuthenticationSession is null, unable to get TRANSACTION_IDs");
+        }
 
         Map<String, String> headers = util.getHeaders(context, config);
         kcForm.setAttribute(AUTH_FORM, piForm);
