@@ -8,6 +8,7 @@ import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.utils.StringUtil;
+import org.keycloak.sessions.AuthenticationSessionModel;
 import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
@@ -96,6 +97,7 @@ public class Util
         {
             return authForm;
         }
+        AuthenticationSessionModel authSession = context.getAuthenticationSession();
         authForm.setChallengesTriggered(true);
         authForm.setEnrollViaMultichallengeOptional(response.isEnrollViaMultichallengeOptional);
         authForm.setEnrollViaMultichallenge(response.isEnrollViaMultichallenge);
@@ -159,15 +161,15 @@ public class Util
         if (StringUtil.isNotBlank(response.passkeyRegistration))
         {
             authForm.setPasskeyRegistration(response.passkeyRegistration);
-            context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
-            context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
+            authSession.setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
+            authSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
         }
 
         // Passkey Authentication (possible with passkey_trigger_by_pin policy)
         if (StringUtil.isNotBlank(response.passkeyChallenge))
         {
             authForm.setPasskeyChallenge(response.passkeyChallenge);
-            context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
+            authSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
             authForm.setMode(Mode.PASSKEY);
         }
 
@@ -192,15 +194,15 @@ public class Util
         // Set the transactionIds for the different modes
         if (StringUtil.isNotBlank(response.otpTransactionId()))
         {
-            context.getAuthenticationSession().setAuthNote(NOTE_OTP_TRANSACTION_ID, response.otpTransactionId());
+            authSession.setAuthNote(NOTE_OTP_TRANSACTION_ID, response.otpTransactionId());
         }
         if (StringUtil.isNotBlank(response.pushTransactionId()))
         {
-            context.getAuthenticationSession().setAuthNote(NOTE_PUSH_TRANSACTION_ID, response.pushTransactionId());
+            authSession.setAuthNote(NOTE_PUSH_TRANSACTION_ID, response.pushTransactionId());
         }
         if (StringUtil.isNotBlank(response.webAuthnTransactionId))
         {
-            context.getAuthenticationSession().setAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID, response.webAuthnTransactionId);
+            authSession.setAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID, response.webAuthnTransactionId);
         }
         authForm.setMode(mode);
         authForm.setOtpMessage(newOtpMessage);
