@@ -419,7 +419,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             return;
         }
         piForm.setAutoSubmitLength(config.otpLength());
-        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
 
         String otpTransactionId = "";
         String pushTransactionId = "";
