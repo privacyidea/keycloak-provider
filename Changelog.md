@@ -1,5 +1,11 @@
 # Changelog
 
+### v1.7.0 - 2026-03-26
+
+* Support for push_code_to_phone (privacyIDEA 3.13).
+* Support for openid requests to use the username from the preferred_username attribute, including resolving the
+    keycloak user via a deviating attribute that can be specified in the configuration.
+
 ### v1.6.0 - 2025-10-30
 
 * Feature: Passkey only. It is now possible to limit login only to passkey tokens. 

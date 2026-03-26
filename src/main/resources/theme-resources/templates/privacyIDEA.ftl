@@ -14,9 +14,9 @@
 </head>
 <@layout.registrationLayout; section>
     <#if section = "title">
-        ${msg("loginTitle",realm.displayName)}
+        ${msg("loginTitle", (realm.displayName!'')?has_content?then(realm.displayName, realm.name))}
     <#elseif section = "header">
-        ${msg("loginTitleHtml",realm.displayName)}
+        ${msg("loginTitleHtml", (realm.displayName!'')?has_content?then(realm.displayName, realm.name))}
     <#elseif section = "form">
         <form id="kc-otp-login-form" onsubmit="submitForm();"
               class="${properties.kcFormClass!}"

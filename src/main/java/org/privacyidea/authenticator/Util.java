@@ -95,7 +95,7 @@ public class Util
         {
             return authForm;
         }
-        AuthenticationSessionModel authSession = context.getAuthenticationSession();
+        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
         authForm.setChallengesTriggered(true);
         authForm.setEnrollViaMultichallengeOptional(response.isEnrollViaMultichallengeOptional);
         authForm.setEnrollViaMultichallenge(response.isEnrollViaMultichallenge);
@@ -122,7 +122,7 @@ public class Util
                 {
                     authForm.setSmartphoneImage(c.getImage());
                     mode = Mode.PUSH;
-                    context.getAuthenticationSession().setAuthNote(NOTE_PUSH_TRANSACTION_ID, c.getTransactionID());
+                    authenticationSession.setAuthNote(NOTE_PUSH_TRANSACTION_ID, c.getTransactionID());
                     authForm.setOtpAvailable(false);
                 }
             }
@@ -160,15 +160,15 @@ public class Util
         if (StringUtil.isNotBlank(response.passkeyRegistration))
         {
             authForm.setPasskeyRegistration(response.passkeyRegistration);
-            authSession.setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
-            authSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
+            authenticationSession.setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
+            authenticationSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
         }
 
         // Passkey Authentication (possible with passkey_trigger_by_pin policy)
         if (StringUtil.isNotBlank(response.passkeyChallenge))
         {
             authForm.setPasskeyChallenge(response.passkeyChallenge);
-            authSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
+            authenticationSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
             authForm.setMode(Mode.PASSKEY);
         }
 
@@ -193,15 +193,15 @@ public class Util
         // Set the transactionIds for the different modes
         if (StringUtil.isNotBlank(response.otpTransactionId()))
         {
-            authSession.setAuthNote(NOTE_OTP_TRANSACTION_ID, response.otpTransactionId());
+            authenticationSession.setAuthNote(NOTE_OTP_TRANSACTION_ID, response.otpTransactionId());
         }
         if (StringUtil.isNotBlank(response.pushTransactionId()))
         {
-            authSession.setAuthNote(NOTE_PUSH_TRANSACTION_ID, response.pushTransactionId());
+            authenticationSession.setAuthNote(NOTE_PUSH_TRANSACTION_ID, response.pushTransactionId());
         }
         if (StringUtil.isNotBlank(response.webAuthnTransactionId))
         {
-            authSession.setAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID, response.webAuthnTransactionId);
+            authenticationSession.setAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID, response.webAuthnTransactionId);
         }
         authForm.setMode(mode);
         authForm.setOtpMessage(newOtpMessage);

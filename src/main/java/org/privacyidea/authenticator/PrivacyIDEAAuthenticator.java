@@ -33,6 +33,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,11 +57,6 @@ import org.privacyidea.ChallengeStatus;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 import static org.privacyidea.PIConstants.AUTH_FORM;
 import static org.privacyidea.PIConstants.AUTH_FORM_RESULT;
@@ -124,6 +120,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }.getType();
             Map<String, Object> claims = gson.fromJson(payload, type);
 
+            if (claims == null)
+            {
+                return Collections.emptyMap();
+            }
+            
             // Convert all values to String to match the method signature and avoid class cast exceptions.
             return claims.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
         }
@@ -280,7 +281,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         if (formData.containsKey(OPENID_PARAM_SCOPE))
         {
             String scope = formData.getFirst(OPENID_PARAM_SCOPE);
-            if (scope != null && Stream.of(scope.split("\\s+")).anyMatch(OPENID_VALUE::equals))
+            if (scope != null && Arrays.asList(scope.split("\\s+")).contains(OPENID_VALUE))
             {
                 String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
                 if (StringUtil.isNotBlank(idTokenHint))
@@ -427,16 +428,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         String otpTransactionId = "";
         String pushTransactionId = "";
         String webAuthnTransactionId = "";
-        if (authenticationSession != null)
-        {
-            otpTransactionId = authenticationSession.getAuthNote(NOTE_OTP_TRANSACTION_ID);
-            pushTransactionId = authenticationSession.getAuthNote(NOTE_PUSH_TRANSACTION_ID);
-            webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
-        }
-        else
-        {
-            error("AuthenticationSession is null, unable to get TRANSACTION_IDs");
-        }
+        otpTransactionId = authenticationSession.getAuthNote(NOTE_OTP_TRANSACTION_ID);
+        pushTransactionId = authenticationSession.getAuthNote(NOTE_PUSH_TRANSACTION_ID);
+        webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
 
         Map<String, String> headers = util.getHeaders(context, config);
         kcForm.setAttribute(AUTH_FORM, piForm);
