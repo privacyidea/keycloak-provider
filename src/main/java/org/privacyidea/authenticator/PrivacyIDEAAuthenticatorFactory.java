@@ -213,7 +213,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         includedGroups.setLabel("Included groups");
         includedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be activated. " +
                                    "The names should be separated with ',' (E.g. group1,group2)" +
-                                   "NOTE: When using usernameless authentication, the group membership check will be ignored!");
+                                   " NOTE: When using usernameless authentication, the group membership check will be ignored!");
         configProperties.add(includedGroups);
 
         ProviderConfigProperty excludedGroups = new ProviderConfigProperty();
