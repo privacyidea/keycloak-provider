@@ -33,23 +33,22 @@ import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.Map;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.common.Version;
 import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
-import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.utils.StringUtil;
 import org.privacyidea.AuthenticationStatus;
@@ -244,7 +243,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         String currentPassword = null;
         // In some cases, there will be no FormParameters so check if it is even possible to get the password
-        if (config.sendPassword() && formData != null && formData.containsKey(PASSWORD))
+        if (config.sendPassword() && formData.containsKey(PASSWORD))
         {
             currentPassword = formData.getFirst(PASSWORD);
         }
@@ -277,7 +276,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
     private boolean processOpenIDRequest(AuthenticationFlowContext context, Configuration config, MultivaluedMap<String, String> formData)
     {
-        String usernameFromOpenId = "";
+        String usernameFromOpenId;
         if (formData.containsKey(OPENID_PARAM_SCOPE) && OPENID_VALUE.equals(formData.getFirst(OPENID_PARAM_SCOPE)))
         {
             String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
@@ -739,7 +738,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Prepare form for the next step, depending on what to do next
         kcForm.setAttribute(AUTH_FORM, piForm);
-        String authenticationFailureMessage = MSG_AUTH_FAILED;
         if ((piFormResult.modeChanged && !didTrigger) ||
             Mode.PUSH.equals(currentMode) && (response != null && StringUtil.isBlank(response.passkeyRegistration)))
         {
@@ -776,7 +774,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             else if (!didTrigger)
             {
-                kcForm.setError(authenticationFailureMessage);
+                kcForm.setError(MSG_AUTH_FAILED);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             // Check failed auth vs real error

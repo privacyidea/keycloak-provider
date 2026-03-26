@@ -3,18 +3,16 @@ package org.privacyidea.authenticator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.UserModel;
-import org.keycloak.utils.StringUtil;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.utils.StringUtil;
 import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
-import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
 import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
@@ -47,7 +45,7 @@ public class Util
         // Take all headers from config plus accept-language
         config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
 
-        for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList()))
+        for (String header : config.forwardedHeaders().stream().distinct().toList())
         {
             List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(header);
 
@@ -103,6 +101,7 @@ public class Util
         authForm.setEnrollViaMultichallenge(response.isEnrollViaMultichallenge);
         Mode mode = Mode.OTP;
         String newOtpMessage = response.otpMessage();
+
         // Images per challenge
         for (Challenge c : response.multiChallenge)
         {
