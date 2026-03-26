@@ -277,62 +277,66 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     private boolean processOpenIDRequest(AuthenticationFlowContext context, Configuration config, MultivaluedMap<String, String> formData)
     {
         String usernameFromOpenId;
-        if (formData.containsKey(OPENID_PARAM_SCOPE) && OPENID_VALUE.equals(formData.getFirst(OPENID_PARAM_SCOPE)))
+        if (formData.containsKey(OPENID_PARAM_SCOPE))
         {
-            String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
-            if (StringUtil.isNotBlank(idTokenHint))
+            String scope = formData.getFirst(OPENID_PARAM_SCOPE);
+            if (scope != null && Stream.of(scope.split("\\s+")).anyMatch(OPENID_VALUE::equals))
             {
-                Map<String, String> token = decodeJWT(idTokenHint);
-                if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
+                String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
+                if (StringUtil.isNotBlank(idTokenHint))
                 {
-                    error("Openid request: Missing 'preferred_username' parameter!");
-                    context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
-                    return true;
-                }
-                if (logEnabled)
-                {
-                    log("ID token hint processed. Claims keys: " + token.keySet());
-                }
-                usernameFromOpenId = token.get(OPENID_CLAIM_PREFERRED_USERNAME);
-
-                // Check if the user is present in keycloak. If not, the authentication can not be completed.
-                UserModel userModel = null;
-                String userAttribute = config.searchUserAttribute();
-
-                if (config.isOpenIDSearchByAttributeEnabled() && StringUtil.isNotBlank(userAttribute))
-                {
-                    log("Searching for user with attribute " + userAttribute + " and value " + usernameFromOpenId);
-                    Stream<UserModel> usersStream = context.getSession()
-                                                           .users()
-                                                           .searchForUserByUserAttributeStream(context.getRealm(), userAttribute,
-                                                                                               usernameFromOpenId);
-                    userModel = usersStream.findFirst().orElse(null);
-                    if (userModel != null)
+                    Map<String, String> token = decodeJWT(idTokenHint);
+                    if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
                     {
-                        log("User found by attribute: " + userModel.getUsername());
+                        error("Openid request: Missing 'preferred_username' parameter!");
+                        context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
+                        return true;
+                    }
+                    if (logEnabled)
+                    {
+                        log("ID token hint processed. Claims keys: " + token.keySet());
+                    }
+                    usernameFromOpenId = token.get(OPENID_CLAIM_PREFERRED_USERNAME);
+
+                    // Check if the user is present in keycloak. If not, the authentication can not be completed.
+                    UserModel userModel = null;
+                    String userAttribute = config.searchUserAttribute();
+
+                    if (config.isOpenIDSearchByAttributeEnabled() && StringUtil.isNotBlank(userAttribute))
+                    {
+                        log("Searching for user with attribute " + userAttribute + " and value " + usernameFromOpenId);
+                        Stream<UserModel> usersStream = context.getSession()
+                                                               .users()
+                                                               .searchForUserByUserAttributeStream(context.getRealm(), userAttribute,
+                                                                                                   usernameFromOpenId);
+                        userModel = usersStream.findFirst().orElse(null);
+                        if (userModel != null)
+                        {
+                            log("User found by attribute: " + userModel.getUsername());
+                        }
+                        else
+                        {
+                            log("User not found by attribute.");
+                        }
+                    }
+
+                    if (userModel == null)
+                    {
+                        log("Searching for user by username: " + usernameFromOpenId);
+                        userModel = context.getSession().users().getUserByUsername(context.getRealm(), usernameFromOpenId);
+                    }
+
+                    if (userModel == null)
+                    {
+                        // If the user was still not found, fall through and let it switch to MODE_USERNAME, so the username can be entered.
+                        error("User " + usernameFromOpenId + " not found in realm " + context.getRealm().getName() + ". Requesting the " +
+                              "username to be entered");
                     }
                     else
                     {
-                        log("User not found by attribute.");
+                        context.clearUser();
+                        context.setUser(userModel);
                     }
-                }
-
-                if (userModel == null)
-                {
-                    log("Searching for user by username: " + usernameFromOpenId);
-                    userModel = context.getSession().users().getUserByUsername(context.getRealm(), usernameFromOpenId);
-                }
-
-                if (userModel == null)
-                {
-                    // If the user was still not found, fall through and let it switch to MODE_USERNAME, so the username can be entered.
-                    error("User " + usernameFromOpenId + " not found in realm " + context.getRealm().getName() + ". Requesting the " +
-                          "username to be entered");
-                }
-                else
-                {
-                    context.clearUser();
-                    context.setUser(userModel);
                 }
             }
         }
