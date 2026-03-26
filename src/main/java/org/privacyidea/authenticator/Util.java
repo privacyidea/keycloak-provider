@@ -3,17 +3,16 @@ package org.privacyidea.authenticator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.utils.StringUtil;
 import org.privacyidea.Challenge;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
-import static org.privacyidea.PIConstants.TOKEN_TYPE_WEBAUTHN;
 import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
 import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
@@ -46,7 +45,7 @@ public class Util
         // Take all headers from config plus accept-language
         config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
 
-        for (String header : config.forwardedHeaders().stream().distinct().collect(Collectors.toList()))
+        for (String header : config.forwardedHeaders().stream().distinct().toList())
         {
             List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(header);
 
@@ -92,16 +91,17 @@ public class Util
     private AuthenticationForm challengesToForm(AuthenticationForm authForm, PIResponse response, Configuration config,
                                                 AuthenticationFlowContext context)
     {
-        if (response == null || response.multiChallenge == null || response.multiChallenge.isEmpty())
+        if (response == null || !response.hasChallenges())
         {
             return authForm;
         }
-
+        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
         authForm.setChallengesTriggered(true);
         authForm.setEnrollViaMultichallengeOptional(response.isEnrollViaMultichallengeOptional);
         authForm.setEnrollViaMultichallenge(response.isEnrollViaMultichallenge);
         Mode mode = Mode.OTP;
         String newOtpMessage = response.otpMessage();
+
         // Images per challenge
         for (Challenge c : response.multiChallenge)
         {
@@ -122,7 +122,7 @@ public class Util
                 {
                     authForm.setSmartphoneImage(c.getImage());
                     mode = Mode.PUSH;
-                    context.getAuthenticationSession().setAuthNote(NOTE_PUSH_TRANSACTION_ID, c.getTransactionID());
+                    authenticationSession.setAuthNote(NOTE_PUSH_TRANSACTION_ID, c.getTransactionID());
                     authForm.setOtpAvailable(false);
                 }
             }
@@ -151,17 +151,27 @@ public class Util
             authForm.setPushMessage(response.pushMessage());
         }
         // WebAuthn
-        if (response.triggeredTokenTypes().contains(TOKEN_TYPE_WEBAUTHN))
+        String signRequest = response.mergedSignRequest();
+        if (signRequest != null && !signRequest.isEmpty())
         {
-            authForm.setWebAuthnSignRequest(response.mergedSignRequest());
+            authForm.setWebAuthnSignRequest(signRequest);
         }
         // Passkey Registration
         if (StringUtil.isNotBlank(response.passkeyRegistration))
         {
             authForm.setPasskeyRegistration(response.passkeyRegistration);
-            context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
-            context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
+            authenticationSession.setAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL, response.serial);
+            authenticationSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
         }
+
+        // Passkey Authentication (possible with passkey_trigger_by_pin policy)
+        if (StringUtil.isNotBlank(response.passkeyChallenge))
+        {
+            authForm.setPasskeyChallenge(response.passkeyChallenge);
+            authenticationSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, response.transactionID);
+            authForm.setMode(Mode.PASSKEY);
+        }
+
         // Preferred client mode
         if (StringUtil.isNotBlank(response.preferredClientMode))
         {
@@ -183,15 +193,15 @@ public class Util
         // Set the transactionIds for the different modes
         if (StringUtil.isNotBlank(response.otpTransactionId()))
         {
-            context.getAuthenticationSession().setAuthNote(NOTE_OTP_TRANSACTION_ID, response.otpTransactionId());
+            authenticationSession.setAuthNote(NOTE_OTP_TRANSACTION_ID, response.otpTransactionId());
         }
         if (StringUtil.isNotBlank(response.pushTransactionId()))
         {
-            context.getAuthenticationSession().setAuthNote(NOTE_PUSH_TRANSACTION_ID, response.pushTransactionId());
+            authenticationSession.setAuthNote(NOTE_PUSH_TRANSACTION_ID, response.pushTransactionId());
         }
         if (StringUtil.isNotBlank(response.webAuthnTransactionId))
         {
-            context.getAuthenticationSession().setAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID, response.webAuthnTransactionId);
+            authenticationSession.setAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID, response.webAuthnTransactionId);
         }
         authForm.setMode(mode);
         authForm.setOtpMessage(newOtpMessage);
@@ -222,11 +232,14 @@ public class Util
             {
                 authForm.setErrorMessage(response.error.message);
             }
-            // New challenges, set the current response as previous response
-            // Responses like "wrong otp" or "user not found" do not contain information that we need to remember.
-            if (!response.multiChallenge.isEmpty())
+
+            // New challenges
+            // WebAuthn and Passkey are not in the multiChallenge array, they need separate conditions here!
+            if (response.hasChallenges())
             {
                 authForm = challengesToForm(authForm, response, config, context);
+                // Set the current response as previous response.
+                // Responses like "wrong otp" or "user not found" do not contain information that we need to remember.
                 String p = response.toJSON();
                 context.getAuthenticationSession().setAuthNote(NOTE_PREVIOUS_RESPONSE, p);
             }

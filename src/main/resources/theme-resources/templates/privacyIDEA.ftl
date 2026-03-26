@@ -14,9 +14,9 @@
 </head>
 <@layout.registrationLayout; section>
     <#if section = "title">
-        ${msg("loginTitle",realm.displayName)}
+        ${msg("loginTitle", (realm.displayName!'')?has_content?then(realm.displayName, realm.name))}
     <#elseif section = "header">
-        ${msg("loginTitleHtml",realm.displayName)}
+        ${msg("loginTitleHtml", (realm.displayName!'')?has_content?then(realm.displayName, realm.name))}
     <#elseif section = "form">
         <form id="kc-otp-login-form" onsubmit="submitForm();"
               class="${properties.kcFormClass!}"
@@ -168,6 +168,7 @@
                            value="${msg('privacyidea.passkeyInitiateButton')}"/>
                 </div>
             </#if>
+
                 <!-- Passkey Authentication with retry button -->
             <#if authenticationForm.passkeyChallenge?has_content && (!authenticationForm.errorMessage?has_content
             || authenticationForm.errorMessage == "passkey_authentication_failed")>
@@ -185,7 +186,8 @@
                     passkeyAuthentication("${authenticationForm.passkeyChallenge}", "${authenticationForm.mode}");
                 </script>
             </#if>
-            </#if> <!-- END OF PASSKEY -->
+            </#if> <!-- ENDIF PASSKEY DISABLED -->
+            <!-- END OF PASSKEY -->
 
             <!-- AUTO SUBMIT -->
             <#if authenticationForm.autoSubmitLength?has_content>

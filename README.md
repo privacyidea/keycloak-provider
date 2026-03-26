@@ -64,5 +64,5 @@ If you want to change any of the default texts for any localization, you can dir
 
 ## Usernameless Authentication
 
-If you decide to use an usernameless authentication, the group membership can not be evaluated and the excluded and included group setting will have no effect.
+If you decide to use a usernameless authentication, the group membership can not be evaluated and the excluded and included group setting will have no effect.
 If you had users excluded previously, make sure they have a passkey token before enabling this feature.

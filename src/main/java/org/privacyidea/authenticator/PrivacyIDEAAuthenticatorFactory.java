@@ -9,6 +9,8 @@
  * Copyright 2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
  * <p>
+ * SPDX-License-Identifier: Apache-2.0
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -177,6 +179,22 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                         "NOTE: If this is enabled, the 'Passkey Only' option will be ignored.");
         configProperties.add(disablePasskeyLogin);
 
+        ProviderConfigProperty enableOpenIdSearch = new ProviderConfigProperty();
+        enableOpenIdSearch.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        enableOpenIdSearch.setDefaultValue(false);
+        enableOpenIdSearch.setName(Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE);
+        enableOpenIdSearch.setLabel("Enable OpenID Search");
+        enableOpenIdSearch.setHelpText("Enable searching for the user with the incoming OpenID requests preferred_username parameter.");
+        configProperties.add(enableOpenIdSearch);
+
+        ProviderConfigProperty realmUserAttribute = new ProviderConfigProperty();
+        realmUserAttribute.setType(ProviderConfigProperty.STRING_TYPE);
+        realmUserAttribute.setName(Const.CONFIG_OPENID_SEARCH_ATTRIBUTE);
+        realmUserAttribute.setLabel("OpenID Search Attribute");
+        realmUserAttribute.setHelpText("The user attribute which will be used to search the user with the incoming OpenID requests" +
+                                       " preferred_username parameter.");
+        configProperties.add(realmUserAttribute);
+
         ProviderConfigProperty passkeyOnly = new ProviderConfigProperty();
         passkeyOnly.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         passkeyOnly.setName(Const.CONFIG_PASSKEY_ONLY);
@@ -184,8 +202,8 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         passkeyOnly.setDefaultValue(false);
         passkeyOnly.setHelpText("Enable this to run the privacyIDEA Provider in the Passkey Only mode. " +
                                 "When enabled, authentication will only be possible using passkeys. " +
-                                "PUSH, One-Time Passwords, and other tokens will not be accessible for users." +
-                                "NOTE: This requires that users have passkeys enrolled in privacyIDEA." +
+                                "PUSH, One-Time Passwords, and other tokens will not be accessible for users. " +
+                                "NOTE: This requires that users have passkeys enrolled in privacyIDEA. " +
                                 "NOTE: Remember to not enable the 'Disable Passkey Login' option. Otherwise, this will be ignored.");
         configProperties.add(passkeyOnly);
 
@@ -195,7 +213,7 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         includedGroups.setLabel("Included groups");
         includedGroups.setHelpText("Set groups for which the privacyIDEA workflow will be activated. " +
                                    "The names should be separated with ',' (E.g. group1,group2)" +
-                                   "NOTE: When using usernameless authentication, the group membership check will be ignored!");
+                                   " NOTE: When using usernameless authentication, the group membership check will be ignored!");
         configProperties.add(includedGroups);
 
         ProviderConfigProperty excludedGroups = new ProviderConfigProperty();

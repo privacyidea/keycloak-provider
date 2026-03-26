@@ -1,5 +1,6 @@
 /*
  * Copyright 2023 NetKnights GmbH - micha.preusser@netknights.it
+ * Copyright 2025 NetKnights GmbH - nils.behlen@netknights.it
  * nils.behlen@netknights.it
  * lukas.matusiewicz@netknights.it
  * - Modified
@@ -8,6 +9,8 @@
  * <p>
  * Copyright 2016 Red Hat, Inc. and/or its affiliates
  * and other contributors as indicated by the @author tags.
+ * <p>
+ * SPDX-License-Identifier: Apache-2.0
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +26,31 @@
  */
 package org.privacyidea.authenticator;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.common.Version;
 import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.utils.StringUtil;
 import org.privacyidea.AuthenticationStatus;
 import org.privacyidea.ChallengeStatus;
@@ -42,23 +58,29 @@ import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
-
 import static org.privacyidea.PIConstants.AUTH_FORM;
 import static org.privacyidea.PIConstants.AUTH_FORM_RESULT;
 import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.USERNAME;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
+import static org.privacyidea.authenticator.Const.MSG_AUTH_FAILED;
+import static org.privacyidea.authenticator.Const.MSG_INVALID_CREDENTIALS;
+import static org.privacyidea.authenticator.Const.MSG_PASSKEY_AUTH_FAILED;
+import static org.privacyidea.authenticator.Const.MSG_PUSH_FAILED;
+import static org.privacyidea.authenticator.Const.MSG_PUSH_NOT_VERIFIED;
+import static org.privacyidea.authenticator.Const.MSG_USERNAME_REQUIRED;
+import static org.privacyidea.authenticator.Const.MSG_USER_NOT_FOUND;
 import static org.privacyidea.authenticator.Const.NOTE_COUNTER;
 import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PUSH_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_WEBAUTHN_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.OPENID_CLAIM_PREFERRED_USERNAME;
+import static org.privacyidea.authenticator.Const.OPENID_PARAM_ID_TOKEN_HINT;
+import static org.privacyidea.authenticator.Const.OPENID_PARAM_SCOPE;
+import static org.privacyidea.authenticator.Const.OPENID_VALUE;
 import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
 
 public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger
@@ -66,6 +88,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
     private final Util util;
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
+    private final Gson gson = new Gson();
     private boolean logEnabled = false;
 
     public PrivacyIDEAAuthenticator()
@@ -73,6 +96,45 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         log("PrivacyIDEA Authenticator initialized.");
         this.util = new Util(this);
     }
+
+    /**
+     * Decodes a JWT and returns its payload as a map of claims.
+     * This method does not verify the signature, which is appropriate for an id_token_hint.
+     *
+     * @param jwtString The JWT as a string.
+     * @return A map of the claims from the JWT payload, or an empty map if decoding fails.
+     */
+    private Map<String, String> decodeJWT(String jwtString)
+    {
+        if (StringUtil.isBlank(jwtString))
+        {
+            return Collections.emptyMap();
+        }
+        try
+        {
+            JWSInput jwsInput = new JWSInput(jwtString);
+            String payload = new String(jwsInput.getContent(), StandardCharsets.UTF_8);
+
+            Type type = new TypeToken<Map<String, Object>>()
+            {
+            }.getType();
+            Map<String, Object> claims = gson.fromJson(payload, type);
+
+            if (claims == null)
+            {
+                return Collections.emptyMap();
+            }
+            
+            // Convert all values to String to match the method signature and avoid class cast exceptions.
+            return claims.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
+        }
+        catch (Exception e)
+        {
+            error("Failed to decode JWT: " + e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
 
     /**
      * Create new instances of PrivacyIDEA and the Configuration, if it does not exist yet.
@@ -131,12 +193,29 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void authenticate(AuthenticationFlowContext context)
     {
+        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
+        if (authenticationSession == null)
+        {
+            error("AuthenticationSession is null in authenticate!");
+            context.failure(AuthenticationFlowError.INTERNAL_ERROR);
+            return;
+        }
         final Pair currentPair = loadConfiguration(context);
         PrivacyIDEA privacyIDEA = currentPair.privacyIDEA();
         Configuration config = currentPair.configuration();
         logEnabled = config.doLog();
         AuthenticationForm piForm = new AuthenticationForm(config);
         piForm.setPollInterval(config.pollingInterval().get(0));
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+
+        // Reset
+        authenticationSession.setUserSessionNote("privacyidea_authentication_method", "otp");
+
+        // Check for an openid from entraid request first
+        if (processOpenIDRequest(context, config, formData))
+        {
+            return;
+        }
 
         // Check if a user is already present.
         // If no user is present, request it. Optionally request the password if not disabled.
@@ -165,10 +244,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         String currentPassword = null;
         // In some cases, there will be no FormParameters so check if it is even possible to get the password
-        if (config.sendPassword() && context.getHttpRequest() != null && context.getHttpRequest().getDecodedFormParameters() != null &&
-            context.getHttpRequest().getDecodedFormParameters().get(PASSWORD) != null)
+        if (config.sendPassword() && formData.containsKey(PASSWORD))
         {
-            currentPassword = context.getHttpRequest().getDecodedFormParameters().get(PASSWORD).get(0);
+            currentPassword = formData.getFirst(PASSWORD);
         }
 
         Map<String, String> headers = util.getHeaders(context, config);
@@ -190,11 +268,80 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         }
 
         // Prepare the form and auth notes to pass infos to the UI and the next step
-        context.getAuthenticationSession().setAuthNote(NOTE_COUNTER, "0");
+        authenticationSession.setAuthNote(NOTE_COUNTER, "0");
         context.form().setAttribute(AUTH_FORM, piForm);
         Response responseForm = context.form().createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
+    }
+
+    private boolean processOpenIDRequest(AuthenticationFlowContext context, Configuration config, MultivaluedMap<String, String> formData)
+    {
+        String usernameFromOpenId;
+        if (formData.containsKey(OPENID_PARAM_SCOPE))
+        {
+            String scope = formData.getFirst(OPENID_PARAM_SCOPE);
+            if (scope != null && Arrays.asList(scope.split("\\s+")).contains(OPENID_VALUE))
+            {
+                String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
+                if (StringUtil.isNotBlank(idTokenHint))
+                {
+                    Map<String, String> token = decodeJWT(idTokenHint);
+                    if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
+                    {
+                        error("Openid request: Missing 'preferred_username' parameter!");
+                        context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
+                        return true;
+                    }
+                    if (logEnabled)
+                    {
+                        log("ID token hint processed. Claims keys: " + token.keySet());
+                    }
+                    usernameFromOpenId = token.get(OPENID_CLAIM_PREFERRED_USERNAME);
+
+                    // Check if the user is present in keycloak. If not, the authentication can not be completed.
+                    UserModel userModel = null;
+                    String userAttribute = config.searchUserAttribute();
+
+                    if (config.isOpenIDSearchByAttributeEnabled() && StringUtil.isNotBlank(userAttribute))
+                    {
+                        log("Searching for user with attribute " + userAttribute + " and value " + usernameFromOpenId);
+                        Stream<UserModel> usersStream = context.getSession()
+                                                               .users()
+                                                               .searchForUserByUserAttributeStream(context.getRealm(), userAttribute,
+                                                                                                   usernameFromOpenId);
+                        userModel = usersStream.findFirst().orElse(null);
+                        if (userModel != null)
+                        {
+                            log("User found by attribute: " + userModel.getUsername());
+                        }
+                        else
+                        {
+                            log("User not found by attribute.");
+                        }
+                    }
+
+                    if (userModel == null)
+                    {
+                        log("Searching for user by username: " + usernameFromOpenId);
+                        userModel = context.getSession().users().getUserByUsername(context.getRealm(), usernameFromOpenId);
+                    }
+
+                    if (userModel == null)
+                    {
+                        // If the user was still not found, fall through and let it switch to MODE_USERNAME, so the username can be entered.
+                        error("User " + usernameFromOpenId + " not found in realm " + context.getRealm().getName() + ". Requesting the " +
+                              "username to be entered");
+                    }
+                    else
+                    {
+                        context.clearUser();
+                        context.setUser(userModel);
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -205,7 +352,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public void action(AuthenticationFlowContext context)
     {
-        //log("action() called.");
+        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
+        if (authenticationSession == null)
+        {
+            error("AuthenticationSession is null in action!");
+            context.failure(AuthenticationFlowError.INTERNAL_ERROR);
+            return;
+        }
         // Get the configuration and privacyIDEA instance for the current realm
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
@@ -230,10 +383,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             context.resetFlow();
             return;
         }
+
+        // Reset
+        authenticationSession.setUserSessionNote("privacyidea_authentication_method", "otp");
+
         // Get the data from the forms and session
         LoginFormsProvider kcForm = context.form();
-        //log("formData:");
-        //formData.forEach((k, v) -> log("key=" + k + ", value=" + v));
+
         // AuthenticationFormResult
         if (!formData.containsKey(AUTH_FORM_RESULT))
         {
@@ -268,9 +424,14 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             return;
         }
         piForm.setAutoSubmitLength(config.otpLength());
-        String otpTransactionId = context.getAuthenticationSession().getAuthNote(NOTE_OTP_TRANSACTION_ID);
-        String pushTransactionId = context.getAuthenticationSession().getAuthNote(NOTE_PUSH_TRANSACTION_ID);
-        String webAuthnTransactionId = context.getAuthenticationSession().getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
+
+        String otpTransactionId = "";
+        String pushTransactionId = "";
+        String webAuthnTransactionId = "";
+        otpTransactionId = authenticationSession.getAuthNote(NOTE_OTP_TRANSACTION_ID);
+        pushTransactionId = authenticationSession.getAuthNote(NOTE_PUSH_TRANSACTION_ID);
+        webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
+
         Map<String, String> headers = util.getHeaders(context, config);
         kcForm.setAttribute(AUTH_FORM, piForm);
 
@@ -287,35 +448,37 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             else
             {
-                String passkeyTransactionID = context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
+                String passkeyTransactionID = authenticationSession.getAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
+
                 response = privacyIDEA.validateCheckPasskey(passkeyTransactionID, piFormResult.passkeySignResponse, piFormResult.origin,
                                                             headers);
                 if (response != null)
                 {
-                    if (StringUtil.isNotBlank(response.username))
-                    {
-                        context.clearUser();
-                        UserModel userModel = context.getSession().users().getUserByUsername(context.getRealm(), response.username);
-                        if (userModel == null)
-                        {
-                            error("User " + response.username + " not found in realm " + context.getRealm().getName());
-                            kcForm.setError("User not found!");
-                            Response responseForm = kcForm.createForm(FORM_FILE_NAME);
-                            context.challenge(responseForm);
-                            return;
-                        }
-                        context.setUser(userModel);
-                    }
-                    if (context.getUser() == null)
-                    {
-                        error("No user set after passkey authentication!");
-                        context.failure(AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR);
-                        return;
-                    }
-
                     if (response.authenticationSuccessful())
                     {
+                        if (StringUtil.isNotBlank(response.username))
+                        {
+                            context.clearUser();
+                            UserModel userModel = context.getSession().users().getUserByUsername(context.getRealm(), response.username);
+                            if (userModel == null)
+                            {
+                                error("User " + response.username + " not found in realm " + context.getRealm().getName());
+                                kcForm.setError(MSG_USER_NOT_FOUND);
+                                Response responseForm = kcForm.createForm(FORM_FILE_NAME);
+                                context.challenge(responseForm);
+                                return;
+                            }
+                            context.setUser(userModel);
+                        }
+                        if (context.getUser() == null)
+                        {
+                            error("No user set after passkey authentication!");
+                            context.failure(AuthenticationFlowError.GENERIC_AUTHENTICATION_ERROR);
+                            return;
+                        }
                         context.success();
+                        // Set the info that fido was used for the protocol mapper
+                        authenticationSession.setUserSessionNote("privacyidea_authentication_method", "fido2");
                     }
                     else if (response.authentication == AuthenticationStatus.CHALLENGE)
                     {
@@ -327,7 +490,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     }
                     else
                     {
-                        piForm.setErrorMessage("passkey_authentication_failed");
+                        piForm.setErrorMessage(MSG_PASSKEY_AUTH_FAILED);
                         kcForm.setAttribute(AUTH_FORM, piForm);
                         Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
@@ -339,40 +502,42 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Passkey login requested: Get a challenge and return
         if (piFormResult.passkeyLoginRequested)
         {
-            PIResponse res = privacyIDEA.validateInitialize("passkey");
-            if (res != null && StringUtil.isNotBlank(res.passkeyChallenge))
+            PIResponse passkeyResponse = privacyIDEA.validateInitialize("passkey");
+            if (passkeyResponse != null && StringUtil.isNotBlank(passkeyResponse.passkeyChallenge))
             {
-                piForm.setPasskeyChallenge(res.passkeyChallenge);
+                piForm.setPasskeyChallenge(passkeyResponse.passkeyChallenge);
                 piForm.setMode(Mode.PASSKEY);
                 kcForm.setAttribute(AUTH_FORM, piForm);
-                context.getAuthenticationSession().setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, res.transactionID);
+                authenticationSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, passkeyResponse.transactionID);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.challenge(responseForm);
                 return;
             }
         }
-        // Passkey login cancelled: Remove the challenge and transaction ID
+        // Passkey login canceled: Remove the challenge and transaction ID
         if (piFormResult.passkeyLoginCancelled)
         {
             piForm.setPasskeyChallenge("");
-            context.getAuthenticationSession().removeAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
+            authenticationSession.removeAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
         }
         // Passkey registration: enroll_via_multichallenge, this is after successful authentication
         if (StringUtil.isNotBlank(piFormResult.passkeyRegistrationResponse))
         {
-            String serial = context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL);
-            String transactionId = context.getAuthenticationSession().getAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
-            PIResponse res = privacyIDEA.validateCheckCompletePasskeyRegistration(transactionId, serial, context.getUser().getUsername(),
-                                                                                  piFormResult.passkeyRegistrationResponse,
-                                                                                  piFormResult.origin, headers);
-            if (res != null && res.value)
+            String serial = authenticationSession.getAuthNote(NOTE_PASSKEY_REGISTRATION_SERIAL);
+            String transactionId = authenticationSession.getAuthNote(NOTE_PASSKEY_TRANSACTION_ID);
+
+            PIResponse passkeyResponse = privacyIDEA.validateCheckCompletePasskeyRegistration(transactionId, serial,
+                                                                                              context.getUser().getUsername(),
+                                                                                              piFormResult.passkeyRegistrationResponse,
+                                                                                              piFormResult.origin, headers);
+            if (passkeyResponse != null && passkeyResponse.value)
             {
                 context.success();
                 return;
             }
-            else if (res != null && res.error != null)
+            else if (passkeyResponse != null && passkeyResponse.error != null)
             {
-                kcForm.setError(res.error.message);
+                kcForm.setError(passkeyResponse.error.message);
                 kcForm.setAttribute(AUTH_FORM, piForm);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
@@ -419,7 +584,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (StringUtil.isBlank(username))
             {
                 logger.error("Username was requested but has not been provided!");
-                kcForm.setError("Username is required!");
+                kcForm.setError(MSG_USERNAME_REQUIRED);
                 kcForm.setAttribute(AUTH_FORM, piForm);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.challenge(responseForm);
@@ -429,7 +594,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (userModel == null)
             {
                 logger.error("User " + username + " not found in realm " + context.getRealm().getName());
-                kcForm.setError("Invalid Credentials!");
+                kcForm.setError(MSG_INVALID_CREDENTIALS);
                 kcForm.setAttribute(AUTH_FORM, piForm);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.challenge(responseForm);
@@ -442,7 +607,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 if (!passwordCorrect)
                 {
                     logger.debug("User " + username + " tried to authenticate with a wrong password.");
-                    kcForm.setError("Invalid Credentials!");
+                    kcForm.setError(MSG_INVALID_CREDENTIALS);
                     kcForm.setAttribute(AUTH_FORM, piForm);
                     Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                     context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
@@ -472,6 +637,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         Mode currentMode = piFormResult.modeChanged ? piFormResult.newMode : piForm.getMode();
         piForm.setMode(currentMode);
         kcForm.setAttribute(AUTH_FORM, piForm);
+        boolean fido2Used = false;
 
         // Send a request to privacyIDEA depending on the mode. Evaluation of the response is done afterward independently of the mode.
         if (Mode.PUSH.equals(currentMode))
@@ -493,7 +659,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else if (pollTransactionStatus != ChallengeStatus.pending)
             {
                 // If poll transaction failed, show the error message and fallback to otp mode.
-                kcForm.setError("Push authentication failed. Please use a different token or restart the login.");
+                kcForm.setError(MSG_PUSH_FAILED);
                 piForm.setMode(Mode.OTP);
             }
         }
@@ -508,6 +674,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 response = privacyIDEA.validateCheckWebAuthn(currentUsername, webAuthnTransactionId, piFormResult.webAuthnSignResponse,
                                                              piFormResult.origin, util.getAdditionalParamsFromContext(context, config),
                                                              headers);
+                fido2Used = true;
             }
         }
         else if (Mode.USERNAMEPASSWORD.equals(currentMode) || Mode.USERNAME.equals(currentMode))
@@ -529,6 +696,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (response.authenticationSuccessful())
             {
                 context.success();
+                if (fido2Used)
+                {
+                    // Set the info that fido was used for the protocol mapper
+                    authenticationSession.setUserSessionNote("privacyidea_authentication_method", "fido2");
+                }
                 return;
             }
             if (response.error != null)
@@ -543,20 +715,32 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // The authCounter is also used to determine the polling interval for push
         // If the authCounter is bigger than the size of the polling interval list, repeat the last value in the list
-        int authCounter = Integer.parseInt(context.getAuthenticationSession().getAuthNote(NOTE_COUNTER)) + 1;
+        int authCounter = 0;
+        String counterStr = authenticationSession.getAuthNote(NOTE_COUNTER);
+        if (StringUtil.isNotBlank(counterStr))
+        {
+            try
+            {
+                authCounter = Integer.parseInt(counterStr) + 1;
+            }
+            catch (NumberFormatException e)
+            {
+                logger.warn("Invalid auth counter format: " + counterStr);
+            }
+        }
+
         authCounter = (authCounter >= config.pollingInterval().size() ? config.pollingInterval().size() - 1 : authCounter);
-        context.getAuthenticationSession().setAuthNote(NOTE_COUNTER, Integer.toString(authCounter));
+        authenticationSession.setAuthNote(NOTE_COUNTER, Integer.toString(authCounter));
         piForm.setPollInterval(config.pollingInterval().get(authCounter));
 
         // Prepare form for the next step, depending on what to do next
         kcForm.setAttribute(AUTH_FORM, piForm);
-        String authenticationFailureMessage = "Authentication failed.";
         if ((piFormResult.modeChanged && !didTrigger) ||
             Mode.PUSH.equals(currentMode) && (response != null && StringUtil.isBlank(response.passkeyRegistration)))
         {
             if (Mode.PUSH.equals(currentMode))
             {
-                piForm.setErrorMessage("push_auth_not_verified");
+                piForm.setErrorMessage(MSG_PUSH_NOT_VERIFIED);
             }
             context.challenge(kcForm.createForm(FORM_FILE_NAME));
         }
@@ -582,12 +766,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             // Fail
             if (currentMode.equals(Mode.PUSH))
             {
-                piForm.setErrorMessage("push_auth_not_verified");
+                piForm.setErrorMessage(MSG_PUSH_NOT_VERIFIED);
                 context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
             else if (!didTrigger)
             {
-                kcForm.setError(authenticationFailureMessage);
+                kcForm.setError(MSG_AUTH_FAILED);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             // Check failed auth vs real error
