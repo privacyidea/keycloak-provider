@@ -129,7 +129,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 return Collections.emptyMap();
             }
-            
+
             // Convert all values to String to match the method signature and avoid class cast exceptions.
             // Claims with a JSON null value are dropped so they are not turned into the literal string "null",
             // which would otherwise slip past a containsKey() check (e.g. a null 'preferred_username').
@@ -143,7 +143,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             return Collections.emptyMap();
         }
     }
-
 
     /**
      * Create new instances of PrivacyIDEA and the Configuration, if it does not exist yet.
@@ -276,7 +275,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Prepare the form and auth notes to pass infos to the UI and the next step
         authenticationSession.setAuthNote(NOTE_COUNTER, "0");
-        context.form().setAttribute(AUTH_FORM, piForm);
+        refreshFormAttributes(context, piForm);
         Response responseForm = context.form().createForm(FORM_FILE_NAME);
 
         context.challenge(responseForm);
@@ -334,7 +333,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                         // Not recognized as EntraID: the default plugin User-Agent is used. Logged so an
                         // unlisted-but-legitimate Microsoft issuer host can be diagnosed instead of failing silently.
                         log("Openid request: issuer '" + issuer + "' not recognized as EntraID, " +
-                            "using the default User-Agent for this flow.");
+                                "using the default User-Agent for this flow.");
                     }
                     if (logEnabled)
                     {
@@ -374,7 +373,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     {
                         // If the user was still not found, fall through and let it switch to MODE_USERNAME, so the username can be entered.
                         error("User " + usernameFromOpenId + " not found in realm " + context.getRealm().getName() + ". Requesting the " +
-                              "username to be entered");
+                                "username to be entered");
                     }
                     else
                     {
@@ -476,13 +475,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         webAuthnTransactionId = authenticationSession.getAuthNote(NOTE_WEBAUTHN_TRANSACTION_ID);
 
         Map<String, String> headers = util.getHeaders(context, config);
-        kcForm.setAttribute(AUTH_FORM, piForm);
+
+        // Every time we modify the piForm or the state, we must refresh the attributes
+        refreshFormAttributes(context, piForm);
 
         boolean didTrigger = false;
         PIResponse response = null;
 
-        // Passkey: Will return the username and end the authentication on success. This is different from the WebAuthn authentication
-        // Which is attempted later.
+        // Passkey: Will return the username and end the authentication on success.
+        // This is different from the WebAuthn authentication, which is attempted later.
         if (StringUtil.isNotBlank(piFormResult.passkeySignResponse))
         {
             if (StringUtil.isBlank(piFormResult.origin))
@@ -526,7 +527,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     else if (response.authentication == AuthenticationStatus.CHALLENGE)
                     {
                         piForm = util.evaluateResponse(response, context, piForm, config);
-                        kcForm.setAttribute(AUTH_FORM, piForm);
+                        refreshFormAttributes(context, piForm);
                         Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                         context.challenge(responseForm);
                         return;
@@ -534,7 +535,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     else
                     {
                         piForm.setErrorMessage(MSG_PASSKEY_AUTH_FAILED);
-                        kcForm.setAttribute(AUTH_FORM, piForm);
+                        refreshFormAttributes(context, piForm);
                         Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
                     }
@@ -550,7 +551,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 piForm.setPasskeyChallenge(passkeyResponse.passkeyChallenge);
                 piForm.setMode(Mode.PASSKEY);
-                kcForm.setAttribute(AUTH_FORM, piForm);
+                refreshFormAttributes(context, piForm);
                 authenticationSession.setAuthNote(NOTE_PASSKEY_TRANSACTION_ID, passkeyResponse.transactionID);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.challenge(responseForm);
@@ -581,7 +582,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else if (passkeyResponse != null && passkeyResponse.error != null)
             {
                 kcForm.setError(passkeyResponse.error.message);
-                kcForm.setAttribute(AUTH_FORM, piForm);
+                refreshFormAttributes(context, piForm);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
                 return;
@@ -605,7 +606,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 if (piResponse.error != null)
                 {
                     kcForm.setError(piResponse.error.message);
-                    kcForm.setAttribute(AUTH_FORM, piForm);
+                    refreshFormAttributes(context, piForm);
                     Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                     context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
                     return;
@@ -628,7 +629,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 logger.error("Username was requested but has not been provided!");
                 kcForm.setError(MSG_USERNAME_REQUIRED);
-                kcForm.setAttribute(AUTH_FORM, piForm);
+                refreshFormAttributes(context, piForm);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.challenge(responseForm);
                 return;
@@ -638,7 +639,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 logger.error("User " + username + " not found in realm " + context.getRealm().getName());
                 kcForm.setError(MSG_INVALID_CREDENTIALS);
-                kcForm.setAttribute(AUTH_FORM, piForm);
+                refreshFormAttributes(context, piForm);
                 Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                 context.challenge(responseForm);
                 return;
@@ -651,7 +652,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 {
                     logger.debug("User " + username + " tried to authenticate with a wrong password.");
                     kcForm.setError(MSG_INVALID_CREDENTIALS);
-                    kcForm.setAttribute(AUTH_FORM, piForm);
+                    refreshFormAttributes(context, piForm);
                     Response responseForm = kcForm.createForm(FORM_FILE_NAME);
                     context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
                     return;
@@ -680,6 +681,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         Mode currentMode = piFormResult.modeChanged ? piFormResult.newMode : piForm.getMode();
         piForm.setMode(currentMode);
         kcForm.setAttribute(AUTH_FORM, piForm);
+        refreshFormAttributes(context, piForm);
         boolean fido2Used = false;
 
         // Send a request to privacyIDEA depending on the mode. Evaluation of the response is done afterward independently of the mode.
@@ -777,14 +779,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         piForm.setPollInterval(config.pollingInterval().get(authCounter));
 
         // Prepare form for the next step, depending on what to do next
-        kcForm.setAttribute(AUTH_FORM, piForm);
+        refreshFormAttributes(context, piForm);
         if ((piFormResult.modeChanged && !didTrigger) ||
-            Mode.PUSH.equals(currentMode) && (response != null && StringUtil.isBlank(response.passkeyRegistration)))
+                Mode.PUSH.equals(currentMode) && (response != null && StringUtil.isBlank(response.passkeyRegistration)))
         {
             if (Mode.PUSH.equals(currentMode))
             {
                 piForm.setErrorMessage(MSG_PUSH_NOT_VERIFIED);
             }
+            refreshFormAttributes(context, piForm);
             context.challenge(kcForm.createForm(FORM_FILE_NAME));
         }
         else if (currentMode == Mode.USERNAMEPASSWORD || currentMode == Mode.USERNAME)
@@ -796,12 +799,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 piForm.setMode(Mode.OTP);
             }
-            kcForm.setAttribute(AUTH_FORM, piForm);
+            refreshFormAttributes(context, piForm);
             context.challenge(kcForm.createForm(FORM_FILE_NAME));
         }
         else if (response != null && StringUtil.isNotBlank(response.passkeyRegistration))
         {
             kcForm.setError(response.message);
+            refreshFormAttributes(context, piForm);
             context.challenge(kcForm.createForm(FORM_FILE_NAME));
         }
         else
@@ -810,11 +814,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (currentMode.equals(Mode.PUSH))
             {
                 piForm.setErrorMessage(MSG_PUSH_NOT_VERIFIED);
+                refreshFormAttributes(context, piForm);
                 context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
             else if (!didTrigger)
             {
                 kcForm.setError(MSG_AUTH_FAILED);
+                refreshFormAttributes(context, piForm);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             // Check failed auth vs real error
@@ -822,11 +828,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             {
                 piForm.setErrorMessage(response.error.message);
                 kcForm.setError(response.error.message);
+                refreshFormAttributes(context, piForm);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             else if (response.authentication.equals(AuthenticationStatus.REJECT))
             {
                 kcForm.setError(response.message);
+                refreshFormAttributes(context, piForm);
                 context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, kcForm.createForm(FORM_FILE_NAME));
             }
             else
@@ -834,6 +842,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
         }
+    }
+
+    /**
+     * Ensures both the object and the JSON-safe map are available to Keycloakify
+     */
+    private void refreshFormAttributes(AuthenticationFlowContext context, AuthenticationForm piForm)
+    {
+        context.form().setAttribute(AUTH_FORM, piForm);
+        context.form().setAttribute(AUTH_FORM + "Data", piForm.toMap());
     }
 
     @Override
@@ -845,20 +862,21 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user)
     {
-        //log("Configured for realm " + realm.getName());
+        // log("Configured for realm " + realm.getName());
         return true;
     }
 
     @Override
     public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user)
     {
-        //log("Setting required actions for realm " + realm.getName() + " and user " + user.getUsername());
+        // log("Setting required actions for realm " + realm.getName() + " and user " +
+        // user.getUsername());
     }
 
     @Override
     public void close()
     {
-        //log("Closing PrivacyIDEA Authenticator.");
+        // log("Closing PrivacyIDEA Authenticator.");
     }
 
     // IPILogger implementation
