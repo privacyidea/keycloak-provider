@@ -64,8 +64,6 @@ public class UtilTest
         config = new Configuration(new HashMap<>());
     }
 
-    // --- checkMFAExcludedByGroup ---
-
     @Test
     public void testNullUserRequiresMFA()
     {
@@ -143,8 +141,6 @@ public class UtilTest
         assertFalse(util.checkMFAExcludedByGroup(cfg, user));
     }
 
-    // --- evaluateResponse: Mode + transaction-id routing ---
-
     @Test
     public void testPollPushChallengeRoutesToPushMode()
     {
@@ -195,8 +191,6 @@ public class UtilTest
         assertEquals("tx-code-to-phone", capture.notes.get(Const.NOTE_OTP_TRANSACTION_ID));
     }
 
-    // --- EntraID User-Agent resolution ---
-
     @Test
     public void testEntraIdUserAgentNullWhenNotEntraIdFlow()
     {
@@ -236,8 +230,6 @@ public class UtilTest
         }
         return new Configuration(map);
     }
-
-    // --- getHeaders: no shared-state mutation, single User-Agent ---
 
     @Test
     public void testGetHeadersDoesNotMutateSharedConfig()
@@ -287,8 +279,6 @@ public class UtilTest
         assertTrue("no User-Agent should be forwarded (default applies)",
                    headers.keySet().stream().noneMatch(k -> k.equalsIgnoreCase("User-Agent")));
     }
-
-    // --- helpers ---
 
     /**
      * Build a CHALLENGE PIResponse with a single challenge. {@code preferredClientMode} uses the provider-side
