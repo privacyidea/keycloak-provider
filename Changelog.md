@@ -1,5 +1,10 @@
 # Changelog
 
+### v1.7.1 - 2026-06-30
+
+* Bugfix: push_code_to_phone did not work. The input field was shown, but the code entered by the user was rejected
+    ("wrong otp pin") because the request was not sent with the transaction id. Requires privacyIDEA-java-client 1.5.1.
+
 ### v1.7.0 - 2026-03-26
 
 * Support for push_code_to_phone (privacyIDEA 3.13).
