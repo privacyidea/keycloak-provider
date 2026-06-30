@@ -154,18 +154,38 @@ public class UtilTest
         AuthenticationSessionModel session = mock(AuthenticationSessionModel.class);
         when(session.getAuthNote(Const.NOTE_ENTRAID_FLOW)).thenReturn(null);
 
-        assertNull(util.entraIdUserAgentIfApplicable(contextWithSession(session)));
+        assertNull(util.entraIdUserAgentIfApplicable(contextWithSession(session), configWithEntraIdUserAgent(true)));
     }
 
     @Test
-    public void testEntraIdUserAgentWhenEntraIdFlow()
+    public void testEntraIdUserAgentWhenEntraIdFlowAndEnabled()
     {
         AuthenticationSessionModel session = mock(AuthenticationSessionModel.class);
         when(session.getAuthNote(Const.NOTE_ENTRAID_FLOW)).thenReturn("true");
 
-        String ua = util.entraIdUserAgentIfApplicable(contextWithSession(session));
+        String ua = util.entraIdUserAgentIfApplicable(contextWithSession(session), configWithEntraIdUserAgent(true));
         assertNotNull(ua);
         assertTrue("expected EntraID product token, got: " + ua, ua.startsWith(Const.ENTRAID_USER_AGENT + "/"));
+    }
+
+    @Test
+    public void testEntraIdUserAgentNullWhenFeatureDisabled()
+    {
+        AuthenticationSessionModel session = mock(AuthenticationSessionModel.class);
+        when(session.getAuthNote(Const.NOTE_ENTRAID_FLOW)).thenReturn("true");
+
+        // Even in an EntraID flow, the default User-Agent is kept when the feature switch is off.
+        assertNull(util.entraIdUserAgentIfApplicable(contextWithSession(session), configWithEntraIdUserAgent(false)));
+    }
+
+    private static Configuration configWithEntraIdUserAgent(boolean enabled)
+    {
+        Map<String, String> map = new HashMap<>();
+        if (enabled)
+        {
+            map.put(Const.CONFIG_ENTRAID_USER_AGENT, "true");
+        }
+        return new Configuration(map);
     }
 
     // --- helpers ---

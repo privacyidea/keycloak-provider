@@ -30,6 +30,7 @@ import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSKEY_LOGIN;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSWORD_CHECK;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE;
+import static org.privacyidea.authenticator.Const.CONFIG_ENTRAID_USER_AGENT;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARD_CLIENT_IP;
@@ -82,6 +83,7 @@ public class Configuration
     private final String searchUserAttribute;
     private final boolean enableOpenIdSearchByAttribute;
     private final boolean passkeyOnly;
+    private final boolean entraIdUserAgent;
 
     public Configuration(Map<String, String> configMap)
     {
@@ -109,6 +111,7 @@ public class Configuration
 
         this.searchUserAttribute = configMap.get(CONFIG_OPENID_SEARCH_ATTRIBUTE) == null ? "" : configMap.get(CONFIG_OPENID_SEARCH_ATTRIBUTE);
         this.enableOpenIdSearchByAttribute = configMap.get(CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE) != null && configMap.get(CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE).equals(TRUE);
+        this.entraIdUserAgent = configMap.get(CONFIG_ENTRAID_USER_AGENT) != null && configMap.get(CONFIG_ENTRAID_USER_AGENT).equals(TRUE);
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
         {
@@ -283,5 +286,10 @@ public class Configuration
     public boolean isPasskeyOnly()
     {
         return passkeyOnly;
+    }
+
+    public boolean isEntraIdUserAgentEnabled()
+    {
+        return entraIdUserAgent;
     }
 }

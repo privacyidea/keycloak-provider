@@ -195,6 +195,16 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                        " preferred_username parameter.");
         configProperties.add(realmUserAttribute);
 
+        ProviderConfigProperty entraIdUserAgent = new ProviderConfigProperty();
+        entraIdUserAgent.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        entraIdUserAgent.setName(Const.CONFIG_ENTRAID_USER_AGENT);
+        entraIdUserAgent.setLabel("Enable Separate User-Agent for EntraID");
+        entraIdUserAgent.setDefaultValue(false);
+        entraIdUserAgent.setHelpText("When enabled, requests to privacyIDEA that originate from an EntraID (openid) " +
+                                     "external-authentication flow use the User-Agent 'entraid-via-keycloak/<version>' " +
+                                     "instead of the default plugin User-Agent.");
+        configProperties.add(entraIdUserAgent);
+
         ProviderConfigProperty passkeyOnly = new ProviderConfigProperty();
         passkeyOnly.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         passkeyOnly.setName(Const.CONFIG_PASSKEY_ONLY);

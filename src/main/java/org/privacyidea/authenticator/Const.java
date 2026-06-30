@@ -93,4 +93,5 @@ final class Const
     static final String CONFIG_DISABLE_PASSKEY_LOGIN = "pidisablepasskeylogin";
     static final String CONFIG_OPENID_SEARCH_ATTRIBUTE = "piOpenIdSearchAttribute";
     static final String CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE = "piEnableOpenIdSearch";
+    static final String CONFIG_ENTRAID_USER_AGENT = "piEntraIdSeparateUserAgent";
 }

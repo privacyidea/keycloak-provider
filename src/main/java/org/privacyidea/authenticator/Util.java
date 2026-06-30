@@ -68,7 +68,7 @@ public class Util
 
         // For an EntraID (openid) flow, override the User-Agent so privacyIDEA can attribute the request to it.
         // The per-request header takes precedence over the client's configured default (java-client >= 1.5.1).
-        String entraIdUserAgent = entraIdUserAgentIfApplicable(context);
+        String entraIdUserAgent = entraIdUserAgentIfApplicable(context, config);
         if (entraIdUserAgent != null)
         {
             headers.put(HEADER_USER_AGENT, entraIdUserAgent);
@@ -89,11 +89,16 @@ public class Util
     }
 
     /**
-     * @return the EntraID User-Agent if the current flow originates from an EntraID (openid) request, otherwise null
-     * (in which case the client's configured default User-Agent is used).
+     * @return the EntraID User-Agent if the feature is enabled in the configuration and the current flow originates
+     * from an EntraID (openid) request, otherwise null (in which case the client's configured default User-Agent is
+     * used).
      */
-    String entraIdUserAgentIfApplicable(AuthenticationFlowContext context)
+    String entraIdUserAgentIfApplicable(AuthenticationFlowContext context, Configuration config)
     {
+        if (config == null || !config.isEntraIdUserAgentEnabled())
+        {
+            return null;
+        }
         AuthenticationSessionModel session = context.getAuthenticationSession();
         if (session != null && TRUE.equals(session.getAuthNote(NOTE_ENTRAID_FLOW)))
         {
