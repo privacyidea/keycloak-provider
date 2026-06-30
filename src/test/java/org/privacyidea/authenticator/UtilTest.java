@@ -22,10 +22,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.models.GroupModel;
+import org.keycloak.models.KeycloakContext;
+import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.privacyidea.AuthenticationStatus;
@@ -174,7 +178,7 @@ public class UtilTest
      * push_code_to_phone: a push token delivered in interactive mode (client_mode=interactive). The user types the
      * code shown on the phone, so the challenge must be routed like an OTP — Mode.OTP and the transaction stored under
      * NOTE_OTP_TRANSACTION_ID, so the code is finalized against that transaction. Regression guard for the bug where
-     * the code was submitted without a transaction id and rejected as "wrong otp pin". Requires java-client >= 1.6.0,
+     * the code was submitted without a transaction id and rejected as "wrong otp pin". Requires java-client >= 1.5.1,
      * whose otpTransactionId() returns the id for interactive push.
      */
     @Test
@@ -233,6 +237,43 @@ public class UtilTest
         return new Configuration(map);
     }
 
+    // --- getHeaders: no shared-state mutation, single User-Agent ---
+
+    @Test
+    public void testGetHeadersDoesNotMutateSharedConfig()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put(Const.CONFIG_FORWARDED_HEADERS, "X-Forwarded-For");
+        Configuration cfg = new Configuration(map);
+        int before = cfg.forwardedHeaders().size();
+
+        AuthenticationFlowContext context = contextWithEmptyRequestHeaders(mock(AuthenticationSessionModel.class));
+        util.getHeaders(context, cfg);
+        util.getHeaders(context, cfg);
+
+        // The cached Configuration's list must not grow (no accept-language appended to it per call).
+        assertEquals(before, cfg.forwardedHeaders().size());
+    }
+
+    @Test
+    public void testEntraIdUserAgentReplacesCaseVariantHeader()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put(Const.CONFIG_ENTRAID_USER_AGENT, "true");
+        map.put(Const.CONFIG_CUSTOM_HEADERS, "user-agent=browser/1.0");
+        Configuration cfg = new Configuration(map);
+
+        AuthenticationSessionModel session = mock(AuthenticationSessionModel.class);
+        when(session.getAuthNote(Const.NOTE_ENTRAID_FLOW)).thenReturn("true");
+
+        Map<String, String> headers = util.getHeaders(contextWithEmptyRequestHeaders(session), cfg);
+
+        // Exactly one User-Agent header (the case-variant custom one was replaced, not appended), and it is EntraID.
+        long uaCount = headers.keySet().stream().filter(k -> k.equalsIgnoreCase("User-Agent")).count();
+        assertEquals(1, uaCount);
+        assertTrue(headers.get("User-Agent").startsWith(Const.ENTRAID_USER_AGENT + "/"));
+    }
+
     // --- helpers ---
 
     /**
@@ -286,6 +327,20 @@ public class UtilTest
     {
         AuthenticationFlowContext context = mock(AuthenticationFlowContext.class);
         when(context.getAuthenticationSession()).thenReturn(session);
+        return context;
+    }
+
+    /** Context whose request-headers chain is mocked to return an empty header map (for getHeaders tests). */
+    private static AuthenticationFlowContext contextWithEmptyRequestHeaders(AuthenticationSessionModel session)
+    {
+        AuthenticationFlowContext context = contextWithSession(session);
+        KeycloakSession keycloakSession = mock(KeycloakSession.class);
+        KeycloakContext keycloakContext = mock(KeycloakContext.class);
+        HttpHeaders httpHeaders = mock(HttpHeaders.class);
+        when(context.getSession()).thenReturn(keycloakSession);
+        when(keycloakSession.getContext()).thenReturn(keycloakContext);
+        when(keycloakContext.getRequestHeaders()).thenReturn(httpHeaders);
+        when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
         return context;
     }
 

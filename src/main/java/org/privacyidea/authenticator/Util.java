@@ -1,5 +1,6 @@
 package org.privacyidea.authenticator;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,10 +50,12 @@ public class Util
     Map<String, String> getHeaders(AuthenticationFlowContext context, Configuration config)
     {
         Map<String, String> headers = new LinkedHashMap<>();
-        // Take all headers from config plus accept-language
-        config.forwardedHeaders().add(HEADER_ACCEPT_LANGUAGE);
+        // Take all headers from config plus accept-language. Build a local list instead of mutating the
+        // Configuration's list, which is shared (cached per realm) across concurrent logins.
+        List<String> forwardedHeaders = new ArrayList<>(config.forwardedHeaders());
+        forwardedHeaders.add(HEADER_ACCEPT_LANGUAGE);
 
-        for (String header : config.forwardedHeaders().stream().distinct().toList())
+        for (String header : forwardedHeaders.stream().distinct().toList())
         {
             List<String> headerValues = context.getSession().getContext().getRequestHeaders().getRequestHeaders().get(header);
 
@@ -73,6 +76,9 @@ public class Util
         String entraIdUserAgent = entraIdUserAgentIfApplicable(context, config);
         if (entraIdUserAgent != null)
         {
+            // Remove any case-variant User-Agent already present (e.g. a forwarded or custom header) so the
+            // EntraID User-Agent is the only one sent, not appended as a second User-Agent header.
+            headers.keySet().removeIf(h -> h.equalsIgnoreCase(HEADER_USER_AGENT));
             headers.put(HEADER_USER_AGENT, entraIdUserAgent);
         }
         return headers;
