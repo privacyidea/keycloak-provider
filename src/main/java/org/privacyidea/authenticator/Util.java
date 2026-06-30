@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.common.Version;
 import org.keycloak.models.GroupModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
@@ -13,7 +14,11 @@ import org.privacyidea.IPILogger;
 import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
+import static org.privacyidea.PIConstants.HEADER_USER_AGENT;
+import static org.privacyidea.authenticator.Const.ENTRAID_USER_AGENT;
 import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
+import static org.privacyidea.authenticator.Const.NOTE_ENTRAID_FLOW;
+import static org.privacyidea.authenticator.Const.TRUE;
 import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
@@ -60,7 +65,41 @@ public class Util
             }
         }
         headers.putAll(config.customHeaders());
+
+        // For an EntraID (openid) flow, override the User-Agent so privacyIDEA can attribute the request to it.
+        // The per-request header takes precedence over the client's configured default (java-client >= 1.5.1).
+        String entraIdUserAgent = entraIdUserAgentIfApplicable(context);
+        if (entraIdUserAgent != null)
+        {
+            headers.put(HEADER_USER_AGENT, entraIdUserAgent);
+        }
         return headers;
+    }
+
+    /**
+     * Build the User-Agent string for a request, e.g. "privacyIDEA-Keycloak/1.7.1 Keycloak/26.5.6".
+     *
+     * @param pluginName the leading product token (e.g. the plugin or the EntraID flow marker)
+     * @return the User-Agent string
+     */
+    String buildUserAgent(String pluginName)
+    {
+        String providerVersion = PrivacyIDEAAuthenticator.class.getPackage().getImplementationVersion();
+        return pluginName + "/" + providerVersion + " Keycloak/" + Version.VERSION;
+    }
+
+    /**
+     * @return the EntraID User-Agent if the current flow originates from an EntraID (openid) request, otherwise null
+     * (in which case the client's configured default User-Agent is used).
+     */
+    String entraIdUserAgentIfApplicable(AuthenticationFlowContext context)
+    {
+        AuthenticationSessionModel session = context.getAuthenticationSession();
+        if (session != null && TRUE.equals(session.getAuthNote(NOTE_ENTRAID_FLOW)))
+        {
+            return buildUserAgent(ENTRAID_USER_AGENT);
+        }
+        return null;
     }
 
     /**

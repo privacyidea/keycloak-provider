@@ -43,7 +43,6 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
-import org.keycloak.common.Version;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.KeycloakSession;
@@ -72,6 +71,7 @@ import static org.privacyidea.authenticator.Const.MSG_PUSH_NOT_VERIFIED;
 import static org.privacyidea.authenticator.Const.MSG_USERNAME_REQUIRED;
 import static org.privacyidea.authenticator.Const.MSG_USER_NOT_FOUND;
 import static org.privacyidea.authenticator.Const.NOTE_COUNTER;
+import static org.privacyidea.authenticator.Const.NOTE_ENTRAID_FLOW;
 import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
@@ -82,6 +82,7 @@ import static org.privacyidea.authenticator.Const.OPENID_PARAM_ID_TOKEN_HINT;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_SCOPE;
 import static org.privacyidea.authenticator.Const.OPENID_VALUE;
 import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
+import static org.privacyidea.authenticator.Const.TRUE;
 
 public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Authenticator, IPILogger
 {
@@ -154,9 +155,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             log("Creating new privacyIDEA instance for realm " + kcRealm);
             final Map<String, String> configMap = context.getAuthenticatorConfig().getConfig();
             Configuration config = new Configuration(configMap);
-            String kcVersion = Version.VERSION;
-            String providerVersion = PrivacyIDEAAuthenticator.class.getPackage().getImplementationVersion();
-            String fullUserAgent = PLUGIN_USER_AGENT + "/" + providerVersion + " Keycloak/" + kcVersion;
+            String fullUserAgent = util.buildUserAgent(PLUGIN_USER_AGENT);
             PrivacyIDEA privacyIDEA = PrivacyIDEA.newBuilder(config.serverURL(), fullUserAgent)
                                                  .verifySSL(config.sslVerify())
                                                  .logger(this)
@@ -286,6 +285,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
                 if (StringUtil.isNotBlank(idTokenHint))
                 {
+                    // This is an EntraID (openid) external-authentication request. Mark the flow so every
+                    // privacyIDEA request in it uses the EntraID User-Agent instead of the default.
+                    context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
                     Map<String, String> token = decodeJWT(idTokenHint);
                     if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
                     {

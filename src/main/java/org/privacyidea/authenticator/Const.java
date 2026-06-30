@@ -28,6 +28,8 @@ final class Const
 
     static final String PROVIDER_ID = "privacyidea-authenticator";
     static final String PLUGIN_USER_AGENT = "privacyIDEA-Keycloak";
+    // User-Agent used for requests that belong to an EntraID (openid) external-authentication flow.
+    static final String ENTRAID_USER_AGENT = "entraid-via-keycloak";
 
     static final String TRUE = "true";
 
@@ -45,6 +47,9 @@ final class Const
     static final String NOTE_COUNTER = "authCounter";
     static final String NOTE_PASSKEY_REGISTRATION_SERIAL = "passkey_registration_serial";
     static final String NOTE_PREVIOUS_RESPONSE = "pi_previous_response";
+    // Set when the current authentication originates from an EntraID (openid) request, so all privacyIDEA
+    // requests in this flow use the EntraID User-Agent.
+    static final String NOTE_ENTRAID_FLOW = "pi_entraid_flow";
 
     // OpenID Connect constants
     static final String OPENID_PARAM_SCOPE = "scope";

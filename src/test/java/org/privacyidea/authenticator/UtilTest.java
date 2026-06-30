@@ -35,6 +35,7 @@ import org.privacyidea.PIResponse;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -143,6 +144,28 @@ public class UtilTest
 
         assertEquals(Mode.OTP, form.getMode());
         assertEquals("tx-code-to-phone", capture.notes.get(Const.NOTE_OTP_TRANSACTION_ID));
+    }
+
+    // --- EntraID User-Agent resolution ---
+
+    @Test
+    public void testEntraIdUserAgentNullWhenNotEntraIdFlow()
+    {
+        AuthenticationSessionModel session = mock(AuthenticationSessionModel.class);
+        when(session.getAuthNote(Const.NOTE_ENTRAID_FLOW)).thenReturn(null);
+
+        assertNull(util.entraIdUserAgentIfApplicable(contextWithSession(session)));
+    }
+
+    @Test
+    public void testEntraIdUserAgentWhenEntraIdFlow()
+    {
+        AuthenticationSessionModel session = mock(AuthenticationSessionModel.class);
+        when(session.getAuthNote(Const.NOTE_ENTRAID_FLOW)).thenReturn("true");
+
+        String ua = util.entraIdUserAgentIfApplicable(contextWithSession(session));
+        assertNotNull(ua);
+        assertTrue("expected EntraID product token, got: " + ua, ua.startsWith(Const.ENTRAID_USER_AGENT + "/"));
     }
 
     // --- helpers ---
