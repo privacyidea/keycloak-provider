@@ -86,7 +86,7 @@ public class Util
     }
 
     /**
-     * Build the User-Agent string for a request, e.g. "privacyIDEA-Keycloak/1.7.1 Keycloak/26.5.6".
+     * Build the User-Agent string for a request, e.g. "privacyIDEA-Keycloak/1.8.0 Keycloak/26.5.6".
      *
      * @param pluginName the leading product token (e.g. the plugin or the EntraID flow marker)
      * @return the User-Agent string

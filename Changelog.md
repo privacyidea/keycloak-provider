@@ -1,7 +1,12 @@
 # Changelog
 
-### v1.7.1 - 2026-06-30
+### v1.8.0 - 2026-06-30
 
+* Feature: Optionally use a separate User-Agent ("entraid-via-keycloak") for requests that originate from an
+    EntraID (openid) external-authentication flow. Enabled via the "Enable Separate User-Agent for EntraID" setting.
+* Feature: Optionally check inherited (parent) groups when matching the included/excluded groups, by walking up the
+    group hierarchy. Enabled via the "Check Inherited Groups" setting. Only applies when the hierarchy exists in
+    Keycloak (native nested groups, or LDAP groups imported with "Preserve Group Inheritance").
 * Bugfix: push_code_to_phone did not work. The input field was shown, but the code entered by the user was rejected
     ("wrong otp pin") because the request was not sent with the transaction id. Requires privacyIDEA-java-client 1.5.1.
 
