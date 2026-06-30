@@ -94,6 +94,51 @@ public class UtilTest
         assertTrue(util.checkMFAExcludedByGroup(cfg, userInGroups("staff")));
     }
 
+    @Test
+    public void testInheritedExcludedGroupMatchedWhenEnabled()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put(Const.CONFIG_EXCLUDED_GROUPS, "no-mfa-parent");
+        map.put(Const.CONFIG_CHECK_INHERITED_GROUPS, "true");
+        Configuration cfg = new Configuration(map);
+
+        // User is directly in "child"; its parent "no-mfa-parent" is the excluded group.
+        GroupModel parent = group("no-mfa-parent", null);
+        UserModel user = userWithGroups(group("child", parent));
+
+        assertTrue(util.checkMFAExcludedByGroup(cfg, user));
+    }
+
+    @Test
+    public void testInheritedExcludedGroupNotMatchedWhenDisabled()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put(Const.CONFIG_EXCLUDED_GROUPS, "no-mfa-parent");
+        // CONFIG_CHECK_INHERITED_GROUPS not set -> default off
+        Configuration cfg = new Configuration(map);
+
+        GroupModel parent = group("no-mfa-parent", null);
+        UserModel user = userWithGroups(group("child", parent));
+
+        // Only the direct group "child" is checked, so the user is not excluded.
+        assertFalse(util.checkMFAExcludedByGroup(cfg, user));
+    }
+
+    @Test
+    public void testInheritedIncludedGroupGatesMFAWhenEnabled()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put(Const.CONFIG_INCLUDED_GROUPS, "mfa-parent");
+        map.put(Const.CONFIG_CHECK_INHERITED_GROUPS, "true");
+        Configuration cfg = new Configuration(map);
+
+        GroupModel parent = group("mfa-parent", null);
+        UserModel user = userWithGroups(group("child", parent));
+
+        // The included group is an ancestor -> MFA required -> not excluded.
+        assertFalse(util.checkMFAExcludedByGroup(cfg, user));
+    }
+
     // --- evaluateResponse: Mode + transaction-id routing ---
 
     @Test
@@ -217,6 +262,23 @@ public class UtilTest
             when(group.getName()).thenReturn(name);
             return group;
         }));
+        return user;
+    }
+
+    /** A mocked group with a name, an id (name reused as id) and an optional parent for hierarchy tests. */
+    private static GroupModel group(String name, GroupModel parent)
+    {
+        GroupModel group = mock(GroupModel.class);
+        when(group.getName()).thenReturn(name);
+        when(group.getId()).thenReturn(name);
+        when(group.getParent()).thenReturn(parent);
+        return group;
+    }
+
+    private static UserModel userWithGroups(GroupModel... directGroups)
+    {
+        UserModel user = mock(UserModel.class);
+        when(user.getGroupsStream()).thenAnswer(invocation -> Stream.of(directGroups));
         return user;
     }
 

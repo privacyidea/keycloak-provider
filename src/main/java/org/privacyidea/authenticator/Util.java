@@ -1,8 +1,10 @@
 package org.privacyidea.authenticator;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.common.Version;
 import org.keycloak.models.GroupModel;
@@ -123,13 +125,43 @@ public class Util
         }
         if (!config.includedGroups().isEmpty())
         {
-            return user.getGroupsStream().map(GroupModel::getName).noneMatch(config.includedGroups()::contains);
+            Set<String> userGroups = collectGroupNames(user, config.isCheckInheritedGroups());
+            return config.includedGroups().stream().noneMatch(userGroups::contains);
         }
         else if (!config.excludedGroups().isEmpty())
         {
-            return user.getGroupsStream().map(GroupModel::getName).anyMatch(config.excludedGroups()::contains);
+            Set<String> userGroups = collectGroupNames(user, config.isCheckInheritedGroups());
+            return config.excludedGroups().stream().anyMatch(userGroups::contains);
         }
         return false;
+    }
+
+    /**
+     * Collect the names of all groups the user is a member of. If {@code includeInherited} is set, the parent groups
+     * (ancestors) of each direct group are included by walking up the group hierarchy via {@link GroupModel#getParent()}.
+     * <p>
+     * NOTE: inherited matching only works when the hierarchy exists in Keycloak (native nested groups, or LDAP groups
+     * imported with "Preserve Group Inheritance"). For flat-imported LDAP groups there are no parents to walk.
+     *
+     * @param user             the user
+     * @param includeInherited whether to also include ancestor group names
+     * @return set of group names
+     */
+    private Set<String> collectGroupNames(UserModel user, boolean includeInherited)
+    {
+        Set<String> names = new HashSet<>();
+        user.getGroupsStream().forEach(group ->
+        {
+            // Guard against cycles (shouldn't happen in a Keycloak group tree, but be safe).
+            Set<String> visited = new HashSet<>();
+            GroupModel current = group;
+            while (current != null && visited.add(current.getId()))
+            {
+                names.add(current.getName());
+                current = includeInherited ? current.getParent() : null;
+            }
+        });
+        return names;
     }
 
     private AuthenticationForm challengesToForm(AuthenticationForm authForm, PIResponse response, Configuration config,

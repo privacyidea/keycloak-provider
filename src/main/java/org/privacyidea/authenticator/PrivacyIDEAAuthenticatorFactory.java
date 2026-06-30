@@ -236,6 +236,18 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                    "NOTE: When using usernameless authentication, the group membership check will be ignored!");
         configProperties.add(excludedGroups);
 
+        ProviderConfigProperty checkInheritedGroups = new ProviderConfigProperty();
+        checkInheritedGroups.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        checkInheritedGroups.setName(Const.CONFIG_CHECK_INHERITED_GROUPS);
+        checkInheritedGroups.setLabel("Check Inherited Groups");
+        checkInheritedGroups.setDefaultValue(false);
+        checkInheritedGroups.setHelpText("When matching the included/excluded groups, also consider the parent groups " +
+                                         "of the user's groups by walking up the group hierarchy. " +
+                                         "NOTE: This only works when the hierarchy exists in Keycloak (native nested " +
+                                         "groups, or LDAP groups imported with 'Preserve Group Inheritance'). For " +
+                                         "LDAP groups imported flat there are no parent groups to check.");
+        configProperties.add(checkInheritedGroups);
+
         ProviderConfigProperty autoSubmitLength = new ProviderConfigProperty();
         autoSubmitLength.setType(ProviderConfigProperty.STRING_TYPE);
         autoSubmitLength.setName(Const.CONFIG_OTP_LENGTH);

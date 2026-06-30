@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.privacyidea.authenticator.Const.CONFIG_CHECK_INHERITED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSKEY_LOGIN;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSWORD_CHECK;
@@ -68,6 +69,7 @@ public class Configuration
     private final String serviceAccountRealm;
     private final List<String> excludedGroups = new ArrayList<>();
     private final List<String> includedGroups = new ArrayList<>();
+    private final boolean checkInheritedGroups;
     private final List<String> forwardedHeaders = new ArrayList<>();
     private final boolean forwardClientIP;
     private final String otpLength;
@@ -123,6 +125,9 @@ public class Configuration
         {
             this.includedGroups.addAll(Arrays.asList(includedGroupsStr.split(",")));
         }
+
+        this.checkInheritedGroups = configMap.get(CONFIG_CHECK_INHERITED_GROUPS) != null &&
+                                    configMap.get(CONFIG_CHECK_INHERITED_GROUPS).equals(TRUE);
 
         String forwardedHeadersStr = configMap.get(CONFIG_FORWARDED_HEADERS);
         if (forwardedHeadersStr != null)
@@ -211,6 +216,11 @@ public class Configuration
     List<String> includedGroups()
     {
         return includedGroups;
+    }
+
+    boolean isCheckInheritedGroups()
+    {
+        return checkInheritedGroups;
     }
 
     List<String> forwardedHeaders()
