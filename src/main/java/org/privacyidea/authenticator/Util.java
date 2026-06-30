@@ -71,14 +71,15 @@ public class Util
         }
         headers.putAll(config.customHeaders());
 
-        // For an EntraID (openid) flow, override the User-Agent so privacyIDEA can attribute the request to it.
-        // The per-request header takes precedence over the client's configured default (java-client >= 1.5.1).
+        // The User-Agent identifies the plugin to privacyIDEA and is overridden only by the EntraID switch.
+        // The forwarded-headers feature is meant for headers added by network hardware (proxies/load balancers),
+        // not the client's real User-Agent, so a forwarded or custom User-Agent must never clobber the plugin's
+        // identity: drop any incoming User-Agent first. With none present, the java-client sends its configured
+        // default; for an EntraID flow we set the EntraID User-Agent, which then takes precedence (java-client >= 1.5.1).
+        headers.keySet().removeIf(h -> h.equalsIgnoreCase(HEADER_USER_AGENT));
         String entraIdUserAgent = entraIdUserAgentIfApplicable(context, config);
         if (entraIdUserAgent != null)
         {
-            // Remove any case-variant User-Agent already present (e.g. a forwarded or custom header) so the
-            // EntraID User-Agent is the only one sent, not appended as a second User-Agent header.
-            headers.keySet().removeIf(h -> h.equalsIgnoreCase(HEADER_USER_AGENT));
             headers.put(HEADER_USER_AGENT, entraIdUserAgent);
         }
         return headers;

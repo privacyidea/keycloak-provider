@@ -274,6 +274,20 @@ public class UtilTest
         assertTrue(headers.get("User-Agent").startsWith(Const.ENTRAID_USER_AGENT + "/"));
     }
 
+    @Test
+    public void testForwardedUserAgentNotPropagatedWhenNotEntraId()
+    {
+        Map<String, String> map = new HashMap<>();
+        // A custom/forwarded User-Agent must not be sent; the java-client's default applies instead.
+        map.put(Const.CONFIG_CUSTOM_HEADERS, "User-Agent=browser/1.0");
+        Configuration cfg = new Configuration(map);
+
+        Map<String, String> headers = util.getHeaders(contextWithEmptyRequestHeaders(mock(AuthenticationSessionModel.class)), cfg);
+
+        assertTrue("no User-Agent should be forwarded (default applies)",
+                   headers.keySet().stream().noneMatch(k -> k.equalsIgnoreCase("User-Agent")));
+    }
+
     // --- helpers ---
 
     /**
