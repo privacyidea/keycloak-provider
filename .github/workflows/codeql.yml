@@ -1,0 +1,57 @@
+# CodeQL static analysis for the provider's Java sources.
+# Results appear under the repository's "Security > Code scanning" tab.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    - cron: '41 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (java)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # Install the java-client dependency BEFORE CodeQL init so the client's own
+      # compilation is not traced/analyzed here (it has its own CodeQL workflow).
+      - name: Install java-client dependency (submodule)
+        run: mvn -B -DskipTests install --file java-client/pom.xml
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
+      # Manual build so CodeQL traces the provider's compilation. Skip tests for speed.
+      - name: Build provider
+        run: mvn -B -DskipTests package --file pom.xml
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
+        with:
+          category: "/language:java-kotlin"

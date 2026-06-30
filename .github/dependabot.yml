@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Maven dependencies (Keycloak SPI, okhttp, ...). Note: the privacyidea-java-client
+  # version is tracked via the java-client submodule, not here.
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    # Wait before adopting a freshly published release (supply-chain hardening).
+    cooldown:
+      default-days: 7
+    groups:
+      maven-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  # Keep the SHA-pinned GitHub Actions fresh (the pins go stale otherwise).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"

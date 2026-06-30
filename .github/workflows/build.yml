@@ -1,0 +1,43 @@
+# Build the provider and run its tests. The privacyidea-java-client dependency is
+# not on a public repository, so the java-client submodule is built and installed
+# first (which also runs the client's own test suite in this repo).
+
+name: Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # LTS JVMs Keycloak runs on.
+        java-version: [ '17', '21' ]
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java-version }}
+          cache: maven
+
+      # Build, test and install the java-client into the local repo so the provider can resolve it.
+      - name: Build and test java-client (submodule)
+        run: mvn -B install --file java-client/pom.xml
+
+      - name: Build and test the provider
+        run: mvn -B verify --file pom.xml

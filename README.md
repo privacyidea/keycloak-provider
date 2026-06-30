@@ -1,5 +1,9 @@
 # PrivacyIDEA Provider for Keycloak
 
+[![Build](https://github.com/privacyidea/keycloak-provider/actions/workflows/build.yml/badge.svg)](https://github.com/privacyidea/keycloak-provider/actions/workflows/build.yml)
+[![CodeQL](https://github.com/privacyidea/keycloak-provider/actions/workflows/codeql.yml/badge.svg)](https://github.com/privacyidea/keycloak-provider/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/privacyidea/keycloak-provider/badge)](https://scorecard.dev/viewer/?uri=github.com/privacyidea/keycloak-provider)
+
 This provider allows you to use privacyIDEA's MFA with Keycloak.  
 We added a detailed how-to on our [blog](https://community.privacyidea.org/t/how-to-use-keycloak-with-privacyidea/1132).
 With version 1.5.0 of this provider, the username and password step of keycloak is not required any more, this provider will handle it.
