@@ -56,6 +56,15 @@ final class Const
     static final String OPENID_VALUE = "openid";
     static final String OPENID_PARAM_ID_TOKEN_HINT = "id_token_hint";
     static final String OPENID_CLAIM_PREFERRED_USERNAME = "preferred_username";
+    static final String OPENID_CLAIM_ISSUER = "iss";
+
+    // Hosts used by the "iss" claim of an EntraID/Microsoft-issued id_token_hint. If the issuer of the
+    // id_token_hint resolves to one of these hosts, the request originates from EntraID. These are the hosts
+    // documented for the external authentication method flow (global Azure plus the national clouds):
+    // https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-external-method-provider
+    static final List<String> ENTRAID_ISSUER_HOSTS = List.of("login.microsoftonline.com",
+                                                             "login.microsoftonline.us",
+                                                             "login.partner.microsoftonline.cn");
 
     // Error Messages
     static final String MSG_INVALID_CREDENTIALS = "Invalid Credentials!";
@@ -95,4 +104,6 @@ final class Const
     static final String CONFIG_OPENID_SEARCH_ATTRIBUTE = "piOpenIdSearchAttribute";
     static final String CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE = "piEnableOpenIdSearch";
     static final String CONFIG_ENTRAID_USER_AGENT = "piEntraIdSeparateUserAgent";
+    static final String CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION = "piDisableIdTokenHintVerification";
+    static final String CONFIG_ENTRAID_AUDIENCE = "piEntraIdAudience";
 }

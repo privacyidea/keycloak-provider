@@ -30,7 +30,9 @@ import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSKEY_LOGIN;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSWORD_CHECK;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_LOG;
+import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION;
 import static org.privacyidea.authenticator.Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE;
+import static org.privacyidea.authenticator.Const.CONFIG_ENTRAID_AUDIENCE;
 import static org.privacyidea.authenticator.Const.CONFIG_ENTRAID_USER_AGENT;
 import static org.privacyidea.authenticator.Const.CONFIG_EXCLUDED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_FORWARDED_HEADERS;
@@ -86,6 +88,8 @@ public class Configuration
     private final boolean enableOpenIdSearchByAttribute;
     private final boolean passkeyOnly;
     private final boolean entraIdUserAgent;
+    private final boolean disableIdTokenHintVerification;
+    private final String entraIdAudience;
 
     public Configuration(Map<String, String> configMap)
     {
@@ -114,6 +118,9 @@ public class Configuration
         this.searchUserAttribute = configMap.get(CONFIG_OPENID_SEARCH_ATTRIBUTE) == null ? "" : configMap.get(CONFIG_OPENID_SEARCH_ATTRIBUTE);
         this.enableOpenIdSearchByAttribute = configMap.get(CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE) != null && configMap.get(CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE).equals(TRUE);
         this.entraIdUserAgent = configMap.get(CONFIG_ENTRAID_USER_AGENT) != null && configMap.get(CONFIG_ENTRAID_USER_AGENT).equals(TRUE);
+        this.disableIdTokenHintVerification =
+                configMap.get(CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION) != null && configMap.get(CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION).equals(TRUE);
+        this.entraIdAudience = configMap.get(CONFIG_ENTRAID_AUDIENCE) == null ? "" : configMap.get(CONFIG_ENTRAID_AUDIENCE);
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
         {
@@ -301,5 +308,15 @@ public class Configuration
     public boolean isEntraIdUserAgentEnabled()
     {
         return entraIdUserAgent;
+    }
+
+    public boolean isIdTokenHintVerificationDisabled()
+    {
+        return disableIdTokenHintVerification;
+    }
+
+    public String entraIdAudience()
+    {
+        return entraIdAudience;
     }
 }

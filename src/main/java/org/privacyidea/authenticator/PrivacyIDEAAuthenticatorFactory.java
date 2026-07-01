@@ -183,16 +183,20 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         enableOpenIdSearch.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         enableOpenIdSearch.setDefaultValue(false);
         enableOpenIdSearch.setName(Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE);
-        enableOpenIdSearch.setLabel("Enable OpenID Search");
-        enableOpenIdSearch.setHelpText("Enable searching for the user with the incoming OpenID requests preferred_username parameter.");
+        enableOpenIdSearch.setLabel("Enable OpenID User Search by Attribute");
+        enableOpenIdSearch.setHelpText("For OpenID requests (e.g. the EntraID external-authentication method), the Keycloak user is " +
+                                       "normally resolved by matching the 'preferred_username' claim against the username. Enable this to " +
+                                       "first look the user up by a custom user attribute (set in 'OpenID Search Attribute') instead. If no " +
+                                       "user matches that attribute, the lookup falls back to the username.");
         configProperties.add(enableOpenIdSearch);
 
         ProviderConfigProperty realmUserAttribute = new ProviderConfigProperty();
         realmUserAttribute.setType(ProviderConfigProperty.STRING_TYPE);
         realmUserAttribute.setName(Const.CONFIG_OPENID_SEARCH_ATTRIBUTE);
         realmUserAttribute.setLabel("OpenID Search Attribute");
-        realmUserAttribute.setHelpText("The user attribute which will be used to search the user with the incoming OpenID requests" +
-                                       " preferred_username parameter.");
+        realmUserAttribute.setHelpText("The Keycloak user attribute matched against the 'preferred_username' claim of the incoming OpenID " +
+                                       "request. Only used when 'Enable OpenID User Search by Attribute' is on. Example: an attribute holding " +
+                                       "the EntraID identifier the user is synchronized with.");
         configProperties.add(realmUserAttribute);
 
         ProviderConfigProperty entraIdUserAgent = new ProviderConfigProperty();
@@ -204,6 +208,29 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                      "external-authentication flow use the User-Agent 'entraid-via-keycloak/<version>' " +
                                      "instead of the default plugin User-Agent.");
         configProperties.add(entraIdUserAgent);
+
+        ProviderConfigProperty disableIdTokenHintVerification = new ProviderConfigProperty();
+        disableIdTokenHintVerification.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        disableIdTokenHintVerification.setName(Const.CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION);
+        disableIdTokenHintVerification.setLabel("Disable EntraID id_token_hint Verification");
+        disableIdTokenHintVerification.setDefaultValue(false);
+        disableIdTokenHintVerification.setHelpText("By default, when an OpenID request from EntraID carries an id_token_hint, " +
+                                                   "its signature is verified against Microsoft's published keys (issuer and, if set, " +
+                                                   "audience are checked; expiry is not, because EntraID issues the hint already expired). " +
+                                                   "If the keys cannot be fetched or verification fails, the request is rejected. Enable this " +
+                                                   "to skip verification and trust the id_token_hint as-is. Only affects requests whose issuer " +
+                                                   "is an EntraID/Microsoft host.");
+        configProperties.add(disableIdTokenHintVerification);
+
+        ProviderConfigProperty entraIdAudience = new ProviderConfigProperty();
+        entraIdAudience.setType(ProviderConfigProperty.STRING_TYPE);
+        entraIdAudience.setName(Const.CONFIG_ENTRAID_AUDIENCE);
+        entraIdAudience.setLabel("EntraID Audience (Application/Client ID)");
+        entraIdAudience.setHelpText("Optional. The application (client) ID that EntraID was configured with for this external " +
+                                    "authentication method. When set, it is checked against the 'aud' claim of the id_token_hint during " +
+                                    "verification. Recommended by Microsoft. Leave empty to skip the audience check (signature and issuer " +
+                                    "are still verified).");
+        configProperties.add(entraIdAudience);
 
         ProviderConfigProperty passkeyOnly = new ProviderConfigProperty();
         passkeyOnly.setType(ProviderConfigProperty.BOOLEAN_TYPE);

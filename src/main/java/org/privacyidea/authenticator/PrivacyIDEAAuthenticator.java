@@ -43,6 +43,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
+import org.keycloak.common.VerificationException;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.KeycloakSession;
@@ -77,6 +78,7 @@ import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERI
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PUSH_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_WEBAUTHN_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.OPENID_CLAIM_ISSUER;
 import static org.privacyidea.authenticator.Const.OPENID_CLAIM_PREFERRED_USERNAME;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_ID_TOKEN_HINT;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_SCOPE;
@@ -88,6 +90,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 {
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
     private final Util util;
+    private final EntraIdTokenHintVerifier entraIdTokenHintVerifier;
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
     private boolean logEnabled = false;
@@ -96,6 +99,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         log("PrivacyIDEA Authenticator initialized.");
         this.util = new Util(this);
+        this.entraIdTokenHintVerifier = new EntraIdTokenHintVerifier(util);
     }
 
     /**
@@ -127,7 +131,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             
             // Convert all values to String to match the method signature and avoid class cast exceptions.
-            return claims.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
+            // Claims with a JSON null value are dropped so they are not turned into the literal string "null",
+            // which would otherwise slip past a containsKey() check (e.g. a null 'preferred_username').
+            return claims.entrySet().stream()
+                         .filter(entry -> entry.getValue() != null)
+                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
         }
         catch (Exception e)
         {
@@ -285,19 +293,52 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
                 if (StringUtil.isNotBlank(idTokenHint))
                 {
-                    // This is an EntraID (openid) external-authentication request. Mark the flow so every
-                    // privacyIDEA request in it uses the EntraID User-Agent instead of the default.
-                    context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
                     Map<String, String> token = decodeJWT(idTokenHint);
-                    if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
+                    String issuer = token.get(OPENID_CLAIM_ISSUER);
+                    boolean isEntraID = util.isEntraIDIssuer(issuer);
+
+                    // For EntraID issuers, verify the id_token_hint (signature/issuer/audience) unless disabled.
+                    // This is done before trusting any claim from the token. Non-EntraID issuers are not verified,
+                    // as their keys are not Microsoft's.
+                    if (isEntraID && !config.isIdTokenHintVerificationDisabled())
+                    {
+                        try
+                        {
+                            entraIdTokenHintVerifier.verify(context.getSession(), idTokenHint, issuer, config.entraIdAudience());
+                            log("Openid request: id_token_hint verified for issuer " + issuer);
+                        }
+                        catch (VerificationException e)
+                        {
+                            error("Openid request: id_token_hint verification failed: " + e.getMessage());
+                            context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
+                            return true;
+                        }
+                    }
+
+                    if (StringUtil.isBlank(token.get(OPENID_CLAIM_PREFERRED_USERNAME)))
                     {
                         error("Openid request: Missing 'preferred_username' parameter!");
                         context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
                         return true;
                     }
+                    // If the id_token_hint was issued by EntraID, mark the flow so every privacyIDEA request in
+                    // it uses the EntraID User-Agent instead of the default. The issuer is part of the token, so it
+                    // is a more reliable indicator than the generic openid scope.
+                    if (isEntraID)
+                    {
+                        log("Openid request: EntraID issuer detected, using EntraID User-Agent for this flow.");
+                        context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
+                    }
+                    else
+                    {
+                        // Not recognized as EntraID: the default plugin User-Agent is used. Logged so an
+                        // unlisted-but-legitimate Microsoft issuer host can be diagnosed instead of failing silently.
+                        log("Openid request: issuer '" + issuer + "' not recognized as EntraID, " +
+                            "using the default User-Agent for this flow.");
+                    }
                     if (logEnabled)
                     {
-                        log("ID token hint processed. Claims keys: " + token.keySet());
+                        log("Openid request: id_token_hint claims keys: " + token.keySet() + ", issuer: " + issuer);
                     }
                     usernameFromOpenId = token.get(OPENID_CLAIM_PREFERRED_USERNAME);
 

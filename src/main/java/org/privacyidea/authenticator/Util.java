@@ -1,9 +1,11 @@
 package org.privacyidea.authenticator;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.keycloak.authentication.AuthenticationFlowContext;
@@ -18,6 +20,7 @@ import org.privacyidea.PIResponse;
 import org.privacyidea.PrivacyIDEA;
 
 import static org.privacyidea.PIConstants.HEADER_USER_AGENT;
+import static org.privacyidea.authenticator.Const.ENTRAID_ISSUER_HOSTS;
 import static org.privacyidea.authenticator.Const.ENTRAID_USER_AGENT;
 import static org.privacyidea.authenticator.Const.HEADER_ACCEPT_LANGUAGE;
 import static org.privacyidea.authenticator.Const.NOTE_ENTRAID_FLOW;
@@ -114,6 +117,49 @@ public class Util
             return buildUserAgent(ENTRAID_USER_AGENT);
         }
         return null;
+    }
+
+    /**
+     * Checks whether the given id_token_hint issuer ("iss" claim) belongs to EntraID/Microsoft.
+     * The issuer host must match one of the known Microsoft login hosts exactly (or be a subdomain of one),
+     * so that a lookalike host such as "login.microsoftonline.com.evil.example" is not accepted.
+     *
+     * @param issuer the value of the "iss" claim, e.g. "https://login.microsoftonline.com/{tenant}/v2.0"
+     * @return true if the issuer originates from EntraID
+     */
+    boolean isEntraIDIssuer(String issuer)
+    {
+        if (StringUtil.isBlank(issuer))
+        {
+            return false;
+        }
+        try
+        {
+            String host = URI.create(issuer).getHost();
+            if (host == null)
+            {
+                return false;
+            }
+            // Locale.ROOT to avoid the Turkish-I problem, and strip a trailing FQDN dot so that an
+            // absolute host such as "login.microsoftonline.com." still matches.
+            host = host.toLowerCase(Locale.ROOT);
+            if (host.endsWith("."))
+            {
+                host = host.substring(0, host.length() - 1);
+            }
+            for (String entraHost : ENTRAID_ISSUER_HOSTS)
+            {
+                if (host.equals(entraHost) || host.endsWith("." + entraHost))
+                {
+                    return true;
+                }
+            }
+        }
+        catch (IllegalArgumentException e)
+        {
+            logger.error("Failed to parse openid issuer '" + issuer + "': " + e.getMessage());
+        }
+        return false;
     }
 
     /**
