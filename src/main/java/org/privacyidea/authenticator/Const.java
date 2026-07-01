@@ -59,13 +59,12 @@ final class Const
     static final String OPENID_CLAIM_ISSUER = "iss";
 
     // Hosts used by the "iss" claim of an EntraID/Microsoft-issued id_token_hint. If the issuer of the
-    // id_token_hint resolves to one of these hosts, the request originates from EntraID.
-    // Covers v2.0 (login.microsoftonline.*) and v1.0 (sts.windows.net) issuers, including national clouds.
+    // id_token_hint resolves to one of these hosts, the request originates from EntraID. These are the hosts
+    // documented for the external authentication method flow (global Azure plus the national clouds):
+    // https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-external-method-provider
     static final List<String> ENTRAID_ISSUER_HOSTS = List.of("login.microsoftonline.com",
                                                              "login.microsoftonline.us",
-                                                             "login.microsoftonline.de",
-                                                             "login.partner.microsoftonline.cn",
-                                                             "sts.windows.net");
+                                                             "login.partner.microsoftonline.cn");
 
     // Error Messages
     static final String MSG_INVALID_CREDENTIALS = "Invalid Credentials!";

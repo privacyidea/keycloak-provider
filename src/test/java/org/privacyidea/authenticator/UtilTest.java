@@ -226,8 +226,6 @@ public class UtilTest
     {
         // v2.0 issuer
         assertTrue(util.isEntraIDIssuer("https://login.microsoftonline.com/25b72930-b1b1-41d4-a9e1-6a934252571b/v2.0"));
-        // v1.0 issuer
-        assertTrue(util.isEntraIDIssuer("https://sts.windows.net/25b72930-b1b1-41d4-a9e1-6a934252571b/"));
         // national clouds
         assertTrue(util.isEntraIDIssuer("https://login.microsoftonline.us/tenant/v2.0"));
         assertTrue(util.isEntraIDIssuer("https://login.partner.microsoftonline.cn/tenant/v2.0"));
@@ -244,6 +242,9 @@ public class UtilTest
         assertFalse(util.isEntraIDIssuer(""));
         // a different (non-Microsoft) issuer
         assertFalse(util.isEntraIDIssuer("https://accounts.google.com"));
+        // v1.0 / retired-cloud issuers are not in the documented EAM host set
+        assertFalse(util.isEntraIDIssuer("https://sts.windows.net/25b72930-b1b1-41d4-a9e1-6a934252571b/"));
+        assertFalse(util.isEntraIDIssuer("https://login.microsoftonline.de/tenant/v2.0"));
         // lookalike host must not be accepted as a subdomain
         assertFalse(util.isEntraIDIssuer("https://login.microsoftonline.com.evil.example/tenant/v2.0"));
         // issuer without a host
