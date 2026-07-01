@@ -43,6 +43,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
+import org.keycloak.common.VerificationException;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.models.KeycloakSession;
@@ -89,6 +90,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 {
     private final Logger logger = Logger.getLogger(PrivacyIDEAAuthenticator.class);
     private final Util util;
+    private final EntraIdTokenHintVerifier entraIdTokenHintVerifier;
     private final ConcurrentHashMap<String, Pair> piInstanceMap = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
     private boolean logEnabled = false;
@@ -97,6 +99,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
     {
         log("PrivacyIDEA Authenticator initialized.");
         this.util = new Util(this);
+        this.entraIdTokenHintVerifier = new EntraIdTokenHintVerifier(util);
     }
 
     /**
@@ -291,6 +294,27 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 if (StringUtil.isNotBlank(idTokenHint))
                 {
                     Map<String, String> token = decodeJWT(idTokenHint);
+                    String issuer = token.get(OPENID_CLAIM_ISSUER);
+                    boolean isEntraID = util.isEntraIDIssuer(issuer);
+
+                    // For EntraID issuers, verify the id_token_hint (signature/issuer/audience) unless disabled.
+                    // This is done before trusting any claim from the token. Non-EntraID issuers are not verified,
+                    // as their keys are not Microsoft's.
+                    if (isEntraID && !config.isIdTokenHintVerificationDisabled())
+                    {
+                        try
+                        {
+                            entraIdTokenHintVerifier.verify(context.getSession(), idTokenHint, issuer, config.entraIdAudience());
+                            log("Openid request: id_token_hint verified for issuer " + issuer);
+                        }
+                        catch (VerificationException e)
+                        {
+                            error("Openid request: id_token_hint verification failed: " + e.getMessage());
+                            context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
+                            return true;
+                        }
+                    }
+
                     if (StringUtil.isBlank(token.get(OPENID_CLAIM_PREFERRED_USERNAME)))
                     {
                         error("Openid request: Missing 'preferred_username' parameter!");
@@ -298,9 +322,9 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                         return true;
                     }
                     // If the id_token_hint was issued by EntraID, mark the flow so every privacyIDEA request in
-                    // it uses the EntraID User-Agent instead of the default. The issuer is part of the (Microsoft
-                    // signed) token, so it is a reliable indicator - unlike the generic openid scope.
-                    if (util.isEntraIDIssuer(token.get(OPENID_CLAIM_ISSUER)))
+                    // it uses the EntraID User-Agent instead of the default. The issuer is part of the token, so it
+                    // is a more reliable indicator than the generic openid scope.
+                    if (isEntraID)
                     {
                         log("Openid request: EntraID issuer detected, using EntraID User-Agent for this flow.");
                         context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
@@ -309,12 +333,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     {
                         // Not recognized as EntraID: the default plugin User-Agent is used. Logged so an
                         // unlisted-but-legitimate Microsoft issuer host can be diagnosed instead of failing silently.
-                        log("Openid request: issuer '" + token.get(OPENID_CLAIM_ISSUER) + "' not recognized as EntraID, " +
+                        log("Openid request: issuer '" + issuer + "' not recognized as EntraID, " +
                             "using the default User-Agent for this flow.");
                     }
                     if (logEnabled)
                     {
-                        log("Openid request: id_token_hint claims keys: " + token.keySet() + ", issuer: " + token.get(OPENID_CLAIM_ISSUER));
+                        log("Openid request: id_token_hint claims keys: " + token.keySet() + ", issuer: " + issuer);
                     }
                     usernameFromOpenId = token.get(OPENID_CLAIM_PREFERRED_USERNAME);
 

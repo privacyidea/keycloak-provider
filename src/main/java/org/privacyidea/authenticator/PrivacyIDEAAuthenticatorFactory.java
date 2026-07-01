@@ -209,6 +209,29 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                      "instead of the default plugin User-Agent.");
         configProperties.add(entraIdUserAgent);
 
+        ProviderConfigProperty disableIdTokenHintVerification = new ProviderConfigProperty();
+        disableIdTokenHintVerification.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        disableIdTokenHintVerification.setName(Const.CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION);
+        disableIdTokenHintVerification.setLabel("Disable EntraID id_token_hint Verification");
+        disableIdTokenHintVerification.setDefaultValue(false);
+        disableIdTokenHintVerification.setHelpText("By default, when an OpenID request from EntraID carries an id_token_hint, " +
+                                                   "its signature is verified against Microsoft's published keys (issuer and, if set, " +
+                                                   "audience are checked; expiry is not, because EntraID issues the hint already expired). " +
+                                                   "If the keys cannot be fetched or verification fails, the request is rejected. Enable this " +
+                                                   "to skip verification and trust the id_token_hint as-is. Only affects requests whose issuer " +
+                                                   "is an EntraID/Microsoft host.");
+        configProperties.add(disableIdTokenHintVerification);
+
+        ProviderConfigProperty entraIdAudience = new ProviderConfigProperty();
+        entraIdAudience.setType(ProviderConfigProperty.STRING_TYPE);
+        entraIdAudience.setName(Const.CONFIG_ENTRAID_AUDIENCE);
+        entraIdAudience.setLabel("EntraID Audience (Application/Client ID)");
+        entraIdAudience.setHelpText("Optional. The application (client) ID that EntraID was configured with for this external " +
+                                    "authentication method. When set, it is checked against the 'aud' claim of the id_token_hint during " +
+                                    "verification. Recommended by Microsoft. Leave empty to skip the audience check (signature and issuer " +
+                                    "are still verified).");
+        configProperties.add(entraIdAudience);
+
         ProviderConfigProperty passkeyOnly = new ProviderConfigProperty();
         passkeyOnly.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         passkeyOnly.setName(Const.CONFIG_PASSKEY_ONLY);

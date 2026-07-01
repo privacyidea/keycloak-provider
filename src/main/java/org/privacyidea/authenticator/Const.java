@@ -105,4 +105,6 @@ final class Const
     static final String CONFIG_OPENID_SEARCH_ATTRIBUTE = "piOpenIdSearchAttribute";
     static final String CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE = "piEnableOpenIdSearch";
     static final String CONFIG_ENTRAID_USER_AGENT = "piEntraIdSeparateUserAgent";
+    static final String CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION = "piDisableIdTokenHintVerification";
+    static final String CONFIG_ENTRAID_AUDIENCE = "piEntraIdAudience";
 }
