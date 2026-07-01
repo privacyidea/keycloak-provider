@@ -28,7 +28,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: maven
+          # No Maven cache here: a release build must not restore a cache that a lower-privilege
+          # workflow (e.g. build.yml on pull_request) could have poisoned. See zizmor cache-poisoning.
 
       # Build and install the java-client into the local repo so the provider can resolve it.
       - name: Build java-client (submodule)
