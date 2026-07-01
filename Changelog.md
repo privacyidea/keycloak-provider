@@ -1,14 +1,22 @@
 # Changelog
 
-### v1.8.0 - 2026-06-30
+### v1.8.0 - 2026-07-01
 
 * Feature: Optionally use a separate User-Agent ("entraid-via-keycloak") for requests that originate from an
     EntraID (openid) external-authentication flow. Enabled via the "Enable Separate User-Agent for EntraID" setting.
+    EntraID flows are identified by the `id_token_hint` issuer, so the separate User-Agent is only used for genuine
+    EntraID requests.
+* Feature: The EntraID `id_token_hint` is now verified before its claims are used - the signature is checked against
+    Microsoft's published keys, along with the issuer and (if configured) the audience. Verification can be turned off
+    via the "Disable EntraID id_token_hint Verification" setting, and the audience check is enabled by setting the
+    optional "EntraID Audience (Application/Client ID)" setting.
 * Feature: Optionally check inherited (parent) groups when matching the included/excluded groups, by walking up the
     group hierarchy. Enabled via the "Check Inherited Groups" setting. Only applies when the hierarchy exists in
     Keycloak (native nested groups, or LDAP groups imported with "Preserve Group Inheritance").
 * Bugfix: push_code_to_phone did not work. The input field was shown, but the code entered by the user was rejected
     ("wrong otp pin") because the request was not sent with the transaction id. Requires privacyIDEA-java-client 1.5.1.
+* Bugfix: An openid `id_token_hint` with a missing, null or empty `preferred_username` is now rejected instead of
+    resolving to a user named "null".
 
 ### v1.7.0 - 2026-03-26
 
