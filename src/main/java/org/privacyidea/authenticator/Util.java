@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.keycloak.authentication.AuthenticationFlowContext;
@@ -139,7 +140,13 @@ public class Util
             {
                 return false;
             }
-            host = host.toLowerCase();
+            // Locale.ROOT to avoid the Turkish-I problem, and strip a trailing FQDN dot so that an
+            // absolute host such as "login.microsoftonline.com." still matches.
+            host = host.toLowerCase(Locale.ROOT);
+            if (host.endsWith("."))
+            {
+                host = host.substring(0, host.length() - 1);
+            }
             for (String entraHost : ENTRAID_ISSUER_HOSTS)
             {
                 if (host.equals(entraHost) || host.endsWith("." + entraHost))

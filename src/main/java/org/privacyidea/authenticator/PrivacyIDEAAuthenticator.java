@@ -128,7 +128,11 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             }
             
             // Convert all values to String to match the method signature and avoid class cast exceptions.
-            return claims.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
+            // Claims with a JSON null value are dropped so they are not turned into the literal string "null",
+            // which would otherwise slip past a containsKey() check (e.g. a null 'preferred_username').
+            return claims.entrySet().stream()
+                         .filter(entry -> entry.getValue() != null)
+                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
         }
         catch (Exception e)
         {
@@ -287,7 +291,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 if (StringUtil.isNotBlank(idTokenHint))
                 {
                     Map<String, String> token = decodeJWT(idTokenHint);
-                    if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
+                    if (StringUtil.isBlank(token.get(OPENID_CLAIM_PREFERRED_USERNAME)))
                     {
                         error("Openid request: Missing 'preferred_username' parameter!");
                         context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
@@ -300,6 +304,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     {
                         log("Openid request: EntraID issuer detected, using EntraID User-Agent for this flow.");
                         context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
+                    }
+                    else
+                    {
+                        // Not recognized as EntraID: the default plugin User-Agent is used. Logged so an
+                        // unlisted-but-legitimate Microsoft issuer host can be diagnosed instead of failing silently.
+                        log("Openid request: issuer '" + token.get(OPENID_CLAIM_ISSUER) + "' not recognized as EntraID, " +
+                            "using the default User-Agent for this flow.");
                     }
                     if (logEnabled)
                     {

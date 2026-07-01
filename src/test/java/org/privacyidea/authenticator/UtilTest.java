@@ -233,6 +233,8 @@ public class UtilTest
         assertTrue(util.isEntraIDIssuer("https://login.partner.microsoftonline.cn/tenant/v2.0"));
         // host match is case-insensitive
         assertTrue(util.isEntraIDIssuer("https://LOGIN.MICROSOFTONLINE.COM/tenant/v2.0"));
+        // an absolute FQDN with a trailing root dot is still recognized
+        assertTrue(util.isEntraIDIssuer("https://login.microsoftonline.com./tenant/v2.0"));
     }
 
     @Test
