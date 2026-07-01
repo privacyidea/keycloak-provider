@@ -1,0 +1,64 @@
+# Build the provider jar and publish a GitHub release when a version tag is pushed.
+# The release notes are taken from the matching section of Changelog.md.
+# As in build.yml, the java-client submodule is built and installed first so the
+# provider can resolve the (non-public) privacyidea-java-client dependency.
+
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to create the release and upload assets
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # Build and install the java-client into the local repo so the provider can resolve it.
+      - name: Build java-client (submodule)
+        run: mvn -B install --file java-client/pom.xml
+
+      - name: Build the provider
+        run: mvn -B package --file pom.xml
+
+      # Extract the changelog section for the tag (e.g. tag v1.8.0 -> "### v1.8.0 ..." block).
+      - name: Extract release notes
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VER="${TAG#v}"
+          awk -v ver="$VER" '
+            $0 ~ "^### v?"ver"([^0-9]|$)" { f=1; next }
+            /^### / && f { exit }
+            f { print }
+          ' Changelog.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No changelog section found for $TAG" >> release-notes.md
+          fi
+          cat release-notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            target/PrivacyIDEA-Keycloak-Provider-*.jar \
+            --title "$TAG" \
+            --notes-file release-notes.md
