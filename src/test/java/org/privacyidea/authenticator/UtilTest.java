@@ -221,6 +221,33 @@ public class UtilTest
         assertNull(util.entraIdUserAgentIfApplicable(contextWithSession(session), configWithEntraIdUserAgent(false)));
     }
 
+    @Test
+    public void testIsEntraIDIssuerAcceptsMicrosoftIssuers()
+    {
+        // v2.0 issuer
+        assertTrue(util.isEntraIDIssuer("https://login.microsoftonline.com/25b72930-b1b1-41d4-a9e1-6a934252571b/v2.0"));
+        // v1.0 issuer
+        assertTrue(util.isEntraIDIssuer("https://sts.windows.net/25b72930-b1b1-41d4-a9e1-6a934252571b/"));
+        // national clouds
+        assertTrue(util.isEntraIDIssuer("https://login.microsoftonline.us/tenant/v2.0"));
+        assertTrue(util.isEntraIDIssuer("https://login.partner.microsoftonline.cn/tenant/v2.0"));
+        // host match is case-insensitive
+        assertTrue(util.isEntraIDIssuer("https://LOGIN.MICROSOFTONLINE.COM/tenant/v2.0"));
+    }
+
+    @Test
+    public void testIsEntraIDIssuerRejectsOthers()
+    {
+        assertFalse(util.isEntraIDIssuer(null));
+        assertFalse(util.isEntraIDIssuer(""));
+        // a different (non-Microsoft) issuer
+        assertFalse(util.isEntraIDIssuer("https://accounts.google.com"));
+        // lookalike host must not be accepted as a subdomain
+        assertFalse(util.isEntraIDIssuer("https://login.microsoftonline.com.evil.example/tenant/v2.0"));
+        // issuer without a host
+        assertFalse(util.isEntraIDIssuer("not-a-url"));
+    }
+
     private static Configuration configWithEntraIdUserAgent(boolean enabled)
     {
         Map<String, String> map = new HashMap<>();

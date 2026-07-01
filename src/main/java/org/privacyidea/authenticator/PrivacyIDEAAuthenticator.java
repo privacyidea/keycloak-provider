@@ -77,6 +77,7 @@ import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERI
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PUSH_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_WEBAUTHN_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.OPENID_CLAIM_ISSUER;
 import static org.privacyidea.authenticator.Const.OPENID_CLAIM_PREFERRED_USERNAME;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_ID_TOKEN_HINT;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_SCOPE;
@@ -285,9 +286,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 String idTokenHint = formData.getFirst(OPENID_PARAM_ID_TOKEN_HINT);
                 if (StringUtil.isNotBlank(idTokenHint))
                 {
-                    // This is an EntraID (openid) external-authentication request. Mark the flow so every
-                    // privacyIDEA request in it uses the EntraID User-Agent instead of the default.
-                    context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
                     Map<String, String> token = decodeJWT(idTokenHint);
                     if (!token.containsKey(OPENID_CLAIM_PREFERRED_USERNAME))
                     {
@@ -295,9 +293,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                         context.failure(AuthenticationFlowError.INVALID_CREDENTIALS);
                         return true;
                     }
+                    // If the id_token_hint was issued by EntraID, mark the flow so every privacyIDEA request in
+                    // it uses the EntraID User-Agent instead of the default. The issuer is part of the (Microsoft
+                    // signed) token, so it is a reliable indicator - unlike the generic openid scope.
+                    if (util.isEntraIDIssuer(token.get(OPENID_CLAIM_ISSUER)))
+                    {
+                        log("Openid request: EntraID issuer detected, using EntraID User-Agent for this flow.");
+                        context.getAuthenticationSession().setAuthNote(NOTE_ENTRAID_FLOW, TRUE);
+                    }
                     if (logEnabled)
                     {
-                        log("ID token hint processed. Claims keys: " + token.keySet());
+                        log("Openid request: id_token_hint claims keys: " + token.keySet() + ", issuer: " + token.get(OPENID_CLAIM_ISSUER));
                     }
                     usernameFromOpenId = token.get(OPENID_CLAIM_PREFERRED_USERNAME);
 

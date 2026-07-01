@@ -183,16 +183,20 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
         enableOpenIdSearch.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         enableOpenIdSearch.setDefaultValue(false);
         enableOpenIdSearch.setName(Const.CONFIG_ENABLE_OPENID_SEARCH_BY_ATTRIBUTE);
-        enableOpenIdSearch.setLabel("Enable OpenID Search");
-        enableOpenIdSearch.setHelpText("Enable searching for the user with the incoming OpenID requests preferred_username parameter.");
+        enableOpenIdSearch.setLabel("Enable OpenID User Search by Attribute");
+        enableOpenIdSearch.setHelpText("For OpenID requests (e.g. the EntraID external-authentication method), the Keycloak user is " +
+                                       "normally resolved by matching the 'preferred_username' claim against the username. Enable this to " +
+                                       "first look the user up by a custom user attribute (set in 'OpenID Search Attribute') instead. If no " +
+                                       "user matches that attribute, the lookup falls back to the username.");
         configProperties.add(enableOpenIdSearch);
 
         ProviderConfigProperty realmUserAttribute = new ProviderConfigProperty();
         realmUserAttribute.setType(ProviderConfigProperty.STRING_TYPE);
         realmUserAttribute.setName(Const.CONFIG_OPENID_SEARCH_ATTRIBUTE);
         realmUserAttribute.setLabel("OpenID Search Attribute");
-        realmUserAttribute.setHelpText("The user attribute which will be used to search the user with the incoming OpenID requests" +
-                                       " preferred_username parameter.");
+        realmUserAttribute.setHelpText("The Keycloak user attribute matched against the 'preferred_username' claim of the incoming OpenID " +
+                                       "request. Only used when 'Enable OpenID User Search by Attribute' is on. Example: an attribute holding " +
+                                       "the EntraID identifier the user is synchronized with.");
         configProperties.add(realmUserAttribute);
 
         ProviderConfigProperty entraIdUserAgent = new ProviderConfigProperty();
