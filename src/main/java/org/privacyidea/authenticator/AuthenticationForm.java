@@ -19,6 +19,8 @@
  */
 package org.privacyidea.authenticator;
 
+import java.util.HashMap;
+import java.util.Map;
 import com.google.gson.Gson;
 import org.keycloak.utils.StringUtil;
 
@@ -318,5 +320,51 @@ public class AuthenticationForm
     public void setEnrollViaMultichallengeOptional(boolean enrollViaMultichallengeOptional)
     {
         isEnrollViaMultichallengeOptional = enrollViaMultichallengeOptional;
+    }
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> m = new HashMap<>();
+
+        m.put("mode", getMode().name().toLowerCase());
+        m.put("firstStep", isFirstStep());
+        m.put("pollInBrowserAvailable", isPollInBrowserAvailable());
+
+        m.put("hasOtp", otpAvailable);
+        m.put("hasPush", pushAvailable);
+        m.put("hasWebAuthn", StringUtil.isNotBlank(webAuthnSignRequest));
+        m.put("hasPasskey", StringUtil.isNotBlank(passkeyChallenge));
+
+        m.put("hasEnrollmentLink", StringUtil.isNotBlank(enrollmentLink));
+        m.put("hasError", StringUtil.isNotBlank(errorMessage));
+        m.put(
+            "hasImages",
+            StringUtil.isNotBlank(pushImage)
+                || StringUtil.isNotBlank(otpImage)
+                || StringUtil.isNotBlank(smartphoneImage)
+                || StringUtil.isNotBlank(webAuthnImage)
+        );
+
+        m.put("autoSubmitEnabled", StringUtil.isNotBlank(autoSubmitLength));
+        m.put("otpMessage", otpMessage);
+        m.put("pushMessage", pushMessage);
+        m.put("webAuthnSignRequest", webAuthnSignRequest);
+        m.put("autoSubmitLength", autoSubmitLength);
+        m.put("transactionId", transactionId);
+        m.put("pollInBrowserUrl", pollInBrowserURL);
+        m.put("pollInterval", pollInterval);
+        m.put("errorMessage", errorMessage);
+        m.put("pushImage", pushImage);
+        m.put("otpImage", otpImage);
+        m.put("smartphoneImage", smartphoneImage);
+        m.put("webAuthnImage", webAuthnImage);
+        m.put("enrollmentLink", enrollmentLink);
+        m.put("challengesTriggered", challengesTriggered);
+        m.put("passkeyRegistration", passkeyRegistration);
+        m.put("passkeyChallenge", passkeyChallenge);
+        m.put("disablePasskeyLogin", disablePasskeyLogin);
+        m.put("enrollViaMultichallenge", isEnrollViaMultichallenge);
+        m.put("enrollViaMultichallengeOptional", isEnrollViaMultichallengeOptional);
+
+        return m;
     }
 }
