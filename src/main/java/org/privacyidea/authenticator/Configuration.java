@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.privacyidea.authenticator.Const.CONFIG_API_KEY;
 import static org.privacyidea.authenticator.Const.CONFIG_CHECK_INHERITED_GROUPS;
 import static org.privacyidea.authenticator.Const.CONFIG_CUSTOM_HEADERS;
 import static org.privacyidea.authenticator.Const.CONFIG_DISABLE_PASSKEY_LOGIN;
@@ -44,6 +45,7 @@ import static org.privacyidea.authenticator.Const.CONFIG_PASSKEY_ONLY;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER;
 import static org.privacyidea.authenticator.Const.CONFIG_POLL_IN_BROWSER_URL;
 import static org.privacyidea.authenticator.Const.CONFIG_REALM;
+import static org.privacyidea.authenticator.Const.CONFIG_REMEMBER_DEVICE;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_PASSWORD;
 import static org.privacyidea.authenticator.Const.CONFIG_SEND_STATIC_PASS;
 import static org.privacyidea.authenticator.Const.CONFIG_SERVER;
@@ -90,6 +92,8 @@ public class Configuration
     private final boolean entraIdUserAgent;
     private final boolean disableIdTokenHintVerification;
     private final String entraIdAudience;
+    private final boolean rememberDevice;
+    private final String apiKey;
 
     public Configuration(Map<String, String> configMap)
     {
@@ -121,6 +125,8 @@ public class Configuration
         this.disableIdTokenHintVerification =
                 configMap.get(CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION) != null && configMap.get(CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION).equals(TRUE);
         this.entraIdAudience = configMap.get(CONFIG_ENTRAID_AUDIENCE) == null ? "" : configMap.get(CONFIG_ENTRAID_AUDIENCE);
+        this.rememberDevice = configMap.get(CONFIG_REMEMBER_DEVICE) != null && configMap.get(CONFIG_REMEMBER_DEVICE).equals(TRUE);
+        this.apiKey = configMap.get(CONFIG_API_KEY) == null ? "" : configMap.get(CONFIG_API_KEY);
         String excludedGroupsStr = configMap.get(CONFIG_EXCLUDED_GROUPS);
         if (excludedGroupsStr != null)
         {
@@ -318,5 +324,15 @@ public class Configuration
     public String entraIdAudience()
     {
         return entraIdAudience;
+    }
+
+    public boolean isRememberDeviceEnabled()
+    {
+        return rememberDevice;
+    }
+
+    public String apiKey()
+    {
+        return apiKey;
     }
 }

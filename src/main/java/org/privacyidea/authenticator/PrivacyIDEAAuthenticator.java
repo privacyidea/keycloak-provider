@@ -35,6 +35,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -50,6 +51,8 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.protocol.LoginProtocol;
+import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.utils.StringUtil;
 import org.privacyidea.AuthenticationStatus;
@@ -64,6 +67,7 @@ import static org.privacyidea.PIConstants.PASSWORD;
 import static org.privacyidea.PIConstants.USERNAME;
 import static org.privacyidea.authenticator.Const.FORM_FILE_NAME;
 import static org.privacyidea.authenticator.Const.FORM_OTP;
+import static org.privacyidea.authenticator.Const.FORM_REMEMBER_DEVICE;
 import static org.privacyidea.authenticator.Const.MSG_AUTH_FAILED;
 import static org.privacyidea.authenticator.Const.MSG_INVALID_CREDENTIALS;
 import static org.privacyidea.authenticator.Const.MSG_PASSKEY_AUTH_FAILED;
@@ -77,12 +81,14 @@ import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PUSH_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.NOTE_REMEMBER_DEVICE_OFFERED;
 import static org.privacyidea.authenticator.Const.NOTE_WEBAUTHN_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.OPENID_CLAIM_ISSUER;
 import static org.privacyidea.authenticator.Const.OPENID_CLAIM_PREFERRED_USERNAME;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_ID_TOKEN_HINT;
 import static org.privacyidea.authenticator.Const.OPENID_PARAM_SCOPE;
 import static org.privacyidea.authenticator.Const.OPENID_VALUE;
+import static org.privacyidea.authenticator.Const.PARAM_REQUEST_PERSISTENT_COOKIE;
 import static org.privacyidea.authenticator.Const.PLUGIN_USER_AGENT;
 import static org.privacyidea.authenticator.Const.TRUE;
 
@@ -185,7 +191,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     error("Failed to close privacyIDEA instance!");
                 }
             }
-            Pair pair = new Pair(privacyIDEA, config);
+            Pair pair = new Pair(privacyIDEA, config, new RememberDevice(config, this));
             piInstanceMap.put(kcRealm, pair);
         }
 
@@ -217,6 +223,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
         // Reset
         authenticationSession.setUserSessionNote("privacyidea_authentication_method", "otp");
+        authenticationSession.removeAuthNote(NOTE_REMEMBER_DEVICE_OFFERED);
 
         // Check for an openid from entraid request first
         if (processOpenIDRequest(context, config, formData))
@@ -227,6 +234,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Check if a user is already present.
         // If no user is present, request it. Optionally request the password if not disabled.
         UserModel user = context.getUser();
+        Map<String, String> headers = util.getHeaders(context, config);
 
         if (user == null)
         {
@@ -242,6 +250,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.success();
                 return;
             }
+
+            // Remember device (layout A): a Keycloak password form has checked the password before this step
+            if (rememberDeviceAllowed(context, currentPair, headers, false))
+            {
+                if (isRememberedDevice(context, currentPair, user, headers))
+                {
+                    context.success();
+                    return;
+                }
+                offerRememberDevice(authenticationSession, piForm);
+            }
         }
 
         if (config.isPasskeyOnly() && !config.isDisablePasskeyLogin())
@@ -255,8 +274,6 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         {
             currentPassword = formData.getFirst(PASSWORD);
         }
-
-        Map<String, String> headers = util.getHeaders(context, config);
 
         // Trigger challenges if configured. If not, the function does nothing
         if (user != null)
@@ -405,11 +422,12 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         // Get the configuration and privacyIDEA instance for the current realm
         loadConfiguration(context);
         String kcRealm = context.getRealm().getName();
+        Pair pair;
         PrivacyIDEA privacyIDEA;
         Configuration config;
         if (piInstanceMap.containsKey(kcRealm))
         {
-            Pair pair = piInstanceMap.get(kcRealm);
+            pair = piInstanceMap.get(kcRealm);
             privacyIDEA = pair.privacyIDEA();
             config = pair.configuration();
         }
@@ -467,6 +485,13 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             return;
         }
         piForm.setAutoSubmitLength(config.otpLength());
+
+        // Remember device: the form comes back from the browser, so only the server's note decides whether it is offered
+        boolean rememberDeviceOffered = TRUE.equals(authenticationSession.getAuthNote(NOTE_REMEMBER_DEVICE_OFFERED));
+        boolean rememberDeviceRequested = rememberDeviceOffered && pair.rememberDevice().isConfigured()
+                                          && formData.containsKey(FORM_REMEMBER_DEVICE);
+        piForm.setRememberDeviceOffered(rememberDeviceOffered);
+        piForm.setRememberDeviceChecked(rememberDeviceRequested);
 
         String otpTransactionId = "";
         String pushTransactionId = "";
@@ -667,6 +692,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.success();
                 return;
             }
+
+            // Remember device (layout B): this provider has just checked the password
+            if (!config.isDisablePasswordCheck() && rememberDeviceAllowed(context, pair, headers, true))
+            {
+                if (isRememberedDevice(context, pair, userModel, headers))
+                {
+                    context.success();
+                    return;
+                }
+                offerRememberDevice(authenticationSession, piForm);
+            }
         }
 
         // OTP / Push / WebAuthn: User has to be present by now
@@ -682,6 +718,17 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         kcForm.setAttribute(AUTH_FORM, piForm);
         boolean fido2Used = false;
 
+        // Remember device opt-in: privacyIDEA issues the cookie on a successful /validate/check with this parameter.
+        // The API key is only sent with the opt-in, so a wrong key cannot break a normal login.
+        Map<String, String> checkParams = util.getAdditionalParamsFromContext(context, config);
+        Map<String, String> checkHeaders = headers;
+        if (rememberDeviceRequested)
+        {
+            checkParams.put(PARAM_REQUEST_PERSISTENT_COOKIE, "1");
+            checkHeaders = new LinkedHashMap<>(headers);
+            pair.rememberDevice().addApiKey(checkHeaders);
+        }
+
         // Send a request to privacyIDEA depending on the mode. Evaluation of the response is done afterward independently of the mode.
         if (Mode.PUSH.equals(currentMode))
         {
@@ -690,8 +737,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             if (pollTransactionStatus == ChallengeStatus.accept)
             {
                 // If the challenge has been answered, finalize with a call to validate check
-                response = privacyIDEA.validateCheck(currentUsername, "", pushTransactionId,
-                                                     util.getAdditionalParamsFromContext(context, config), headers);
+                response = privacyIDEA.validateCheck(currentUsername, "", pushTransactionId, checkParams, checkHeaders);
             }
             else if (pollTransactionStatus == ChallengeStatus.declined)
             {
@@ -715,8 +761,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
             else
             {
                 response = privacyIDEA.validateCheckWebAuthn(currentUsername, webAuthnTransactionId, piFormResult.webAuthnSignResponse,
-                                                             piFormResult.origin, util.getAdditionalParamsFromContext(context, config),
-                                                             headers);
+                                                             piFormResult.origin, checkParams, checkHeaders);
                 fido2Used = true;
             }
         }
@@ -729,13 +774,15 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         else if (!piFormResult.modeChanged)
         {
             // /validate/check with the OTP input
-            response = privacyIDEA.validateCheck(currentUsername, formData.getFirst(FORM_OTP), otpTransactionId,
-                                                 util.getAdditionalParamsFromContext(context, config), headers);
+            response = privacyIDEA.validateCheck(currentUsername, formData.getFirst(FORM_OTP), otpTransactionId, checkParams,
+                                                 checkHeaders);
         }
 
         // Evaluate the response: Check for success, error or new challenges
         if (response != null)
         {
+            // Store, rotate or remove the remember device cookie as privacyIDEA says
+            pair.rememberDevice().relay(context, response);
             if (response.authenticationSuccessful())
             {
                 context.success();
@@ -834,6 +881,71 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 context.challenge(kcForm.createForm(FORM_FILE_NAME));
             }
         }
+    }
+
+    /**
+     * Remember device needs a password check earlier in the same login: by a Keycloak password form before this step
+     * (layout A, auth note PASSWORD_VALIDATED) or by this provider in the current request (layout B). It is not used
+     * when the client asks for a new login (OIDC prompt=login, SAML ForceAuthn). Fails closed.
+     *
+     * @param context                   AuthenticationFlowContext
+     * @param pair                      privacyIDEA instance and configuration of the realm
+     * @param headers                   headers for privacyIDEA
+     * @param passwordCheckedByProvider true if this provider has checked the password in the current request
+     * @return true if the device may be recognized and the checkbox may be offered
+     */
+    private boolean rememberDeviceAllowed(AuthenticationFlowContext context, Pair pair, Map<String, String> headers,
+                                          boolean passwordCheckedByProvider)
+    {
+        if (!pair.rememberDevice().isConfigured() || pair.configuration().isPasskeyOnly())
+        {
+            return false;
+        }
+        AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
+        if (!passwordCheckedByProvider && !TRUE.equals(authenticationSession.getAuthNote(AuthenticationManager.PASSWORD_VALIDATED)))
+        {
+            log("Remember device: no password was checked before this step, the second factor is required.");
+            return false;
+        }
+        LoginProtocol protocol = context.getSession().getProvider(LoginProtocol.class, authenticationSession.getProtocol());
+        if (protocol != null && protocol.requireReauthentication(null, authenticationSession))
+        {
+            log("Remember device: the client requested a new login, the second factor is required.");
+            return false;
+        }
+        return pair.rememberDevice().isServerCapable(pair.privacyIDEA(), headers);
+    }
+
+    /**
+     * Asks privacyIDEA whether the browser's remember device cookie belongs to a remembered device of the user. On a hit,
+     * privacyIDEA rotates the cookie and the new value is passed on to the browser.
+     *
+     * @return true if the second factor can be skipped
+     */
+    private boolean isRememberedDevice(AuthenticationFlowContext context, Pair pair, UserModel user, Map<String, String> headers)
+    {
+        String cookie = RememberDevice.readCookie(context);
+        if (StringUtil.isBlank(cookie))
+        {
+            return false;
+        }
+        Map<String, String> recognitionHeaders = new LinkedHashMap<>(headers);
+        pair.rememberDevice().addRecognitionData(recognitionHeaders, cookie);
+        PIResponse response = pair.privacyIDEA().rememberDeviceCheck(user.getUsername(), recognitionHeaders);
+        pair.rememberDevice().relay(context, response);
+        if (response != null && response.value)
+        {
+            log("Remember device: privacyIDEA recognized the device of " + user.getUsername() + ", skipping the second factor.");
+            return true;
+        }
+        log("Remember device: privacyIDEA did not recognize the device of " + user.getUsername() + ".");
+        return false;
+    }
+
+    private void offerRememberDevice(AuthenticationSessionModel authenticationSession, AuthenticationForm piForm)
+    {
+        authenticationSession.setAuthNote(NOTE_REMEMBER_DEVICE_OFFERED, TRUE);
+        piForm.setRememberDeviceOffered(true);
     }
 
     @Override

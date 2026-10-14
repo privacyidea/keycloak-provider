@@ -354,8 +354,12 @@ public class Util
         if (response != null)
         {
             Mode previousMode = authForm.getMode();
+            boolean rememberDeviceOffered = authForm.isRememberDeviceOffered();
+            boolean rememberDeviceChecked = authForm.isRememberDeviceChecked();
             authForm = new AuthenticationForm(config);
             authForm.setMode(previousMode);
+            authForm.setRememberDeviceOffered(rememberDeviceOffered);
+            authForm.setRememberDeviceChecked(rememberDeviceChecked);
             authForm.setEnrollmentLink(response.enrollmentLink);
             if (response.error != null)
             {

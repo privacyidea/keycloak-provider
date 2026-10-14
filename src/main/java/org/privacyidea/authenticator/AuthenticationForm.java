@@ -53,6 +53,9 @@ public class AuthenticationForm
     private boolean disablePasskeyLogin = false;
     private boolean isEnrollViaMultichallenge = false;
     private boolean isEnrollViaMultichallengeOptional = false;
+    // Display only: the server decides with auth notes whether the opt-in is sent, as this form comes back from the browser
+    private boolean rememberDeviceOffered = false;
+    private boolean rememberDeviceChecked = false;
 
     public AuthenticationForm(Configuration configuration)
     {
@@ -318,5 +321,25 @@ public class AuthenticationForm
     public void setEnrollViaMultichallengeOptional(boolean enrollViaMultichallengeOptional)
     {
         isEnrollViaMultichallengeOptional = enrollViaMultichallengeOptional;
+    }
+
+    public boolean isRememberDeviceOffered()
+    {
+        return rememberDeviceOffered;
+    }
+
+    public void setRememberDeviceOffered(boolean rememberDeviceOffered)
+    {
+        this.rememberDeviceOffered = rememberDeviceOffered;
+    }
+
+    public boolean isRememberDeviceChecked()
+    {
+        return rememberDeviceChecked;
+    }
+
+    public void setRememberDeviceChecked(boolean rememberDeviceChecked)
+    {
+        this.rememberDeviceChecked = rememberDeviceChecked;
     }
 }

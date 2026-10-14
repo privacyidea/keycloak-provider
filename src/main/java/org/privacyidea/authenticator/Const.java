@@ -50,6 +50,13 @@ final class Const
     // Set when the current authentication originates from an EntraID (openid) request, so all privacyIDEA
     // requests in this flow use the EntraID User-Agent.
     static final String NOTE_ENTRAID_FLOW = "pi_entraid_flow";
+    // Remember device: set by the server when the checkbox may be offered in this login. The form state comes from the
+    // browser, so only this note decides whether the opt-in is sent to privacyIDEA.
+    static final String NOTE_REMEMBER_DEVICE_OFFERED = "pi_remember_device_offered";
+
+    // Remember device: checkbox on the privacyIDEA form and the opt-in parameter of /validate/check
+    static final String FORM_REMEMBER_DEVICE = "rememberDevice";
+    static final String PARAM_REQUEST_PERSISTENT_COOKIE = "request_persistent_cookie";
 
     // OpenID Connect constants
     static final String OPENID_PARAM_SCOPE = "scope";
@@ -106,4 +113,6 @@ final class Const
     static final String CONFIG_ENTRAID_USER_AGENT = "piEntraIdSeparateUserAgent";
     static final String CONFIG_DISABLE_ID_TOKEN_HINT_VERIFICATION = "piDisableIdTokenHintVerification";
     static final String CONFIG_ENTRAID_AUDIENCE = "piEntraIdAudience";
+    static final String CONFIG_REMEMBER_DEVICE = "piRememberDevice";
+    static final String CONFIG_API_KEY = "piApiKey";
 }

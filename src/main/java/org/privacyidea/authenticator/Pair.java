@@ -29,11 +29,13 @@ public class Pair
 {
     private final PrivacyIDEA privacyIDEA;
     private final Configuration configuration;
+    private final RememberDevice rememberDevice;
 
-    public Pair(PrivacyIDEA privacyIDEA, Configuration configuration)
+    public Pair(PrivacyIDEA privacyIDEA, Configuration configuration, RememberDevice rememberDevice)
     {
         this.privacyIDEA = privacyIDEA;
         this.configuration = configuration;
+        this.rememberDevice = rememberDevice;
     }
 
     public PrivacyIDEA privacyIDEA()
@@ -44,5 +46,10 @@ public class Pair
     public Configuration configuration()
     {
         return configuration;
+    }
+
+    public RememberDevice rememberDevice()
+    {
+        return rememberDevice;
     }
 }

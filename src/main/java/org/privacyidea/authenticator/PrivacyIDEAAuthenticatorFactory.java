@@ -334,6 +334,24 @@ public class PrivacyIDEAAuthenticatorFactory implements org.keycloak.authenticat
                                      "Otherwise, the general URL will be used.");
         configProperties.add(pollInBrowserURL);
 
+        ProviderConfigProperty rememberDevice = new ProviderConfigProperty();
+        rememberDevice.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        rememberDevice.setName(Const.CONFIG_REMEMBER_DEVICE);
+        rememberDevice.setLabel("Remember Device");
+        rememberDevice.setDefaultValue(false);
+        rememberDevice.setHelpText("Offer a 'Remember this device' checkbox with the second factor. A remembered device skips the " +
+                                   "second factor on later logins. Needs privacyIDEA 3.14 or later, the API Key below and a " +
+                                   "'remember_device' policy in privacyIDEA. NOTE: Only works if the password was checked " +
+                                   "before the second factor in the same login, by a Keycloak password form or by this provider.");
+        configProperties.add(rememberDevice);
+
+        ProviderConfigProperty apiKey = new ProviderConfigProperty();
+        apiKey.setType(ProviderConfigProperty.PASSWORD);
+        apiKey.setName(Const.CONFIG_API_KEY);
+        apiKey.setLabel("API Key");
+        apiKey.setHelpText("API key of the API client created for this Keycloak in privacyIDEA. Needed for Remember Device.");
+        configProperties.add(apiKey);
+
         ProviderConfigProperty debugLog = new ProviderConfigProperty();
         debugLog.setType(ProviderConfigProperty.BOOLEAN_TYPE);
         debugLog.setName(Const.CONFIG_ENABLE_LOG);
