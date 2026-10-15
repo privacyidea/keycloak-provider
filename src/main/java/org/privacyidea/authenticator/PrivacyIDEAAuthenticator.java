@@ -935,6 +935,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
         pair.rememberDevice().relay(context, response);
         if (response != null && response.value)
         {
+            context.getAuthenticationSession().setUserSessionNote("privacyidea_authentication_method", "remember_device");
             log("Remember device: privacyIDEA recognized the device of " + user.getUsername() + ", skipping the second factor.");
             return true;
         }
