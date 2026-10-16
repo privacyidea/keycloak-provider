@@ -74,6 +74,17 @@ public class Util
         }
         headers.putAll(config.customHeaders());
 
+        // The java-client throws for a header value with a control or non-ASCII character, which would end the login
+        // with an error page instead of a failed request
+        headers.entrySet().removeIf(header -> {
+            if (isValidHeaderValue(header.getValue()))
+            {
+                return false;
+            }
+            logger.error("Header " + header.getKey() + " has a value with a control or non-ASCII character and is not forwarded.");
+            return true;
+        });
+
         // The User-Agent identifies the plugin to privacyIDEA and is overridden only by the EntraID switch.
         // The forwarded-headers feature is meant for headers added by network hardware (proxies/load balancers),
         // not the client's real User-Agent, so a forwarded or custom User-Agent must never clobber the plugin's
@@ -86,6 +97,14 @@ public class Util
             headers.put(HEADER_USER_AGENT, entraIdUserAgent);
         }
         return headers;
+    }
+
+    /**
+     * @return true if OkHttp accepts the value: only tab and the printable ASCII characters
+     */
+    static boolean isValidHeaderValue(String value)
+    {
+        return value != null && value.chars().allMatch(c -> c == '\t' || (c >= 0x20 && c <= 0x7e));
     }
 
     /**

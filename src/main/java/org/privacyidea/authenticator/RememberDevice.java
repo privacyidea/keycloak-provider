@@ -19,6 +19,8 @@ package org.privacyidea.authenticator;
 
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,7 +274,9 @@ public class RememberDevice
     }
 
     /**
-     * @return the path of the realm, for example /realms/master/ or /auth/realms/master/ with a context path
+     * @return the path of the realm, for example /realms/master/ or /auth/realms/master/ with a context path. It is
+     * percent-encoded like the request path, otherwise the browser never sends the cookie for a realm name with a
+     * space, % or non-ASCII character.
      */
     static String cookiePath(AuthenticationFlowContext context)
     {
@@ -281,6 +285,14 @@ public class RememberDevice
         {
             base = base + "/";
         }
-        return base + "realms/" + context.getRealm().getName() + "/";
+        String path = base + "realms/" + context.getRealm().getName() + "/";
+        try
+        {
+            return new URI(null, null, path, null).toASCIIString();
+        }
+        catch (URISyntaxException e)
+        {
+            return path;
+        }
     }
 }

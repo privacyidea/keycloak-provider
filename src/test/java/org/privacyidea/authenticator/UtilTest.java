@@ -19,7 +19,6 @@
 package org.privacyidea.authenticator;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -310,6 +309,25 @@ public class UtilTest
                    headers.keySet().stream().noneMatch(k -> k.equalsIgnoreCase("User-Agent")));
     }
 
+    @Test
+    public void testHeaderWithControlOrNonAsciiCharacterIsNotForwarded()
+    {
+        Map<String, String> map = new HashMap<>();
+        map.put(Const.CONFIG_FORWARDED_HEADERS, "X-Forwarded-For,X-Client-Cert");
+        Configuration cfg = new Configuration(map);
+        MultivaluedHashMap<String, String> requestHeaders = new MultivaluedHashMap<>();
+        requestHeaders.add("X-Forwarded-For", "192.0.2.10");
+        requestHeaders.add("X-Client-Cert", "CN=Müller");
+        requestHeaders.add(Const.HEADER_ACCEPT_LANGUAGE, "de\r\nX-Injected: 1");
+
+        Map<String, String> headers = util.getHeaders(contextWithRequestHeaders(mock(AuthenticationSessionModel.class),
+                                                                                requestHeaders), cfg);
+
+        assertEquals("192.0.2.10", headers.get("X-Forwarded-For"));
+        assertFalse(headers.containsKey("X-Client-Cert"));
+        assertFalse(headers.containsKey(Const.HEADER_ACCEPT_LANGUAGE));
+    }
+
     /**
      * Build a CHALLENGE PIResponse with a single challenge. {@code preferredClientMode} uses the provider-side
      * (already-translated) mode names the wire parser produces: "poll" -> "push", "interactive" -> "otp".
@@ -367,6 +385,12 @@ public class UtilTest
     /** Context whose request-headers chain is mocked to return an empty header map (for getHeaders tests). */
     private static AuthenticationFlowContext contextWithEmptyRequestHeaders(AuthenticationSessionModel session)
     {
+        return contextWithRequestHeaders(session, new MultivaluedHashMap<>());
+    }
+
+    private static AuthenticationFlowContext contextWithRequestHeaders(AuthenticationSessionModel session,
+                                                                       MultivaluedHashMap<String, String> requestHeaders)
+    {
         AuthenticationFlowContext context = contextWithSession(session);
         KeycloakSession keycloakSession = mock(KeycloakSession.class);
         KeycloakContext keycloakContext = mock(KeycloakContext.class);
@@ -374,7 +398,7 @@ public class UtilTest
         when(context.getSession()).thenReturn(keycloakSession);
         when(keycloakSession.getContext()).thenReturn(keycloakContext);
         when(keycloakContext.getRequestHeaders()).thenReturn(httpHeaders);
-        when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedHashMap<>());
+        when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
         return context;
     }
 

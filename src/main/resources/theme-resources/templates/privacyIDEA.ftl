@@ -141,22 +141,19 @@
                                value="${msg('privacyidea.passkeyRegisterRetryButton')}" name="retryPasskeyRegistration"
                                type="button" onclick="registerPasskey('${authenticationForm.passkeyRegistration}')"/>
                     </#if>
+                    <!-- REMEMBER DEVICE: only offered with the second factor, after a password check in this login -->
+                    <#if authenticationForm.rememberDeviceOffered && ["otp", "push", "webauthn"]?seq_contains(authenticationForm.mode)
+                    && !(authenticationForm.passkeyRegistration?has_content)>
+                        <div class="checkbox">
+                            <label for="rememberDevice">
+                                <input id="rememberDevice" name="rememberDevice" type="checkbox" value="on"
+                                       <#if authenticationForm.rememberDeviceChecked>checked</#if>/>
+                                ${msg('privacyidea.rememberDevice')}
+                            </label>
+                        </div>
+                    </#if>
                 </div>
             </div>
-
-            <!-- REMEMBER DEVICE: only offered with the second factor, after a password check in this login -->
-            <#if authenticationForm.rememberDeviceOffered && ["otp", "push", "webauthn"]?seq_contains(authenticationForm.mode)
-            && !(authenticationForm.passkeyRegistration?has_content)>
-                <div class="${properties.kcFormGroupClass!}">
-                    <div class="checkbox">
-                        <label for="rememberDevice">
-                            <input id="rememberDevice" name="rememberDevice" type="checkbox" value="on"
-                                   <#if authenticationForm.rememberDeviceChecked>checked</#if>/>
-                            ${msg('privacyidea.rememberDevice')}
-                        </label>
-                    </div>
-                </div>
-            </#if>
 
             <!-- Sign In Button -->
             <#if !(["passkey", "push", "passkeyonly"]?seq_contains(authenticationForm.mode))

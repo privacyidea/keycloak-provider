@@ -18,7 +18,9 @@
 package org.privacyidea.authenticator;
 
 import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.RuntimeDelegate;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +29,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.models.RealmModel;
 import org.privacyidea.IPILogger;
 import org.privacyidea.PrivacyIDEA;
 
@@ -134,12 +138,16 @@ public class RememberDeviceTest
     @Test
     public void inconclusiveProbeKeepsEarlierAnswer()
     {
-        RememberDevice rd = rememberDevice(true, "key");
-        rd.cacheServerCapability(Boolean.FALSE);
-        now.addAndGet(RememberDevice.CAPABILITY_TTL_MILLIS);
         when(privacyIDEA.getRememberDeviceCapability(anyMap())).thenReturn(null);
+        RememberDevice capable = rememberDevice(true, "key");
+        capable.cacheServerCapability(Boolean.TRUE);
+        RememberDevice notCapable = rememberDevice(true, "key");
+        notCapable.cacheServerCapability(Boolean.FALSE);
+        now.addAndGet(RememberDevice.CAPABILITY_TTL_MILLIS);
 
-        assertFalse(rd.isServerCapable(privacyIDEA, new HashMap<>()));
+        assertTrue(capable.isServerCapable(privacyIDEA, new HashMap<>()));
+        assertFalse(notCapable.isServerCapable(privacyIDEA, new HashMap<>()));
+        verify(privacyIDEA, times(2)).getRememberDeviceCapability(anyMap());
     }
 
     @Test
@@ -217,6 +225,26 @@ public class RememberDeviceTest
 
         assertEquals("", cookie.getValue());
         assertEquals(0, cookie.getMaxAge());
+    }
+
+    @Test
+    public void cookiePathIsPercentEncodedLikeTheRequestPath()
+    {
+        assertEquals("/realms/master/", cookiePath("https://kc.example/", "master"));
+        assertEquals("/auth/realms/my%20realm/", cookiePath("https://kc.example/auth", "my realm"));
+        assertEquals("/realms/B%C3%BCro%25/", cookiePath("https://kc.example/", "Büro%"));
+    }
+
+    private static String cookiePath(String baseUri, String realmName)
+    {
+        AuthenticationFlowContext context = mock(AuthenticationFlowContext.class);
+        UriInfo uriInfo = mock(UriInfo.class);
+        when(uriInfo.getBaseUri()).thenReturn(URI.create(baseUri));
+        when(context.getUriInfo()).thenReturn(uriInfo);
+        RealmModel realm = mock(RealmModel.class);
+        when(realm.getName()).thenReturn(realmName);
+        when(context.getRealm()).thenReturn(realm);
+        return RememberDevice.cookiePath(context);
     }
 
     private static final class NoopLogger implements IPILogger

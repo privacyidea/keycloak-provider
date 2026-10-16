@@ -80,6 +80,7 @@ import static org.privacyidea.authenticator.Const.NOTE_ENTRAID_FLOW;
 import static org.privacyidea.authenticator.Const.NOTE_OTP_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_REGISTRATION_SERIAL;
 import static org.privacyidea.authenticator.Const.NOTE_PASSKEY_TRANSACTION_ID;
+import static org.privacyidea.authenticator.Const.NOTE_PASSWORD_CHECKED;
 import static org.privacyidea.authenticator.Const.NOTE_PUSH_TRANSACTION_ID;
 import static org.privacyidea.authenticator.Const.NOTE_REMEMBER_DEVICE_OFFERED;
 import static org.privacyidea.authenticator.Const.NOTE_WEBAUTHN_TRANSACTION_ID;
@@ -251,8 +252,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
 
-            // Remember device (layout A): a Keycloak password form has checked the password before this step
-            if (rememberDeviceAllowed(context, currentPair, headers, false))
+            // Remember device: needs a password check earlier in this login (Keycloak form or this provider)
+            if (rememberDeviceAllowed(context, currentPair, headers))
             {
                 if (isRememberedDevice(context, currentPair, user, headers))
                 {
@@ -681,6 +682,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                     context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, responseForm);
                     return;
                 }
+                authenticationSession.setAuthNote(NOTE_PASSWORD_CHECKED, TRUE);
             }
             context.clearUser();
             context.setUser(userModel);
@@ -693,8 +695,8 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
                 return;
             }
 
-            // Remember device (layout B): this provider has just checked the password
-            if (!config.isDisablePasswordCheck() && rememberDeviceAllowed(context, pair, headers, true))
+            // Remember device: this provider has just checked the password on its own login form
+            if (!config.isDisablePasswordCheck() && rememberDeviceAllowed(context, pair, headers))
             {
                 if (isRememberedDevice(context, pair, userModel, headers))
                 {
@@ -885,24 +887,23 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
 
     /**
      * Remember device needs a password check earlier in the same login: by a Keycloak password form before this step
-     * (layout A, auth note PASSWORD_VALIDATED) or by this provider in the current request (layout B). It is not used
-     * when the client asks for a new login (OIDC prompt=login, SAML ForceAuthn). Fails closed.
+     * (auth note PASSWORD_VALIDATED) or by this provider on its own login form (auth note NOTE_PASSWORD_CHECKED). It is
+     * not used when the client asks for a new login (OIDC prompt=login, SAML ForceAuthn). Fails closed.
      *
-     * @param context                   AuthenticationFlowContext
-     * @param pair                      privacyIDEA instance and configuration of the realm
-     * @param headers                   headers for privacyIDEA
-     * @param passwordCheckedByProvider true if this provider has checked the password in the current request
+     * @param context AuthenticationFlowContext
+     * @param pair    privacyIDEA instance and configuration of the realm
+     * @param headers headers for privacyIDEA
      * @return true if the device may be recognized and the checkbox may be offered
      */
-    private boolean rememberDeviceAllowed(AuthenticationFlowContext context, Pair pair, Map<String, String> headers,
-                                          boolean passwordCheckedByProvider)
+    boolean rememberDeviceAllowed(AuthenticationFlowContext context, Pair pair, Map<String, String> headers)
     {
         if (!pair.rememberDevice().isConfigured() || pair.configuration().isPasskeyOnly())
         {
             return false;
         }
         AuthenticationSessionModel authenticationSession = context.getAuthenticationSession();
-        if (!passwordCheckedByProvider && !TRUE.equals(authenticationSession.getAuthNote(AuthenticationManager.PASSWORD_VALIDATED)))
+        if (!TRUE.equals(authenticationSession.getAuthNote(AuthenticationManager.PASSWORD_VALIDATED))
+            && !TRUE.equals(authenticationSession.getAuthNote(NOTE_PASSWORD_CHECKED)))
         {
             log("Remember device: no password was checked before this step, the second factor is required.");
             return false;
@@ -922,7 +923,7 @@ public class PrivacyIDEAAuthenticator implements org.keycloak.authentication.Aut
      *
      * @return true if the second factor can be skipped
      */
-    private boolean isRememberedDevice(AuthenticationFlowContext context, Pair pair, UserModel user, Map<String, String> headers)
+    boolean isRememberedDevice(AuthenticationFlowContext context, Pair pair, UserModel user, Map<String, String> headers)
     {
         String cookie = RememberDevice.readCookie(context);
         if (StringUtil.isBlank(cookie))

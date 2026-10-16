@@ -53,6 +53,9 @@ final class Const
     // Remember device: set by the server when the checkbox may be offered in this login. The form state comes from the
     // browser, so only this note decides whether the opt-in is sent to privacyIDEA.
     static final String NOTE_REMEMBER_DEVICE_OFFERED = "pi_remember_device_offered";
+    // Set when this provider has checked the password on its own login form. Keycloak's PASSWORD_VALIDATED is only set
+    // by its own password forms, so a new run of authenticate() needs this note to keep remember device.
+    static final String NOTE_PASSWORD_CHECKED = "pi_password_checked";
 
     // Remember device: checkbox on the privacyIDEA form and the opt-in parameter of /validate/check
     static final String FORM_REMEMBER_DEVICE = "rememberDevice";

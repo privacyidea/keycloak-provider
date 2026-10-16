@@ -1,5 +1,16 @@
 # Changelog
 
+### Unreleased
+
+* Feature: "Remember this device" lets a user skip the second factor on later logins from the same browser. Enabled
+    via the "Remember Device" setting together with the "API Key" of an API client in privacyIDEA, and needs
+    privacyIDEA 3.14 or later with a `remember_device` policy. Only offered when the password was checked earlier in
+    the same login. A login that skipped the second factor sets the user session note
+    `privacyidea_authentication_method` to `remember_device`.
+* Change: Requires privacyIDEA-java-client 1.6.0, which no longer follows HTTP redirects. The configured privacyIDEA
+    URL must be the final URL: a URL that answers with a redirect (for example http to https, or a different path)
+    makes every request to privacyIDEA fail.
+
 ### v1.8.0 - 2026-07-01
 
 * Feature: Optionally use a separate User-Agent ("entraid-via-keycloak") for requests that originate from an

@@ -33,7 +33,7 @@ the following table:
 
 | Configuration | Explanation |
 |---|---|
-| PrivacyIDEA URL | The URL of your privacyIDEA server, which must be reachable from the keycloak server. |
+| PrivacyIDEA URL | The URL of your privacyIDEA server, which must be reachable from the keycloak server. Redirects are not followed, so enter the final URL (for example https, not an http URL that redirects to https). |
 | Realm | This realm will be appended to all requests to privacyIDEA. Leave empty to use the privacyIDEA default realm. |
 | Verify SSL | You can choose if Keycloak should verify the SSL certificate from privacyIDEA. Please do not uncheck this in a productive environment! |
 | Enable Trigger Challenge | Enable if challenges should be triggered beforehand using the provided service account. This is mutually exclusive to sending the password and takes precedence. |
